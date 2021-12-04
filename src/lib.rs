@@ -25,10 +25,6 @@ pub fn establish_connection() -> MysqlConnection {
 		.unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
 
-pub fn create_rl_dir(conn: &MysqlConnection, name: &str) -> Dir {
-	create_dir(conn,name,None)
-}
-
 pub fn create_dir(conn: &MysqlConnection, name: &str, loc: Option<i32>) -> Dir {
 	use schema::dir;
 	
@@ -265,7 +261,6 @@ pub fn show_entries(conn: &MysqlConnection, display: Option<bool>, shortened: Op
 			println!("{} ({}) {} {}",e.name,e.type_,e.loc,tags);
 		}
 	}
-
 }
 
 pub fn delete_entry(conn: &MysqlConnection,entryid: i32) {
