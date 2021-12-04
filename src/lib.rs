@@ -170,6 +170,35 @@ pub fn prompt_tag_dir_target(conn: &MysqlConnection,prompt_string: Option<String
 	tag::table.filter(id.eq(idtoremove)).first(conn).unwrap()
 }
 
+pub fn prompt_tag_entry_target(conn: &MysqlConnection,prompt_string: Option<String>,entryid: i32) -> Tag {
+	use schema::tag;
+	use std::io::{stdin, Read};
+	use self::schema::tag::dsl::*;
+	let mut n = String::new();
+
+	println!("{}",get_entrytags(conn,entryid));
+	let prompt = prompt_string.unwrap_or("Tag?:".to_string());
+	println!("{}",prompt);
+	stdin().read_line(&mut n).unwrap();
+	let n = n.trim_right(); 
+	let matches = tag.filter(name.eq_any(vec![n])).load::<Tag>(conn).expect("Error loading matched entries");
+	let idtoremove: i32;
+	if ( matches.len() != 1)  {
+		for m in matches {
+			println!("{} {}", m.id, m.name);
+		}
+		println!("Which {}?: ",n);
+		let mut n= String::new();
+		stdin().read_line(&mut n).unwrap();
+		let n= n.trim_right(); 
+		idtoremove = n.parse::<i32>().unwrap_or_else(|_| panic!("Invalid ID."));
+	}else {
+		idtoremove = matches[0].id
+	}
+	println!("Matched id \"{}\"",idtoremove);
+	tag::table.filter(id.eq(idtoremove)).first(conn).unwrap()
+}
+
 pub fn delete_tag(conn: &MysqlConnection) {
 	use self::schema::tag::dsl::*;
 	let t = prompt_tag_target(conn,Some("Tag to delete?:".to_string()));
@@ -347,7 +376,6 @@ pub fn get_entrytags(conn: &MysqlConnection, entry_id: i32) -> String {
 	retstr
 }
 
-#[tokio::main]
 pub async fn make_file_entry(conn: &MysqlConnection,name: &str,dt: Vec<u8>,location: Option<i32>,lbl: Option<&str>) -> Entry {
 	use schema::entry;
 
