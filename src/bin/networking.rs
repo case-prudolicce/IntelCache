@@ -1,14 +1,51 @@
 use std::net::{TcpStream, SocketAddrV4, Ipv4Addr, TcpListener};
 use std::io::{Read, Error,Write};
 use std::thread;
+use std::str;
+
+fn parse_command(buffer: &mut [u8],br:usize) -> Result<i32,Error>{
+	let cmd = str::from_utf8(&buffer[..br]).unwrap();
+	let pcmd: Vec<&str> = cmd.trim_end().split_whitespace().collect::<Vec<&str>>();
+	
+	let mut DirEntry = 0;
+	let mut tagging = false;
+
+	match pcmd[0] {
+	"DIR" => DirEntry = 1,
+	"ENTRY" => DirEntry = -1,
+	"TAG" => tagging = true,
+	"EXIT" => return Ok(0),
+	_ => eprintln!("Invalid."),
+	}
+	
+	if ! tagging {
+		if DirEntry == 1 {
+			println!("DIRECTORY HANDLER");
+		} else if DirEntry == -1 {
+			println!("ENTRY HANDLER");
+		}
+	}else {
+		println!("TAG HANDLER");
+	}
+	//for c in pcmd {
+	//	println!("{}",c);
+	//}
+	Ok(1)
+}
 
 fn clientHandle(mut stream: TcpStream) -> Result<(),Error>{
 	println!("Connection received! {:?} is sending data.", stream.peer_addr()?);
 	let mut buf = [0; 512];
 	loop {
 		let bytes_read = stream.read(&mut buf)?;
+		let mut return_size = 0;
 		if bytes_read == 0 { return Ok(()) }
-		stream.write(&buf[..bytes_read])?;
+		else { return_size = parse_command(&mut buf,bytes_read)?;};
+		if return_size == 0 {
+			println!("{:?} is disconnected.", stream.peer_addr()?);
+			return Ok(())
+		}
+		//stream.write(&buf[..bytes_read])?;
 	}
 }
 
@@ -22,8 +59,8 @@ fn main() -> Result<(), Error> {
 		match stream {
 			Err(e) => { eprintln!("failed: {}",e) },
 			Ok(stream) => { thread::spawn( move || {
-						clientHandle(stream).unwrap_or_else(|error| eprintln!("{:?}",error));
-					});
+					clientHandle(stream).unwrap_or_else(|error| eprintln!("{:?}",error));
+				});
 			},
 		}
 	}
