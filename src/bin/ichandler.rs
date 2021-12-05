@@ -21,7 +21,7 @@ pub fn handle_dir(cmd_opts: Vec<String>) -> String {
 	
 	let mut create = false;
 	let mut delete = false;
-	let mut retstr = String::new();
+	let mut retstr: String = "OK.\n".to_string();
 	match cmd_opts[0].as_str() {
 	"DELETE" => delete = true,
 	"SHOW" => retstr = show_dirs(&connection),
@@ -119,7 +119,7 @@ pub async fn handle_entry(cmd_opts: Vec<String>) -> (Option<i32>,Option<Vec<u8>>
 			}
 		}
 	}
-	(None,None)
+	(Some(4),Some("OK.\n".as_bytes().to_vec()))
 }
 
 #[tokio::main]
