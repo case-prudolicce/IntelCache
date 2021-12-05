@@ -1,6 +1,7 @@
 use std::net::TcpStream;
-use std::io::{stdin,self,Write,Read};
+use std::io::{BufRead,BufReader,stdin,self,Write,Read};
 use std::str;
+use std::fs;
 
 fn main() {
 	let mut stream = TcpStream::connect("127.0.0.1:64209").expect("could not connect");
@@ -10,6 +11,8 @@ fn main() {
 	let mut writemode = false;
 	let mut recvmode = false;
 	let mut filename = String::new();
+	let mut filedata: Vec<u8> = Vec::new();
+	let mut filesize = 0;
 	while input != "EXIT" {
 		if ! recvmode {
 			input = String::new();
@@ -56,12 +59,41 @@ fn main() {
 			}
 		} else {
 		//write false get true
-			println!("GETTING");
 			if recvmode {
-				let br = stream.read(&mut buff).unwrap();
-				println!("{}\t({} bytes)\nGOTTEN!",filename,(&buff[..br].len()).to_string());
-				getmode = false;
-				recvmode = false;
+				if filedata.len() == 0 && filesize == 0{
+				//First time setup
+					let br = stream.read(&mut buff).unwrap();
+					let mut sstr = String::new();
+					let mut sc = 1;
+					for b in buff {
+						if b == 10 {break}
+						//println!("{}",b);
+						sstr.push(b as char);
+						sc += 1;
+					}
+					filesize = sstr.parse::<i32>().unwrap();
+					println!("Getting {} ({} bytes)",filename,filesize);
+					for b in buff[sc..].to_vec(){
+						filedata.push(b);
+					}
+				} else if (filedata.len() as i32) < filesize {
+					//Put more into filedata (until fill up)
+					let br = stream.read(&mut buff).unwrap();
+					for b in buff[..br].to_vec() {
+						if filedata.len() + 1 <= filesize.try_into().unwrap() {
+							filedata.push(b);
+						}else {println!("{} + 1 == {} ({})",filedata.len(),filedata.len() + 1,filesize);}
+					} 
+				} else if (filedata.len() as i32) == filesize {
+					//Done, write to file filename
+					fs::write(filename,filedata);
+					println!("File downloaded!");
+					getmode = false;
+					recvmode = false;
+					filedata = Vec::new();
+					filename = String::new();
+					filesize = 0;
+				}
 			}else {
 				if ! input.len() >= 5 {
 					filename = String::new();

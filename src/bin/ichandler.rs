@@ -112,7 +112,8 @@ pub async fn handle_entry(cmd_opts: Vec<String>) -> (Option<i32>,Option<Vec<u8>>
 				archive.unpack(".").unwrap();
 				fs::rename(str::from_utf8(&e.data).unwrap(),&cmd_opts[2]).unwrap();
 				let ret = fs::read(&cmd_opts[2]).unwrap();
-				return (Some(ret.len() as i32),Some([cmd_opts[2].as_bytes(),&[10_u8],&ret].concat()))
+				fs::remove_file(&cmd_opts[2]).unwrap();
+				return (Some(ret.len() as i32),Some([ret.len().to_string().as_bytes(),&[10_u8],&ret].concat()))
 				
 			}else if e.type_ == "text" {
 				return (Some(e.data.len() as i32),Some(e.data));
