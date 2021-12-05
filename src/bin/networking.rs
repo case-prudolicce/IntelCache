@@ -141,7 +141,7 @@ fn clientHandle(mut stream: TcpStream) -> Result<(),Error>{
 
 fn main() -> Result<(), Error> {
 	let loopback = Ipv4Addr::new(0, 0, 0, 0);
-	let socket = SocketAddrV4::new(loopback, 0);
+	let socket = SocketAddrV4::new(loopback, 64209);
 	let listener = TcpListener::bind(socket)?;
 	let port = listener.local_addr()?;
 	println!("Listening on {}", port);
