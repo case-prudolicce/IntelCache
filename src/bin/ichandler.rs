@@ -55,6 +55,7 @@ pub async fn handle_entry(cmd_opts: Vec<String>) -> (Option<i32>,Option<Vec<u8>>
 	let mut create = false;
 	let mut delete = false;
 	let mut show = false;
+	let mut rstr = "OK.".to_string();
 	match cmd_opts[0].as_str() {
 	"DELETE" => delete = true,
 	"SHOW" => show = true,
@@ -89,7 +90,7 @@ pub async fn handle_entry(cmd_opts: Vec<String>) -> (Option<i32>,Option<Vec<u8>>
 		}
 	}
 	if show {
-		let rstr = show_entries(&connection,Some(false),Some(true));
+		rstr = show_entries(&connection,Some(false),Some(true));
 		return (Some(rstr.len() as i32),Some(rstr.as_bytes().to_vec()));
 	}
 	if get {
@@ -144,6 +145,8 @@ pub fn handle_tag(cmd_opts: Vec<String>) -> (Option<i32>,Option<String>) {
 	let mut create = false;
 	let mut tagdir = 0;
 	let mut tagentry = 0;
+	let mut rstr = "OK.".to_string();
+
 	match cmd_opts[0].as_str() {
 	"DELETE" => delete = true,
 	"SHOW" => show = true,
@@ -161,7 +164,7 @@ pub fn handle_tag(cmd_opts: Vec<String>) -> (Option<i32>,Option<String>) {
 	}
 
 	if show {
-		let rstr = show_tags(&connection,Some(true));
+		rstr = show_tags(&connection,Some(true));
 		return (if rstr.len() != 0 {Some(rstr.len() as i32)} else {None},if rstr.len() != 0 {Some(rstr)} else {None});
 	}
 
@@ -193,7 +196,7 @@ pub fn handle_tag(cmd_opts: Vec<String>) -> (Option<i32>,Option<String>) {
 			untag_entry(&connection, (&cmd_opts[1]).parse::<i32>().unwrap(),(&cmd_opts[2]).parse::<i32>().unwrap());
 		}
 	}
-	(None,None)
+	(Some(4),Some("OK.\n".to_string()))
 }
 
 #[cfg(not(windows))]
