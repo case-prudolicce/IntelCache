@@ -131,8 +131,63 @@ pub async fn make_entry(data: &[u8], name: String, t: String) {
 	};
 }
 
-pub fn handle_tag(cmd_opts: Vec<String>) {
+pub fn handle_tag(cmd_opts: Vec<String>) -> (Option<i32>,Option<String>) {
+	let connection = establish_connection();
+	let mut delete = false;
+	let mut show = false;
+	let mut create = false;
+	let mut tagdir = 0;
+	let mut tagentry = 0;
+	match cmd_opts[0].as_str() {
+	"DELETE" => delete = true,
+	"SHOW" => show = true,
+	"CREATE" => create = true,
+	"DIR" => tagdir = 1,
+	"UNDIR" => tagdir = -1,
+	"ENTRY" => tagentry = 1,
+	"UNENTRY" => tagentry = -1,
+	_ => eprintln!("Not a valid command."),
+	}
+	if delete {
+		if cmd_opts.len() == 2 {
+			delete_tag(&connection, (&cmd_opts[1]).parse::<i32>().unwrap());
+		}
+	}
 
+	if show {
+		let rstr = show_tags(&connection,Some(true));
+		return (if rstr.len() != 0 {Some(rstr.len() as i32)} else {None},if rstr.len() != 0 {Some(rstr)} else {None});
+	}
+
+	if create {
+		//CREATE <TAG>
+		if cmd_opts.len() == 2 {
+			create_tag(&connection, &cmd_opts[1]);
+		}
+	}
+
+	if tagdir == 1{
+		//DIR <DIRID> <TAGID>
+		if cmd_opts.len() == 3 {
+			tag_dir(&connection, (&cmd_opts[1]).parse::<i32>().unwrap(),(&cmd_opts[2]).parse::<i32>().unwrap());
+		}
+	} else if tagdir == -1 {
+		//UNDIR <DIRID> <TAGID>
+		if cmd_opts.len() == 3 {
+			untag_dir(&connection, (&cmd_opts[1]).parse::<i32>().unwrap(),(&cmd_opts[2]).parse::<i32>().unwrap());
+		}
+	}
+
+	if tagentry == 1{
+		if cmd_opts.len() == 3 {
+			tag_entry(&connection, (&cmd_opts[1]).parse::<i32>().unwrap(),(&cmd_opts[2]).parse::<i32>().unwrap());
+		}
+	} else if tagentry == -1 {
+		if cmd_opts.len() == 3 {
+			untag_entry(&connection, (&cmd_opts[1]).parse::<i32>().unwrap(),(&cmd_opts[2]).parse::<i32>().unwrap());
+		}
+	}
+	(None,None)
 }
 
 #[cfg(not(windows))]

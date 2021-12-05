@@ -86,15 +86,17 @@ pub fn show_dirs(conn: &MysqlConnection) -> String{
 	retstr
 }
 
-pub fn show_tags(conn: &MysqlConnection, display: Option<bool>) {
+pub fn show_tags(conn: &MysqlConnection, display: Option<bool>) -> String {
 	use self::schema::tag::dsl::*;
 	let results = tag.load::<Tag>(conn).expect("Error loading tags");
-	if ( display.unwrap_or(false) ) {
-		println!("Displaying {} tags", results.len());
-	}
+	//if ( display.unwrap_or(false) ) {
+	//	println!("Displaying {} tags", results.len());
+	//}
+	let mut retstr = String::new();
 	for d in results {
-		println!("{}", d.name);
+		retstr.push_str(&d.name);
 	}
+	retstr
 }
 
 pub fn create_tag(conn: &MysqlConnection, name: &str) -> Tag {
@@ -195,12 +197,9 @@ pub fn prompt_tag_entry_target(conn: &MysqlConnection,prompt_string: Option<Stri
 	tag::table.filter(id.eq(idtoremove)).first(conn).unwrap()
 }
 
-pub fn delete_tag(conn: &MysqlConnection) {
+pub fn delete_tag(conn: &MysqlConnection,tagid: i32) {
 	use self::schema::tag::dsl::*;
-	let t = prompt_tag_target(conn,Some("Tag to delete?:".to_string()));
-	println!("Removing id {}", t.id);
-	diesel::delete(tag.filter(id.eq(t.id))).execute(conn).unwrap();
-	println!("Removed Successfully");
+	diesel::delete(tag.filter(id.eq(tagid))).execute(conn).unwrap();
 }
 
 pub fn tag_dir(conn: &MysqlConnection, dir_id: i32,tag_id: i32) -> dirtag {

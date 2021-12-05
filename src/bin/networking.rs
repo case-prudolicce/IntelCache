@@ -71,7 +71,9 @@ fn parse_command(buffer: &mut [u8],br:usize) -> (Option<i32>,Option<Vec<u8>>){
 			return (if retv.0 != None {Some(retv.0.unwrap())} else {None},if retv.1 != None {Some(retv.1.unwrap().to_vec())} else {None})
 		}
 	}else {
-		println!("TAG HANDLER");
+		let r = handle_tag(fcmd[1..].to_vec());
+		println!("{:?}",r);
+		return (if r.0 != None {Some(r.0.unwrap())} else {None},if r.1 != None {Some(r.1.unwrap().as_bytes().to_vec())} else {None})
 	}
 	//for c in pcmd {
 	//	println!("{}",c);
