@@ -20,8 +20,9 @@ pub fn handle_dir(cmd_opts: Vec<String>) {
 	//NOTE: Handle deleting and creating dirs
 	
 	let mut create = false;
+	let mut delete = false;
 	match cmd_opts[0].as_str() {
-	"DELETE" => delete_dir(&connection),
+	"DELETE" => delete = true,
 	"SHOW" => show_dirs(&connection,Some(true)),
 	"CREATE" => create = true,
 	_ => eprintln!("Not a valid command."),
@@ -35,6 +36,13 @@ pub fn handle_dir(cmd_opts: Vec<String>) {
 			} 
 		}
 		println!("Dir made.");
+	}
+
+	if delete {
+		if cmd_opts.len() == 2 {
+			delete_dir(&connection,cmd_opts[1].parse::<i32>().unwrap());
+		}
+		println!("Dir Removed.");
 	}
 }
 

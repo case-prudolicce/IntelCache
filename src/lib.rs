@@ -67,12 +67,9 @@ pub fn prompt_dir_target(conn: &MysqlConnection,prompt_string: Option<String>) -
 	dir::table.filter(id.eq(idtoremove)).first(conn).unwrap()
 }
 
-pub fn delete_dir(conn: &MysqlConnection) {
+pub fn delete_dir(conn: &MysqlConnection,dirid: i32) {
 	use self::schema::dir::dsl::*;
-	let t = prompt_dir_target(conn,Some("Directory to delete?:".to_string()));
-	println!("Removing id {}", t.id);
-	diesel::delete(dir.filter(id.eq(t.id))).execute(conn).unwrap();
-	println!("Removed Successfully");
+	diesel::delete(dir.filter(id.eq(dirid))).execute(conn).unwrap();
 }
 
 pub fn show_dirs(conn: &MysqlConnection, display: Option<bool>) {
