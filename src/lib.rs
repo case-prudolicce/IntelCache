@@ -94,7 +94,7 @@ pub fn show_tags(conn: &MysqlConnection, display: Option<bool>) -> String {
 	//}
 	let mut retstr = String::new();
 	for d in results {
-		retstr.push_str(&d.name);
+		retstr.push_str(&format!("{} {}\n",d.id,&d.name));
 	}
 	retstr
 }
