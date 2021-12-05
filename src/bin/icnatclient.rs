@@ -3,6 +3,7 @@ use std::io::{BufRead,BufReader,stdin,self,Write,Read};
 use std::str;
 use std::fs;
 use std::process::Command;
+use std::{thread, time};
 
 pub fn write_entry(d: &mut String) {
 	//io::stdout().flush();
@@ -55,11 +56,13 @@ fn main() {
 				println!("Sending {} bytes to server.",data.len());
 				let msg = "ENTRY CREATE ipfs_file ((".to_owned() + &entryname + &")) ".to_owned() + &(data.len() as i32).to_string();
 				stream.write(msg.as_bytes()).expect("Error writing to server");
+				thread::sleep(time::Duration::from_millis(10));
 				stream.write(data.as_bytes()).expect("Error writing to server");
 			}else {
 				println!("Sending {} bytes to server.",data.len());
 				let msg = "ENTRY CREATE text ((".to_owned() + &entryname + &")) ".to_owned() + &(data.len() as i32).to_string();
 				stream.write(msg.as_bytes()).expect("Error writing to server");
+				thread::sleep(time::Duration::from_millis(10));
 				stream.write(data.as_bytes()).expect("Error writing to server");
 			}
 		} else {
