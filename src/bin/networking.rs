@@ -61,10 +61,12 @@ fn parse_command(buffer: &mut [u8],br:usize) -> (Option<i32>,Option<Vec<u8>>){
 	let retsize: Option<i32>;
 	let retdata: Vec<u8>;
 	if ! tagging {
+		//Dir handling
 		if DirEntry == 1 {
 			let retstr = handle_dir(fcmd[1..].to_vec());
 			return (if retstr.len() != 0 {Some(retstr.len().try_into().unwrap())} else {None},Some(retstr.as_bytes().to_vec()))
 		} else if DirEntry == -1 {
+		//Entry handling
 			let retv = handle_entry(fcmd[1..].to_vec());
 			return (if retv.0 != None {Some(retv.0.unwrap()*-1)} else {None},if retv.1 != None {Some(retv.1.unwrap().as_bytes().to_vec())} else {None})
 		}
@@ -99,10 +101,12 @@ fn clientHandle(mut stream: TcpStream) -> Result<(),Error>{
 			None => println!("None"),
 			}
 			
+			//If return size is 0, disconnect client.
 			if return_value.0 != None && return_value.0.unwrap() == 0 {
 				println!("{:?} is disconnected.", stream.peer_addr()?);
 				return Ok(())
 			} else if return_value.0 != None && return_value.0.unwrap() < 0 {
+			//Else if its under 0, get that amount of data
 				if return_value.1 == None { panic!("NO TYPE OR NAME FOR ENTRY") }
 				let rret = return_value.1.unwrap();
 				let sret = str::from_utf8(&rret).unwrap().split(" ").collect::<Vec<&str>>();
@@ -112,10 +116,11 @@ fn clientHandle(mut stream: TcpStream) -> Result<(),Error>{
 				data = true;
 				data_size = return_value.0.unwrap()*-1;
 			} else if return_value.0 != None && return_value.0.unwrap() > 0 {
+			//Else if its over 0, return that amount of data to the client.
 				println!("Sending {} bytes to {}",return_value.0.unwrap(),stream.peer_addr()?);
 			}
-			//stream.write(&buf[..bytes_read])?;
 		} else {
+			//Getting the data for the entry
 			if databuf.len() < data_size.try_into().unwrap() { 
 				for b in 0..bytes_read {
 					if databuf.len() + 1 <= data_size.try_into().unwrap() { databuf.push(buf[b]); }
