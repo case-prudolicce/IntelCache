@@ -72,7 +72,6 @@ fn parse_command(buffer: &mut [u8],br:usize) -> (Option<i32>,Option<Vec<u8>>){
 		}
 	}else {
 		let r = handle_tag(fcmd[1..].to_vec());
-		println!("{:?}",r);
 		return (if r.0 != None {Some(r.0.unwrap())} else {None},if r.1 != None {Some(r.1.unwrap().as_bytes().to_vec())} else {None})
 	}
 	//for c in pcmd {
@@ -128,7 +127,13 @@ fn clientHandle(mut stream: TcpStream) -> Result<(),Error>{
 				for b in 0..bytes_read {
 					if databuf.len() + 1 <= data_size.try_into().unwrap() { databuf.push(buf[b]); }
 				}
-				if databuf.len() < data_size.try_into().unwrap() { println!("Missing {} bytes",data_size - databuf.len() as i32) } else if databuf.len() as i32 == data_size { println!("All {} Bytes recieved!\n{:?}",data_size,databuf);data = false;make_entry(&databuf,data_info.0.to_string(),data_info.1.to_string());println!("Entry made")};
+				if databuf.len() < data_size.try_into().unwrap() { println!("Missing {} bytes",data_size - databuf.len() as i32); 
+				} else if databuf.len() as i32 == data_size { 
+					println!("All {} Bytes recieved!\n{:?}",data_size,databuf);
+					data = false;
+					make_entry(&databuf,data_info.0.to_string(),data_info.1.to_string());
+					println!("Entry made");
+				}
 			} else if databuf.len() as i32 == data_size {
 				println!("All {} Bytes recieved!\n{:?}",data_size,databuf);
 				data = false;

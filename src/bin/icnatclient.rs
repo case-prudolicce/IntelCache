@@ -44,7 +44,7 @@ fn main() {
 			let mut entryname = String::new();
 			let mut data = String::new();
 			if input.len() > 5 {
-				entryname = (&input[5..]).to_string();
+				entryname = (&input[6..]).to_string();
 				write_entry(&mut data);
 			} else {
 				println!("Name?");
@@ -54,13 +54,15 @@ fn main() {
 			}
 			if data.len() > 65535 {
 				println!("Sending {} bytes to server.",data.len());
-				let msg = "ENTRY CREATE ipfs_file ((".to_owned() + &entryname + &")) ".to_owned() + &(data.len() as i32).to_string();
+				entryname = if entryname.trim_end().contains(char::is_whitespace) {"((".to_owned()+&entryname+"))"} else {entryname};
+				let msg = "ENTRY CREATE ipfs_file ".to_owned() + &entryname + &" ".to_owned() + &(data.len() as i32).to_string();
 				stream.write(msg.as_bytes()).expect("Error writing to server");
 				thread::sleep(time::Duration::from_millis(10));
 				stream.write(data.as_bytes()).expect("Error writing to server");
 			}else {
 				println!("Sending {} bytes to server.",data.len());
-				let msg = "ENTRY CREATE text ((".to_owned() + &entryname + &")) ".to_owned() + &(data.len() as i32).to_string();
+				entryname = if entryname.trim_end().contains(char::is_whitespace) {"((".to_owned()+&entryname+"))"} else {entryname};
+				let msg = "ENTRY CREATE text ".to_owned() + &entryname + &" ".to_owned() + &(data.len() as i32).to_string();
 				stream.write(msg.as_bytes()).expect("Error writing to server");
 				thread::sleep(time::Duration::from_millis(10));
 				stream.write(data.as_bytes()).expect("Error writing to server");
@@ -109,7 +111,8 @@ fn main() {
 					stdin().read_line(&mut filename).unwrap();
 					filename = filename.trim_end().to_string();
 				}else {println!("{} {}",input,input.len())}
-				let msg = "ENTRY GET ".to_owned() + &input[4..] + " ((" + &filename + "))";
+				filename = if filename.trim_end().contains(char::is_whitespace) {"((".to_owned()+&filename+"))"} else {filename};
+				let msg = "ENTRY GET ".to_owned() + &input[4..] + " " + &filename;
 				stream.write(msg.as_bytes()).expect("Error writing to server");
 				recvmode = true;
 			}

@@ -67,8 +67,10 @@ pub async fn handle_entry(cmd_opts: Vec<String>) -> (Option<i32>,Option<Vec<u8>>
 		//"CREATE <TYPE> <NAME> <SIZE>"
 		//RETURN (-SIZE,NAME-TYPE)
 		//DATA OF SIZE <SIZE>
+		println!("{:?}",cmd_opts);
 		let mut retstr = String::new();
 		if cmd_opts.len() == 4 {
+			if cmd_opts[2].contains(char::is_whitespace) {
 			retstr.push('(');
 			retstr.push('(');
 			retstr.push_str(&cmd_opts[2]);
@@ -76,6 +78,7 @@ pub async fn handle_entry(cmd_opts: Vec<String>) -> (Option<i32>,Option<Vec<u8>>
 			retstr.push(')');
 			retstr.push(' ');
 			retstr.push_str(&cmd_opts[1]);
+			} else { retstr.push_str(&(cmd_opts[2].to_owned()+" "+&cmd_opts[1])); }
 			return (Some((&cmd_opts[3]).to_string().parse::<i32>().unwrap()*-1),Some(retstr.as_bytes().to_vec()));
 		}
 	}
