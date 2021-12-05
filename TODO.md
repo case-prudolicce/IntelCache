@@ -1,6 +1,6 @@
 # Features to add
 * README.md
-* Concatenate all the bins into one
-* Network stack
+* Return ids from Dir,Entry and tag.
+* Return Tags with newlines
 # Bugs to fix
 * TBD
