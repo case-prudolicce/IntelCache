@@ -3,14 +3,53 @@ use std::io::{Read, Error,Write};
 use std::thread;
 use std::str;
 
+pub mod ichandler;
+
+use ichandler::*;
+
+fn finalize_command(cmd: Vec<&str>) -> Vec<String> {
+	//check for ((tokens That are included between these))
+	//If found, concat to one str
+	let mut con = false;
+	let mut finalizedstr = String::new();
+	let mut retve: Vec<String> = Vec::new();
+	for c in cmd {
+		if ! con { 
+			if c.len() > 1 {
+				if &c[..2] == "((" && ! (&c[c.len() - 2..] == "))"){ 
+					con = true; 
+					finalizedstr.push_str(&c[2..].to_string());
+				} else {
+					retve.push(c.to_string()); 
+				}
+			} else { retve.push(c.to_string()) }
+		} else { 
+			if c.len() > 1 {
+				if &c[c.len() - 2..] == "))" {
+					finalizedstr.push(' ');
+					finalizedstr.push_str(&c[..c.len() - 2]);
+					retve.push(finalizedstr);
+					finalizedstr = String::new();
+					con = false 
+				}else { 
+					finalizedstr.push(' ');
+					finalizedstr.push_str(c);
+				} 
+			} else { finalizedstr.push(' '); finalizedstr.push_str(c) }
+		}
+	}
+	retve
+}
+
 fn parse_command(buffer: &mut [u8],br:usize) -> Result<i32,Error>{
 	let cmd = str::from_utf8(&buffer[..br]).unwrap();
 	let pcmd: Vec<&str> = cmd.trim_end().split_whitespace().collect::<Vec<&str>>();
+	let fcmd = finalize_command(pcmd);
 	
 	let mut DirEntry = 0;
 	let mut tagging = false;
 
-	match pcmd[0] {
+	match fcmd[0].as_str() {
 	"DIR" => DirEntry = 1,
 	"ENTRY" => DirEntry = -1,
 	"TAG" => tagging = true,
@@ -20,7 +59,7 @@ fn parse_command(buffer: &mut [u8],br:usize) -> Result<i32,Error>{
 	
 	if ! tagging {
 		if DirEntry == 1 {
-			println!("DIRECTORY HANDLER");
+			handle_dir(fcmd[1..].to_vec());
 		} else if DirEntry == -1 {
 			println!("ENTRY HANDLER");
 		}
