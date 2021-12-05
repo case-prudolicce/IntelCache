@@ -68,7 +68,7 @@ fn parse_command(buffer: &mut [u8],br:usize) -> (Option<i32>,Option<Vec<u8>>){
 		} else if DirEntry == -1 {
 		//Entry handling
 			let retv = handle_entry(fcmd[1..].to_vec());
-			return (if retv.0 != None {Some(retv.0.unwrap()*-1)} else {None},if retv.1 != None {Some(retv.1.unwrap().as_bytes().to_vec())} else {None})
+			return (if retv.0 != None {Some(retv.0.unwrap())} else {None},if retv.1 != None {Some(retv.1.unwrap().as_bytes().to_vec())} else {None})
 		}
 	}else {
 		println!("TAG HANDLER");
@@ -118,6 +118,7 @@ fn clientHandle(mut stream: TcpStream) -> Result<(),Error>{
 			} else if return_value.0 != None && return_value.0.unwrap() > 0 {
 			//Else if its over 0, return that amount of data to the client.
 				println!("Sending {} bytes to {}",return_value.0.unwrap(),stream.peer_addr()?);
+				stream.write(&return_value.1.unwrap())?;
 			}
 		} else {
 			//Getting the data for the entry

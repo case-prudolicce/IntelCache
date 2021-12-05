@@ -263,14 +263,15 @@ pub fn make_text_entry(conn: &MysqlConnection,name: &str,data: &str,location: Op
 	entry::table.order(entry::id.desc()).first(conn).unwrap()
 }
 
-pub fn show_entries(conn: &MysqlConnection, display: Option<bool>, shortened: Option<bool>) {
+pub fn show_entries(conn: &MysqlConnection, display: Option<bool>, shortened: Option<bool>) -> String {
 	use self::schema::entry::dsl::*;
 	use schema::entry;
 	let results = entry.load::<Entry>(conn).expect("Error loading entries");
 	
-	if ( display.unwrap_or(false) ) {
-		println!("Displaying {} entries", results.len());
-	}
+	//if ( display.unwrap_or(false) ) {
+	//	println!("Displaying {} entries", results.len());
+	//}
+	let mut retstr = String::new();
 	if ! shortened.unwrap_or(false) { 
 		for e in results {
 			let tags = get_entrytags(conn,e.id);
@@ -278,14 +279,15 @@ pub fn show_entries(conn: &MysqlConnection, display: Option<bool>, shortened: Op
 				Ok(v) => v,
 				Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
 			};
-			println!("{} ({}) {} [{}]\n{}",e.name,e.type_,e.loc,tags,text);
+			retstr.push_str(format!("{} ({}) {} [{}]\n{}\n",e.name,e.type_,e.loc,tags,text).as_str());
 		}
 	} else {
 		for e in results {
 			let tags = get_entrytags(conn,e.id);
-			println!("{} ({}) {} {}",e.name,e.type_,e.loc,tags);
+			retstr.push_str(format!("{} ({}) {} {}\n",e.name,e.type_,e.loc,tags).as_str());
 		}
 	}
+	retstr
 }
 
 pub fn delete_entry(conn: &MysqlConnection,entryid: i32) {

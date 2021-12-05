@@ -51,9 +51,10 @@ pub fn handle_entry(cmd_opts: Vec<String>) -> (Option<i32>,Option<String>) {
 	let mut get = false;
 	let mut create = false;
 	let mut delete = false;
+	let mut show = false;
 	match cmd_opts[0].as_str() {
 	"DELETE" => delete = true,
-	"SHOW" => show_entries(&connection,Some(false),Some(true)),
+	"SHOW" => show = true,
 	"CREATE" => create = true,
 	"GET" => get = true,
 	_ => eprintln!("Not a valid command."),
@@ -72,7 +73,7 @@ pub fn handle_entry(cmd_opts: Vec<String>) -> (Option<i32>,Option<String>) {
 			retstr.push(')');
 			retstr.push(' ');
 			retstr.push_str(&cmd_opts[1]);
-			return (Some((&cmd_opts[3]).to_string().parse::<i32>().unwrap()),Some(retstr));
+			return (Some((&cmd_opts[3]).to_string().parse::<i32>().unwrap()*-1),Some(retstr));
 		}
 	}
 	if delete {
@@ -80,6 +81,10 @@ pub fn handle_entry(cmd_opts: Vec<String>) -> (Option<i32>,Option<String>) {
 		if cmd_opts.len() == 2 {
 			delete_entry(&connection,cmd_opts[1].parse::<i32>().unwrap());
 		}
+	}
+	if show {
+		let rstr = show_entries(&connection,Some(false),Some(true));
+		return (Some(rstr.len() as i32),Some(rstr));
 	}
 	(None,None)
 }
