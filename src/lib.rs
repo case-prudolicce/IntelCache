@@ -42,7 +42,7 @@ pub fn prompt_dir_target(conn: &MysqlConnection,prompt_string: Option<String>) -
 	use self::schema::dir::dsl::*;
 	let mut n = String::new();
 
-	show_dirs(conn,None);
+	//show_dirs(conn,None);
 	let prompt = prompt_string.unwrap_or("Directory?:".to_string());
 	println!("{}",prompt);
 	stdin().read_line(&mut n).unwrap();
@@ -72,19 +72,18 @@ pub fn delete_dir(conn: &MysqlConnection,dirid: i32) {
 	diesel::delete(dir.filter(id.eq(dirid))).execute(conn).unwrap();
 }
 
-pub fn show_dirs(conn: &MysqlConnection, display: Option<bool>) {
+pub fn show_dirs(conn: &MysqlConnection) -> String{
 	use self::schema::dir::dsl::*;
 	use schema::dir;
 	let results = dir.load::<Dir>(conn).expect("Error loading dirs");
+	let mut retstr = String::new();
 	
-	if ( display.unwrap_or(false) ) {
-		println!("Displaying {} dirs", results.len());
-	}
 	for d in results {
 		let location = if (d.loc.unwrap_or(-1) == -1) {"ROOT".to_string()} else {dir::table.filter(dir::id.eq(d.loc.unwrap())).select(dir::name).get_result::<String>(conn).unwrap()};
 		let tags = get_dirtags(conn,d.id);
-		println!("{} ({}) {}", d.name, location,tags);
+		retstr.push_str(format!("{} ({}) {}\n",d.name, location, tags).as_str())
 	}
+	retstr
 }
 
 pub fn show_tags(conn: &MysqlConnection, display: Option<bool>) {
