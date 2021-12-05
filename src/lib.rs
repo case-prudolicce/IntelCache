@@ -81,7 +81,7 @@ pub fn show_dirs(conn: &MysqlConnection) -> String{
 	for d in results {
 		let location = if (d.loc.unwrap_or(-1) == -1) {"ROOT".to_string()} else {dir::table.filter(dir::id.eq(d.loc.unwrap())).select(dir::name).get_result::<String>(conn).unwrap()};
 		let tags = get_dirtags(conn,d.id);
-		retstr.push_str(format!("{} ({}) {}\n",d.name, location, tags).as_str())
+		retstr.push_str(format!("{} {} ({}) {}\n",d.id,d.name, location, tags).as_str())
 	}
 	retstr
 }
@@ -278,12 +278,12 @@ pub fn show_entries(conn: &MysqlConnection, display: Option<bool>, shortened: Op
 				Ok(v) => v,
 				Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
 			};
-			retstr.push_str(format!("{} ({}) {} [{}]\n{}\n",e.name,e.type_,e.loc,tags,text).as_str());
+			retstr.push_str(format!("{} {} ({}) {} [{}]\n{}\n",e.id,e.name,e.type_,e.loc,tags,text).as_str());
 		}
 	} else {
 		for e in results {
 			let tags = get_entrytags(conn,e.id);
-			retstr.push_str(format!("{} ({}) {} {}\n",e.name,e.type_,e.loc,tags).as_str());
+			retstr.push_str(format!("{} {} ({}) {} {}\n",e.id,e.name,e.type_,e.loc,tags).as_str());
 		}
 	}
 	retstr

@@ -29,9 +29,11 @@ pub fn handle_dir(cmd_opts: Vec<String>) -> String {
 	_ => eprintln!("Not a valid command."),
 	}
 	if create {
+		//CREATE ((NAME))
 		if cmd_opts.len() == 2 {
 			create_dir(&connection,&cmd_opts[1],None);
 		} else if ( cmd_opts.len() == 4 ) {
+			//CREATE ((NAME)) UNDER <DIR ID>
 			if cmd_opts[2] == "UNDER" {
 				create_dir(&connection,&cmd_opts[1],Some(cmd_opts[3].parse::<i32>().unwrap()));
 			} 
