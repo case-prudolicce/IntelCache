@@ -46,7 +46,8 @@ pub fn handle_dir(cmd_opts: Vec<String>) -> String {
 	retstr
 }
 
-pub fn handle_entry(cmd_opts: Vec<String>) -> (Option<i32>,Option<String>) {
+#[tokio::main]
+pub async fn handle_entry(cmd_opts: Vec<String>) -> (Option<i32>,Option<Vec<u8>>) {
 	let connection = establish_connection();
 	let mut get = false;
 	let mut create = false;
@@ -73,7 +74,7 @@ pub fn handle_entry(cmd_opts: Vec<String>) -> (Option<i32>,Option<String>) {
 			retstr.push(')');
 			retstr.push(' ');
 			retstr.push_str(&cmd_opts[1]);
-			return (Some((&cmd_opts[3]).to_string().parse::<i32>().unwrap()*-1),Some(retstr));
+			return (Some((&cmd_opts[3]).to_string().parse::<i32>().unwrap()*-1),Some(retstr.as_bytes().to_vec()));
 		}
 	}
 	if delete {
@@ -84,7 +85,37 @@ pub fn handle_entry(cmd_opts: Vec<String>) -> (Option<i32>,Option<String>) {
 	}
 	if show {
 		let rstr = show_entries(&connection,Some(false),Some(true));
-		return (Some(rstr.len() as i32),Some(rstr));
+		return (Some(rstr.len() as i32),Some(rstr.as_bytes().to_vec()));
+	}
+	if get {
+		//GET 1 file.txt
+		use models::Entry;
+		let e = get_entry_by_id(&connection,cmd_opts[1].parse::<i32>().unwrap());
+		
+		if cmd_opts.len() == 3 {
+			if e.type_ == "ipfs_file" {
+				let client = IpfsClient::default();
+				match block_on(client
+				    .get(str::from_utf8(&e.data).unwrap())
+				    .map_ok(|chunk| chunk.to_vec())
+				    .try_concat())
+				{
+				    Ok(res) => {
+					fs::write(&cmd_opts[2],res).unwrap();
+
+				    }
+				    Err(e) => eprintln!("error getting file: {}", e)
+				}
+				let mut archive = Archive::new(File::open(&cmd_opts[2]).unwrap());
+				archive.unpack(".").unwrap();
+				fs::rename(str::from_utf8(&e.data).unwrap(),&cmd_opts[2]).unwrap();
+				let ret = fs::read(&cmd_opts[2]).unwrap();
+				return (Some(ret.len() as i32),Some([cmd_opts[2].as_bytes(),&[10_u8],&ret].concat()))
+				
+			}else if e.type_ == "text" {
+				return (Some(e.data.len() as i32),Some(e.data));
+			}
+		}
 	}
 	(None,None)
 }

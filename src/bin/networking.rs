@@ -68,7 +68,7 @@ fn parse_command(buffer: &mut [u8],br:usize) -> (Option<i32>,Option<Vec<u8>>){
 		} else if DirEntry == -1 {
 		//Entry handling
 			let retv = handle_entry(fcmd[1..].to_vec());
-			return (if retv.0 != None {Some(retv.0.unwrap())} else {None},if retv.1 != None {Some(retv.1.unwrap().as_bytes().to_vec())} else {None})
+			return (if retv.0 != None {Some(retv.0.unwrap())} else {None},if retv.1 != None {Some(retv.1.unwrap().to_vec())} else {None})
 		}
 	}else {
 		println!("TAG HANDLER");

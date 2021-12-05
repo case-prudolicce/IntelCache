@@ -400,3 +400,10 @@ pub async fn make_file_entry(conn: &MysqlConnection,name: &str,dt: Vec<u8>,locat
 	}
 	entry::table.order(entry::id.desc()).first(conn).unwrap()
 }
+
+pub fn get_entry_by_id(conn: &MysqlConnection,entryid: i32) -> Entry {
+	use schema::entry;
+	use self::schema::entry::dsl::*;
+	
+	entry::table.filter(entry::id.eq(entryid)).get_result::<Entry>(conn).unwrap()
+}
