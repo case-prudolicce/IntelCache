@@ -2,6 +2,14 @@ use std::net::TcpStream;
 use std::io::{BufRead,BufReader,stdin,self,Write,Read};
 use std::str;
 use std::fs;
+use std::process::Command;
+
+pub fn write_entry(d: &mut String) {
+	//io::stdout().flush();
+	Command::new("vim").arg("/tmp/tmpentry").status().expect("Failed to open editor");
+	*d = str::from_utf8(&fs::read("/tmp/tmpentry").unwrap()).unwrap().to_string();
+	fs::remove_file("/tmp/tmpentry").unwrap();
+}
 
 fn main() {
 	let mut stream = TcpStream::connect("127.0.0.1:64209").expect("could not connect");
@@ -18,7 +26,7 @@ fn main() {
 			input = String::new();
 			print!("> ");
 			io::stdout().flush();
-			io::stdin().read_line(&mut input).expect("Error reading line");
+			stdin().read_line(&mut input).expect("Error reading line");
 			input = input.trim_right().to_string();
 		}
 		writemode = if input.len() >= 5 && &input[..5] == "WRITE" {true} else {false};
@@ -32,30 +40,27 @@ fn main() {
 			}
 		}else if ! getmode{
 		//write true get false
+			let mut entryname = String::new();
+			let mut data = String::new();
 			if input.len() > 5 {
-				let entryname = &input[5..];
-				let mut data = String::new();
-				
-				println!("Ok! (Press {} when finished)",EOF);
-				stdin().read_to_string(&mut data).unwrap();
+				entryname = (&input[5..]).to_string();
+				write_entry(&mut data);
 			} else {
-				let mut entryname = String::new();
-				let mut data = String::new();
 				println!("Name?");
 				stdin().read_line(&mut entryname).unwrap();
 				entryname = entryname.trim_end().to_string();
-				println!("Ok. (Press {} when finished)",EOF);
-				stdin().read_to_string(&mut data).unwrap();
-				if data.len() > 65535 {
-					let msg = "ENTRY CREATE ipfs_file ((".to_owned() + &entryname + &")) ".to_owned() + &(data.len() as i32).to_string();
-					stream.write(msg.as_bytes()).expect("Error writing to server");
-					stream.write(data.as_bytes()).expect("Error writing to server");
-				}else {
-					let msg = "ENTRY CREATE text ((".to_owned() + &entryname + &")) ".to_owned() + &(data.len() as i32).to_string();
-					stream.write(msg.as_bytes()).expect("Error writing to server");
-					stream.write(data.as_bytes()).expect("Error writing to server");
-				}
-				
+				write_entry(&mut data);
+			}
+			if data.len() > 65535 {
+				println!("Sending {} bytes to server.",data.len());
+				let msg = "ENTRY CREATE ipfs_file ((".to_owned() + &entryname + &")) ".to_owned() + &(data.len() as i32).to_string();
+				stream.write(msg.as_bytes()).expect("Error writing to server");
+				stream.write(data.as_bytes()).expect("Error writing to server");
+			}else {
+				println!("Sending {} bytes to server.",data.len());
+				let msg = "ENTRY CREATE text ((".to_owned() + &entryname + &")) ".to_owned() + &(data.len() as i32).to_string();
+				stream.write(msg.as_bytes()).expect("Error writing to server");
+				stream.write(data.as_bytes()).expect("Error writing to server");
 			}
 		} else {
 		//write false get true
