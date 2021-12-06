@@ -7,5 +7,4 @@
 ##Maintenance (Feature-Native\_client)
 * WRITE with location
 # Bugs to fix
-* GET on text files bugs
-
+* TBD

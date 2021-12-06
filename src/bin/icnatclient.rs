@@ -75,7 +75,8 @@ fn main() {
 					let br = stream.read(&mut buff).unwrap();
 					let mut sstr = String::new();
 					let mut sc = 1;
-					for b in buff {
+					println!("DATA RECIEVED: {:?}",buff[..br].to_vec());
+					for b in buff[..br].to_vec() {
 						if b == 10 {break}
 						//println!("{}",b);
 						sstr.push(b as char);
@@ -84,16 +85,31 @@ fn main() {
 					filesize = sstr.parse::<i32>().unwrap();
 					println!("Getting {} ({} bytes)",filename,filesize);
 					for b in buff[sc..].to_vec(){
-						filedata.push(b);
+						if filedata.len() + 1 <= filesize.try_into().unwrap(){
+							filedata.push(b);
+						} else if filedata.len() + 1 == filesize.try_into().unwrap(){
+							filedata.push(b);
+							//Done, write to file filename
+							fs::write(filename,filedata);
+							println!("File downloaded!");
+							getmode = false;
+							recvmode = false;
+							filedata = Vec::new();
+							filename = String::new();
+							filesize = 0;
+						}
 					}
+					println!("filedata now is {} out of {}",filedata.len(),filesize);
 				} else if (filedata.len() as i32) < filesize {
 					//Put more into filedata (until fill up)
+					println!("filedata now is {} out of {}",filedata.len(),filesize);
 					let br = stream.read(&mut buff).unwrap();
 					for b in buff[..br].to_vec() {
 						if filedata.len() + 1 <= filesize.try_into().unwrap() {
 							filedata.push(b);
 						}else {println!("{} + 1 == {} ({})",filedata.len(),filedata.len() + 1,filesize);}
 					} 
+					println!("filedata now is {} out of {}",filedata.len(),filesize);
 				} else if (filedata.len() as i32) == filesize {
 					//Done, write to file filename
 					fs::write(filename,filedata);
