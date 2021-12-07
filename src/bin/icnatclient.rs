@@ -2,193 +2,65 @@ use std::net::TcpStream;
 use std::io::{BufRead,BufReader,stdin,self,Write,Read};
 use std::str;
 use std::fs;
-use std::process::Command;
 use std::{thread, time};
-
-//TODO (1): Clone from ichandler.rs. To handle better.
-fn finalize_command(cmd: Vec<&str>) -> Vec<String> {
-	//check for ((tokens That are included between these))
-	//If found, concat to one str
-	let mut con = false;
-	let mut finalizedstr = String::new();
-	let mut retve: Vec<String> = Vec::new();
-	for c in cmd {
-		if ! con { 
-			if c.len() > 1 {
-				if c.chars().nth(0).unwrap() == '\"' && ! (c.chars().nth(c.len()-1).unwrap() == '\"'){ 
-					con = true; 
-					finalizedstr.push_str(&c[1..].to_string());
-				} else {
-					retve.push(c.to_string()); 
-				}
-			} else { retve.push(c.to_string()) }
-		} else { 
-			if c.len() > 1 {
-				if c.chars().nth(c.len()-1).unwrap() == '\"' {
-					finalizedstr.push(' ');
-					finalizedstr.push_str(&c[..c.len() - 1]);
-					retve.push(finalizedstr);
-					finalizedstr = String::new();
-					con = false 
-				}else { 
-					finalizedstr.push(' ');
-					finalizedstr.push_str(c);
-				} 
-			} else { finalizedstr.push(' '); finalizedstr.push_str(c) }
-		}
-	}
-	retve
-}
-
-pub fn write_entry(d: &mut String) {
-	//io::stdout().flush();
-	Command::new("vim").arg("/tmp/tmpentry").status().expect("Failed to open editor");
-	*d = str::from_utf8(&fs::read("/tmp/tmpentry").unwrap()).unwrap().to_string();
-	fs::remove_file("/tmp/tmpentry").unwrap();
-}
+pub mod ichandler;
+use ichandler::{ic_connection,ic_input};
 
 fn main() {
-	let mut stream = TcpStream::connect("127.0.0.1:64209").expect("could not connect");
-	let mut input = String::new();
-	let mut buff = [0;512];
+	let mut stream = ic_connection::connect("127.0.0.1");
+	let mut input = ic_input::new();
+
 	let mut getmode = false;
 	let mut writemode = false;
-	let mut recvmode = false;
-	let mut filename = String::new();
-	let mut filedata: Vec<u8> = Vec::new();
-	let mut filesize = 0;
-	let mut fentryname: Vec<String> = Vec::new();
-	while input != "EXIT" {
-		if ! recvmode {
-			input = String::new();
-			print!("> ");
-			io::stdout().flush();
-			stdin().read_line(&mut input).expect("Error reading line");
-			input = input.trim_right().to_string();
-		}
-		writemode = if input.len() >= 5 && &input[..5] == "WRITE" {true} else {false};
-		getmode =  if &input[..3] == "GET" || recvmode {true} else {false};
+	//while input != "EXIT" {
+	while ! input.check_exit() {
+		//input = String::new();
+		input.flush();
+		//print!("> ");
+		//stdin().read_line(&mut input).expect("Error reading line");
+		//input = input.trim_right().to_string();
+		input.prompt();
+		
+		writemode = input.is_writemode();
+		getmode = input.is_getmode(); 
 		if ! writemode && ! getmode{
-		//write false get false
-			stream.write(input.as_bytes()).expect("Error writing to server");
-			if input != "EXIT" { 
-				let br = stream.read(&mut buff).unwrap();
-				print!("{}",str::from_utf8(&buff[..br]).expect("Error converting buffer."));
+		//write false get false (read)
+			stream.send(input.to_ic_command()); 
+			if ! input.check_exit() { 
+				//let br = stream.read(&mut buff).unwrap();
+				let sr = stream.recieve();
+				//print!("{}",str::from_utf8(&buff[..br]).expect("Error converting buffer."));
+				print!("{}",sr);
 			}
-		}else if ! getmode{
-		//write true get false
-			let mut entryname = String::new();
-			let mut data = String::new();
-			if input.len() > 6 {
-				entryname = (&input[6..]).to_string();
-				let ens = entryname.split(" ").collect();
-				fentryname = finalize_command(ens);
-				write_entry(&mut data);
+		}else if ! getmode {
+		//write true get false (write mode)
+			if input.fmt_str.len() > 1 {
+				input.write_entry();
 			} else {
+				input.fmt_str.push(String::new());
 				println!("Name?");
-				stdin().read_line(&mut entryname).unwrap();
-				entryname = entryname.trim_end().to_string();
-				write_entry(&mut data);
+				let mut n = String::new();
+				stdin().read_line(&mut n).unwrap();
+				input.fmt_str[1] = n;
+				input.write_entry();
 			}
-			if data.len() > 65535 {
-				println!("Sending {} bytes to server.",data.len());
-				entryname = if fentryname[0].trim_end().contains(char::is_whitespace) {"((".to_owned()+&fentryname[0]+"))"} else {fentryname[0].to_string()};
-				let location = if fentryname.len() > 2 {" UNDER ".to_owned()+&fentryname[2]} else {"".to_string()};
-				let msg = "ENTRY CREATE ipfs_file ".to_owned() + &fentryname[0] + &" ".to_owned() + &(data.len() as i32).to_string() + &location;
-				stream.write(msg.as_bytes()).expect("Error writing to server");
-				thread::sleep(time::Duration::from_millis(10));
-				stream.write(data.as_bytes()).expect("Error writing to server");
-			}else {
-				println!("Sending {} bytes to server.",data.len());
-				entryname = if entryname.trim_end().contains(char::is_whitespace) {"((".to_owned()+&fentryname[0]+"))"} else {fentryname[0].to_string()};
-				let location = if fentryname.len() > 2 {" UNDER ".to_owned()+&fentryname[2]} else {"".to_string()};
-				let msg = "ENTRY CREATE text ".to_owned() + &entryname + &" ".to_owned() + &(data.len() as i32).to_string() + &location;
-				stream.write(msg.as_bytes()).expect("Error writing to server");
-				thread::sleep(time::Duration::from_millis(10));
-				stream.write(data.as_bytes()).expect("Error writing to server");
-			}
+			stream.send(input.to_ic_command());
+			thread::sleep(time::Duration::from_millis(10));
+			stream.data_send(input.input_str.as_bytes());
+		
 		} else {
-		//write false get true
-			if recvmode {
-				if filedata.len() == 0 && filesize == 0{
-				//First time setup
-					let br = stream.read(&mut buff).unwrap();
-					let mut sstr = String::new();
-					let mut sc = 1;
-					println!("DATA RECIEVED: {:?}",buff[..br].to_vec());
-					for b in buff[..br].to_vec() {
-						if b == 10 {break}
-						//println!("{}",b);
-						sstr.push(b as char);
-						sc += 1;
-					}
-					filesize = sstr.parse::<i32>().unwrap();
-					println!("Getting {} ({} bytes)",filename,filesize);
-					for b in buff[sc..].to_vec(){
-						if filedata.len() + 1 <= filesize.try_into().unwrap(){
-							filedata.push(b);
-						} else if filedata.len() + 1 == filesize.try_into().unwrap(){
-							filedata.push(b);
-							//Done, write to file filename
-							fs::write(filename,filedata);
-							println!("File downloaded!");
-							getmode = false;
-							recvmode = false;
-							filedata = Vec::new();
-							filename = String::new();
-							filesize = 0;
-						}
-					}
-					println!("filedata now is {} out of {}",filedata.len(),filesize);
-				} else if (filedata.len() as i32) < filesize {
-					//Put more into filedata (until fill up)
-					println!("filedata now is {} out of {}",filedata.len(),filesize);
-					let br = stream.read(&mut buff).unwrap();
-					for b in buff[..br].to_vec() {
-						if filedata.len() + 1 <= filesize.try_into().unwrap() {
-							filedata.push(b);
-						}else {println!("{} + 1 == {} ({})",filedata.len(),filedata.len() + 1,filesize);}
-					} 
-					println!("filedata now is {} out of {}",filedata.len(),filesize);
-				} else if (filedata.len() as i32) == filesize {
-					//Done, write to file filename
-					fs::write(filename,filedata);
-					println!("File downloaded!");
-					getmode = false;
-					recvmode = false;
-					filedata = Vec::new();
-					filename = String::new();
-					filesize = 0;
-				}
-			}else {
-				if ! input.len() >= 5 {
-					filename = String::new();
-					println!("File name?");
-					stdin().read_line(&mut filename).unwrap();
-					filename = filename.trim_end().to_string();
-				}else {println!("{} {}",input,input.len())}
-				filename = if filename.trim_end().contains(char::is_whitespace) {"((".to_owned()+&filename+"))"} else {filename};
-				let msg = "ENTRY GET ".to_owned() + &input[4..] + " " + &filename;
-				stream.write(msg.as_bytes()).expect("Error writing to server");
-				recvmode = true;
-			}
+			if ! (input.fmt_str.len() == 4) && input.fmt_str.len() >= 2{
+				println!("File name?");
+				input.fmt_str.push("AS".to_string());
+				input.fmt_str.push(String::new());
+				stdin().read_line(&mut input.fmt_str[3]).unwrap();
+				input.fmt_str[3] = input.fmt_str[3].trim_end().to_string();
+			} else {println!("{} {}",! (input.fmt_str.len() == 4),input.fmt_str.len() >= 2)}
+			stream.send(input.to_ic_command());
+			stream.recieve_data(input.fmt_str[3].clone()); 
+			
 		}
 	}
-	//let loopback = Ipv4Addr::new(0, 0, 0, 0);
-	//let socket = SocketAddrV4::new(loopback, 0);
-	//let listener = TcpListener::bind(socket)?;
-	//let port = listener.local_addr()?;
-	//println!("Listening on {}", port);
-	//for stream in listener.incoming() { 
-	//	match stream {
-	//		Err(e) => { eprintln!("failed: {}",e) },
-	//		Ok(stream) => { thread::spawn( move || {
-	//				clientHandle(stream).unwrap_or_else(|error| eprintln!("{:?}",error));
-	//			});
-	//		},
-	//	}
-	//}
-	//Ok(())
 }
 
 #[cfg(not(windows))]
