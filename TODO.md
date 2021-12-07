@@ -4,6 +4,9 @@
 * LS
 * IMPORT
 * CAT
+* CD
+* EDIT
+* MV 
 ##Maintenance (Feature-Native\_client)
 * TBD
 #Maintenance
