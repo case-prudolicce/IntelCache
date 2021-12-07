@@ -45,6 +45,7 @@ fn finalize_command(cmd: Vec<&str>) -> Vec<String> {
 fn parse_command(buffer: &mut [u8],br:usize) -> (Option<i32>,Option<Vec<u8>>){
 	let cmd = str::from_utf8(&buffer[..br]).unwrap();
 	let pcmd: Vec<&str> = cmd.trim_end().split_whitespace().collect::<Vec<&str>>();
+	println!("CMD FINALIZE: {:?}",cmd);
 	let fcmd = finalize_command(pcmd);
 	
 	let mut DirEntry = 0; //Dir = 1, Entry = -1
@@ -88,32 +89,33 @@ fn clientHandle(mut stream: TcpStream) -> Result<(),Error>{
 	let mut data = false;
 	let mut data_size = 0;
 	let mut databuf: Vec<u8> = Vec::new();
-	let mut data_info: (&String,&String) = (&"".to_string(),&"".to_string());
+	let mut data_info: (&String,&String,Option<i32>) = (&"".to_string(),&"".to_string(),None);
 	let mut rdi: Vec<String>;
+	let mut rv1f: String;
 	loop {
 		let bytes_read = stream.read(&mut buf)?;
 		
 		if ! data {
+			//If we aren't getting data, parse the read command into a (Opt<i32>,Opt<Vec<u8>>), where 0 is usually the return size of 1
 			if bytes_read == 0 { return Ok(()) }
 			else { return_value = parse_command(&mut buf,bytes_read);};
-			print!("return_size: ");
-			match return_value.0 {
-			Some(x) => println!("{}",x),
-			None => println!("None"),
-			}
 			
-			//If return size is 0, disconnect client.
+			//Then send back data based on the return_value to client
 			if return_value.0 != None && return_value.0.unwrap() == 0 {
+			//If return.0 size is 0, disconnect client.
 				println!("{:?} is disconnected.", stream.peer_addr()?);
 				return Ok(())
 			} else if return_value.0 != None && return_value.0.unwrap() < 0 {
-			//Else if its under 0, get that amount of data
+				//Else if its under 0, get that amount of data (turn data mode on)
 				if return_value.1 == None { panic!("NO TYPE OR NAME FOR ENTRY") }
 				let rret = return_value.1.unwrap();
 				let sret = str::from_utf8(&rret).unwrap().split(" ").collect::<Vec<&str>>();
+				println!("SRET FINALIZE: {:?}",sret);
 				rdi = finalize_command(sret);
+				println!("RDI: {:?}",rdi);
 				println!("Expecting {} bytes from {}",return_value.0.unwrap()*-1,stream.peer_addr()?);
-				data_info = (&rdi[0],&rdi[1]);
+				data_info = (&rdi[0],&rdi[1],Some(rdi[2].parse::<i32>().unwrap()));
+				println!("DATAINFO: {:?}",data_info);
 				data = true;
 				data_size = return_value.0.unwrap()*-1;
 			} else if return_value.0 != None && return_value.0.unwrap() > 0 {
@@ -131,13 +133,13 @@ fn clientHandle(mut stream: TcpStream) -> Result<(),Error>{
 				} else if databuf.len() as i32 == data_size { 
 					println!("All {} Bytes recieved!\n{:?}",data_size,databuf);
 					data = false;
-					make_entry(&databuf,data_info.0.to_string(),data_info.1.to_string());
+					make_entry(&databuf,data_info.0.to_string(),data_info.1.to_string(),data_info.2);
 					println!("Entry made");
 				}
 			} else if databuf.len() as i32 == data_size {
 				println!("All {} Bytes recieved!\n{:?}",data_size,databuf);
 				data = false;
-				make_entry(&databuf,data_info.0.to_string(),data_info.1.to_string());
+				make_entry(&databuf,data_info.0.to_string(),data_info.1.to_string(),data_info.2);
 			} 
 			
 		}

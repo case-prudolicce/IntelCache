@@ -5,6 +5,41 @@ use std::fs;
 use std::process::Command;
 use std::{thread, time};
 
+//TODO (1): Clone from ichandler.rs. To handle better.
+fn finalize_command(cmd: Vec<&str>) -> Vec<String> {
+	//check for ((tokens That are included between these))
+	//If found, concat to one str
+	let mut con = false;
+	let mut finalizedstr = String::new();
+	let mut retve: Vec<String> = Vec::new();
+	for c in cmd {
+		if ! con { 
+			if c.len() > 1 {
+				if c.chars().nth(0).unwrap() == '\"' && ! (c.chars().nth(c.len()-1).unwrap() == '\"'){ 
+					con = true; 
+					finalizedstr.push_str(&c[1..].to_string());
+				} else {
+					retve.push(c.to_string()); 
+				}
+			} else { retve.push(c.to_string()) }
+		} else { 
+			if c.len() > 1 {
+				if c.chars().nth(c.len()-1).unwrap() == '\"' {
+					finalizedstr.push(' ');
+					finalizedstr.push_str(&c[..c.len() - 1]);
+					retve.push(finalizedstr);
+					finalizedstr = String::new();
+					con = false 
+				}else { 
+					finalizedstr.push(' ');
+					finalizedstr.push_str(c);
+				} 
+			} else { finalizedstr.push(' '); finalizedstr.push_str(c) }
+		}
+	}
+	retve
+}
+
 pub fn write_entry(d: &mut String) {
 	//io::stdout().flush();
 	Command::new("vim").arg("/tmp/tmpentry").status().expect("Failed to open editor");
@@ -22,6 +57,7 @@ fn main() {
 	let mut filename = String::new();
 	let mut filedata: Vec<u8> = Vec::new();
 	let mut filesize = 0;
+	let mut fentryname: Vec<String> = Vec::new();
 	while input != "EXIT" {
 		if ! recvmode {
 			input = String::new();
@@ -43,8 +79,10 @@ fn main() {
 		//write true get false
 			let mut entryname = String::new();
 			let mut data = String::new();
-			if input.len() > 5 {
+			if input.len() > 6 {
 				entryname = (&input[6..]).to_string();
+				let ens = entryname.split(" ").collect();
+				fentryname = finalize_command(ens);
 				write_entry(&mut data);
 			} else {
 				println!("Name?");
@@ -54,15 +92,17 @@ fn main() {
 			}
 			if data.len() > 65535 {
 				println!("Sending {} bytes to server.",data.len());
-				entryname = if entryname.trim_end().contains(char::is_whitespace) {"((".to_owned()+&entryname+"))"} else {entryname};
-				let msg = "ENTRY CREATE ipfs_file ".to_owned() + &entryname + &" ".to_owned() + &(data.len() as i32).to_string();
+				entryname = if fentryname[0].trim_end().contains(char::is_whitespace) {"((".to_owned()+&fentryname[0]+"))"} else {fentryname[0].to_string()};
+				let location = if fentryname.len() > 2 {" UNDER ".to_owned()+&fentryname[2]} else {"".to_string()};
+				let msg = "ENTRY CREATE ipfs_file ".to_owned() + &fentryname[0] + &" ".to_owned() + &(data.len() as i32).to_string() + &location;
 				stream.write(msg.as_bytes()).expect("Error writing to server");
 				thread::sleep(time::Duration::from_millis(10));
 				stream.write(data.as_bytes()).expect("Error writing to server");
 			}else {
 				println!("Sending {} bytes to server.",data.len());
-				entryname = if entryname.trim_end().contains(char::is_whitespace) {"((".to_owned()+&entryname+"))"} else {entryname};
-				let msg = "ENTRY CREATE text ".to_owned() + &entryname + &" ".to_owned() + &(data.len() as i32).to_string();
+				entryname = if entryname.trim_end().contains(char::is_whitespace) {"((".to_owned()+&fentryname[0]+"))"} else {fentryname[0].to_string()};
+				let location = if fentryname.len() > 2 {" UNDER ".to_owned()+&fentryname[2]} else {"".to_string()};
+				let msg = "ENTRY CREATE text ".to_owned() + &entryname + &" ".to_owned() + &(data.len() as i32).to_string() + &location;
 				stream.write(msg.as_bytes()).expect("Error writing to server");
 				thread::sleep(time::Duration::from_millis(10));
 				stream.write(data.as_bytes()).expect("Error writing to server");

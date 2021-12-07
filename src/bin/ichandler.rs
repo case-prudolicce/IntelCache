@@ -65,21 +65,26 @@ pub async fn handle_entry(cmd_opts: Vec<String>) -> (Option<i32>,Option<Vec<u8>>
 	}
 	
 	if create {
-		//"CREATE <TYPE> <NAME> <SIZE>"
+		//"CREATE <TYPE> <NAME> <SIZE> UNDER <LOC>"
 		//RETURN (-SIZE,NAME-TYPE)
 		//DATA OF SIZE <SIZE>
-		println!("{:?}",cmd_opts);
+		println!("HANDLE_ENTRY: {:?}",cmd_opts);
 		let mut retstr = String::new();
-		if cmd_opts.len() == 4 {
+		if cmd_opts.len() >= 4 {
 			if cmd_opts[2].contains(char::is_whitespace) {
-			retstr.push('(');
-			retstr.push('(');
-			retstr.push_str(&cmd_opts[2]);
-			retstr.push(')');
-			retstr.push(')');
-			retstr.push(' ');
-			retstr.push_str(&cmd_opts[1]);
-			} else { retstr.push_str(&(cmd_opts[2].to_owned()+" "+&cmd_opts[1])); }
+				retstr.push('(');
+				retstr.push('(');
+				retstr.push_str(&cmd_opts[2]);
+				retstr.push(')');
+				retstr.push(')');
+				retstr.push(' ');
+				retstr.push_str(&cmd_opts[1]);
+			} else { 
+				retstr.push_str(&(cmd_opts[2].to_owned()+" "+&cmd_opts[1]));
+			}
+			if cmd_opts.len() == 6 && cmd_opts[4] == "UNDER" {
+				retstr.push_str(&(" ".to_owned()+&cmd_opts[5]));
+			}
 			return (Some((&cmd_opts[3]).to_string().parse::<i32>().unwrap()*-1),Some(retstr.as_bytes().to_vec()));
 		}
 	}
@@ -128,12 +133,14 @@ pub async fn handle_entry(cmd_opts: Vec<String>) -> (Option<i32>,Option<Vec<u8>>
 }
 
 #[tokio::main]
-pub async fn make_entry(data: &[u8], name: String, t: String) {
+pub async fn make_entry(data: &[u8], name: String, t: String,loc: Option<i32>) {
 	//println!("Creating entry \"{}\" of type {} and contains\n\"{}\"\n.",name,t,str::from_utf8(data).unwrap())
+	println!("MAKEENTRY TYPE {}",t);
+	println!("MAKEENTRY LOC {:?}",loc);
 	let connection = establish_connection();
 	match t.as_ref() {
-	"text" => Some(make_text_entry(&connection,&name,str::from_utf8(data).unwrap(),None,None)),
-	"ipfs_file" => Some(block_on(make_file_entry(&connection,&name,data.to_vec(),None,None))),
+	"text" => Some(make_text_entry(&connection,&name,str::from_utf8(data).unwrap(),loc,None)),
+	"ipfs_file" => Some(block_on(make_file_entry(&connection,&name,data.to_vec(),loc,None))),
 	_ => None,
 	};
 }
