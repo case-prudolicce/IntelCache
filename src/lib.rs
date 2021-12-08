@@ -3,7 +3,6 @@ extern crate diesel;
 extern crate dotenv;
 extern crate ipfs_api_backend_hyper;
 
-
 use diesel::prelude::*;
 use dotenv::dotenv;
 use std::env;
@@ -14,6 +13,7 @@ use futures::executor::block_on;
 
 pub mod models;
 pub mod schema;
+pub mod ichandler;
 
 use self::models::{entrytag,new_entrytag,NewEntry, Entry, new_dirtag, dirtag, Tag, NewTag, Dir, NewDir};
 

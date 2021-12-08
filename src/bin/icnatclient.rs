@@ -3,8 +3,7 @@ use std::io::{BufRead,BufReader,stdin,self,Write,Read};
 use std::str;
 use std::fs;
 use std::{thread, time};
-pub mod ichandler;
-use ichandler::{ic_connection,ic_input};
+use IntelCache::ichandler::ic_client::{ic_connection,ic_input};
 
 fn main() {
 	let mut stream = ic_connection::connect("127.0.0.1");
