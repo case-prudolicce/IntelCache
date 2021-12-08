@@ -1,11 +1,23 @@
 use std::str;
 use std::net::TcpStream;
-use std::io::{stdout,stdin,Read,Write};
+use std::io::{self,BufRead,BufReader,stdout,stdin,Read,Write};
 use std::process::Command;
+use std::process;
 use std::fs;
+use std::{thread, time};
+use std::fmt::Display;
+use std::fmt;
 
-use crate::ichandler::ic_server::ic_command;
+use super::ic_server::{ic_response,ic_command};
+use super::ic_execute;
 
+#[derive(Debug)]
+pub enum ic_input_cmd_mode {
+	READ,
+	GET,
+	WRITE,
+	EXIT,
+}
 
 pub struct ic_input { pub input_str: String,pub fmt_str: Vec<String> }
 impl ic_input {
@@ -15,98 +27,29 @@ impl ic_input {
 		proto_ici
 	}
 	pub fn check_exit(&self) -> bool {
-		return if self.fmt_str[0] == "EXIT" {true} else {false};
+		return if self.fmt_str.len() > 0 && self.fmt_str[0] == "EXIT" {true} else {false};
 	}
 	pub fn flush(&mut self) {
 		self.input_str = String::new();
 		self.fmt_str = Vec::new();//vec!["".to_string();512];
 	}
-	pub fn prompt(&mut self) {
+	pub fn prompt(&mut self) -> ic_input_command {
 		print!("> ");
 		stdout().flush();
 		stdin().read_line(&mut self.input_str).expect("Error reading line");
 		self.input_str = self.input_str.trim_right().to_string();
-		self.format_input();
-	}
-	pub fn is_writemode(&self) -> bool {
-		if self.fmt_str[0] == "WRITE".to_string() {true} else {false}
-	}
-	pub fn is_getmode(&self) -> bool {
-		if self.fmt_str[0] == "GET" {true} else {false}
+		let s = &self.input_str;
+		ic_input_command::from_string(s.to_string())
 	}
 
-	fn format_input(&mut self) {
-		//format the input
-		//check for ((tokens That are included between these))
-		//If found, concat to one str
-		let mut con = false;
-		let mut concatenated_str = String::new();
-		if self.input_str.split_whitespace().collect::<Vec<&str>>().len() == 0 {
-			self.fmt_str = Vec::new();
-		}
-		for c in self.input_str.split_whitespace() {
-			if ! con { 
-				if c.len() > 1 {
-					if c.chars().nth(0).unwrap() == '\"' && ! (c.chars().nth(c.len()-1).unwrap() == '\"'){ 
-						con = true; 
-						concatenated_str.push_str(&c[1..].to_string());
-					} else {
-						self.fmt_str.push(c.to_string()); 
-					}
-				} else { self.fmt_str.push(c.to_string()) }
-			} else { 
-				if c.len() > 1 {
-					if c.chars().nth(c.len()-1).unwrap() == '\"' {
-						concatenated_str.push(' ');
-						concatenated_str.push_str(&c[..c.len() - 1]);
-						self.fmt_str.push(concatenated_str);
-						concatenated_str = String::new();
-						con = false 
-					}else { 
-						concatenated_str.push(' ');
-						concatenated_str.push_str(c);
-					} 
-				} else { concatenated_str.push(' '); concatenated_str.push_str(c) }
-			}
-		}
-	}
 	
-	pub fn write_entry(&mut self) {
+	pub fn write_entry() -> String {
 		Command::new("vim").arg("/tmp/tmpentry").status().expect("Failed to open editor");
-		self.input_str = str::from_utf8(&fs::read("/tmp/tmpentry").unwrap()).unwrap().to_string();
+		let ret = str::from_utf8(&fs::read("/tmp/tmpentry").unwrap()).unwrap().to_string();
 		fs::remove_file("/tmp/tmpentry").unwrap();
+		ret
 	}
 	
-	fn string_wrap(&self,s: String) -> String {
-		if s.contains(char::is_whitespace) {"((".to_owned()+&s+"))"} else {s}
-	}
-
-	pub fn to_ic_command(&self) -> ic_command {
-		let mut fmt_vec:Vec<String> = Vec::new();
-		match self.fmt_str[0].as_ref() {
-		"WRITE" => {
-		//WRITE [<name>] [UNDER <dir id>]
-		//CREATE <TYPE> <NAME> <SIZE> UNDER <LOC>"
-			fmt_vec.push("ENTRY".to_string());
-			fmt_vec.push("CREATE".to_string());
-			fmt_vec.push(if self.input_str.len() > 65535 {"ipfs_file".to_string()} else {"text".to_string()});
-			fmt_vec.push(self.string_wrap(self.fmt_str[1].clone()));
-			fmt_vec.push(self.input_str.len().to_string());
-			fmt_vec.push(if self.fmt_str.len() > 3 {self.fmt_str[3].clone()} else {"".to_string()});
-			fmt_vec.push(if self.fmt_str.len() > 3 {"UNDER".to_string()} else {"".to_string()});
-			return ic_command::from_formated_vec(fmt_vec);
-		},
-		"GET" => {
-			fmt_vec.push("ENTRY".to_string());
-			fmt_vec.push("GET".to_string());
-			fmt_vec.push(self.string_wrap(self.fmt_str[1].clone()));
-			fmt_vec.push(self.fmt_str[3].clone());
-			return ic_command::from_formated_vec(fmt_vec);
-		},
-		_ => return ic_command::from_formated_vec(self.fmt_str.clone()),
-		}
-		ic_command::from_formated_vec(self.fmt_str)
-	}
 }
 
 pub struct ic_connection { con_stream: TcpStream,con_filebuff: Vec<u8>,con_buff: Vec<u8> }
@@ -176,5 +119,157 @@ impl ic_connection {
 				return ();
 			}
 		}
+	}
+}
+
+pub struct ic_input_command { pub cmd: Vec<String>, databuff: Vec<u8> }
+impl ic_execute for ic_input_command {
+	type Connection = ic_connection;
+
+	fn exec(&mut self,mut con: Option<&mut Self::Connection>) -> ic_response {
+		//println!("ICMD MODE {:?}",self.get_mode());
+		match self.get_mode() {
+		ic_input_cmd_mode::READ =>{
+			con.as_mut().unwrap().send(self.to_ic_command()); 
+			if ! (self.cmd[0] == "EXIT") { 
+				let sr = con.as_mut().unwrap().recieve();
+				print!("{}",sr);
+			};
+		},
+		ic_input_cmd_mode::WRITE => {
+			//println!("ICMD WRITEMODE: {:?}",self.cmd);
+			if self.cmd.len() > 1 {
+				self.databuff = ic_input::write_entry().as_bytes().to_vec();
+			} else {
+				self.cmd.push(String::new());
+				println!("Name?");
+				let mut n = String::new();
+				stdin().read_line(&mut n).unwrap();
+				self.cmd[1] = n;
+				self.databuff = ic_input::write_entry().as_bytes().to_vec();
+			}
+			con.as_mut().unwrap().send(self.to_ic_command());
+			thread::sleep(time::Duration::from_millis(10));
+			con.as_mut().unwrap().data_send(self.to_string().as_bytes());
+		},
+		ic_input_cmd_mode::GET => {
+			if ! (self.cmd.len() == 4) && self.cmd.len() >= 2{
+				println!("File name?");
+				self.cmd.push("AS".to_string());
+				self.cmd.push(String::new());
+				stdin().read_line(&mut self.cmd[3]).unwrap();
+				self.cmd[3] = self.cmd[3].trim_end().to_string();
+			} else {println!("{} {}",! (self.cmd.len() == 4),self.cmd.len() >= 2)}
+			con.as_mut().unwrap().send(self.to_ic_command());
+			con.as_mut().unwrap().recieve_data(self.cmd[3].clone()); 
+		},
+		ic_input_cmd_mode::EXIT => {
+			process::exit(1);
+		},
+		_ => { eprintln!("ERR: NOT MATCHED: {:?}", self.get_mode()) }
+		};
+		ic_response::null_response()
+	}
+}
+impl ic_input_command {
+	pub fn from_string(s:String) -> ic_input_command {
+		//format the input
+		//check for ((tokens That are included between these))
+		//If found, concat to one str
+		let mut con = false;
+		let mut concatenated_str = String::new();
+		let mut fcmd = Vec::new();
+		if s.split_whitespace().collect::<Vec<&str>>().len() == 0 {
+			return ic_input_command { cmd:Vec::new(), databuff: vec![0;512]}
+		}
+		for c in s.split_whitespace() {
+			if ! con { 
+				if c.len() > 1 {
+					if c.chars().nth(0).unwrap() == '\"' && ! (c.chars().nth(c.len()-1).unwrap() == '\"'){ 
+						con = true; 
+						concatenated_str.push_str(&c[1..].to_string());
+					} else {
+						fcmd.push(c.to_string()); 
+					}
+				} else { fcmd.push(c.to_string()) }
+			} else { 
+				if c.len() > 1 {
+					if c.chars().nth(c.len()-1).unwrap() == '\"' {
+						concatenated_str.push(' ');
+						concatenated_str.push_str(&c[..c.len() - 1]);
+						fcmd.push(concatenated_str);
+						concatenated_str = String::new();
+						con = false 
+					}else { 
+						concatenated_str.push(' ');
+						concatenated_str.push_str(c);
+					} 
+				} else { concatenated_str.push(' '); concatenated_str.push_str(c) }
+			}
+		}
+		ic_input_command { cmd:fcmd, databuff: vec![0;512] }
+	}
+	pub fn is_writemode(&self) -> bool {
+		if self.cmd[0] == "WRITE".to_string() {true} else {false}
+	}
+	pub fn is_getmode(&self) -> bool {
+		if self.cmd[0] == "GET" {true} else {false}
+	}
+	pub fn get_mode(&self) -> ic_input_cmd_mode {
+		if ! self.is_writemode() && ! self.is_getmode() && self.cmd[0] != "EXIT" {
+			return ic_input_cmd_mode::READ;
+		} else if ! self.is_getmode() && self.cmd[0] != "EXIT" {
+			return ic_input_cmd_mode::WRITE;
+		} else if self.cmd[0] != "EXIT" { 
+			return ic_input_cmd_mode::GET;
+		} else {
+			return ic_input_cmd_mode::EXIT;
+		}
+	}
+	pub fn to_ic_command(&self) -> ic_command {
+		let mut fmt_vec:Vec<String> = Vec::new();
+		match self.cmd[0].as_ref() {
+		"WRITE" => {
+		//WRITE [<name>] [UNDER <dir id>]
+		//CREATE <TYPE> <NAME> <SIZE> UNDER <LOC>"
+			fmt_vec.push("ENTRY".to_string());
+			fmt_vec.push("CREATE".to_string());
+			fmt_vec.push(if self.databuff.len() > 65535 {"ipfs_file".to_string()} else {"text".to_string()});
+			if self.cmd.len() >= 2 {
+				fmt_vec.push(self.string_wrap(self.cmd[1].clone()));
+				fmt_vec.push(self.databuff.len().to_string());
+				fmt_vec.push(if self.cmd.len() > 3 {self.cmd[3].clone()} else {"".to_string()});
+				fmt_vec.push(if self.cmd.len() > 3 {"UNDER".to_string()} else {"".to_string()});
+			}
+			return ic_command::from_formated_vec(fmt_vec);
+		},
+		"GET" => {
+			fmt_vec.push("ENTRY".to_string());
+			fmt_vec.push("GET".to_string());
+			fmt_vec.push(self.string_wrap(self.cmd[1].clone()));
+			fmt_vec.push(self.cmd[3].clone());
+			return ic_command::from_formated_vec(fmt_vec);
+		},
+		_ => return ic_command::from_formated_vec(self.cmd.clone()),
+		}
+		ic_command::from_formated_vec(self.cmd)
+	}
+
+	fn string_wrap(&self,s: String) -> String {
+		if s.contains(char::is_whitespace) {"((".to_owned()+&s+"))"} else {s}
+	}
+}
+impl Display for ic_input_command {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		let mut s = String::new();
+		for c in &self.cmd {
+			if c.contains(char::is_whitespace) {
+				s.push_str(&("((".to_owned()+&c+"))"));
+			}else {
+				s.push_str(&c);
+			}
+			s.push(' ');
+		}
+		write!(f,"{}", s)
 	}
 }

@@ -9,6 +9,8 @@ use tar::Archive;
 use std::net::{TcpStream, SocketAddrV4, Ipv4Addr, TcpListener};
 use std::io::{stdout,stdin,Read, Error,Write};
 
+use super::ic_execute;
+
 #[derive(Clone)]
 pub struct ic_response { pub internal_val: (Option<i32>,Option<Vec<u8>>), }
 #[derive(Clone)]
@@ -87,7 +89,7 @@ impl ic_command {
 		ic_command { cmd:input }
 	}
 
-	pub fn parse(&self) -> Box<dyn ic_execute> {
+	pub fn parse(&self) -> Box<dyn ic_execute<Connection = MysqlConnection>> {
 		//Returns an ic_execute by parsing cmd
 		//0: null
 		//1: dir
@@ -213,7 +215,7 @@ impl ic_client {
 			let bytes_read = self.con_stream.read(&mut self.buffer).unwrap();
 			let cmd = str::from_utf8(&self.buffer[..bytes_read]).unwrap();
 			println!("COMMAND READ: {}",cmd);
-			let ic_cmd = ic_command::new(cmd.to_string());
+			let mut ic_cmd = ic_command::new(cmd.to_string());
 			ic_cmd.exec(None) 
 		}
 	}
@@ -268,13 +270,11 @@ impl ic_server {
 }
 
 //TRAITS
-//TRAIT DECLARATION
-pub trait ic_execute {
-	fn exec(&self,con: Option<&MysqlConnection>) -> ic_response;
-}
 //ic_execute TRAIT IMPLs
 impl ic_execute for ic_command {
-	fn exec(&self,con: Option<&MysqlConnection>) -> ic_response {
+	type Connection = MysqlConnection;
+	
+	fn exec(&mut self,con: Option<&mut Self::Connection>) -> ic_response {
 		
 		let mut DirEntry = 0; //Dir = 1, Entry = -1
 		let mut tagging = false;
@@ -307,13 +307,14 @@ impl ic_execute for ic_command {
 	}
 }
 impl ic_execute for ic_dir {
-	fn exec(&self,con: Option<&MysqlConnection>) -> ic_response {
+	type Connection = MysqlConnection;
+	fn exec(&mut self,con: Option<&mut Self::Connection>) -> ic_response {
 		let mut create = false;
 		let mut delete = false;
 		let mut retstr: String = "OK.\n".to_string();
 		match self.cmd[0].as_str() {
 		"DELETE" => delete = true,
-		"SHOW" => retstr = show_dirs(con.unwrap()),
+		"SHOW" => retstr = show_dirs(con.as_ref().unwrap()),
 		"CREATE" => create = true,
 		_ => eprintln!("{} is not a valid subcommand of DIR",self.cmd[0]),
 		}
@@ -321,29 +322,31 @@ impl ic_execute for ic_dir {
 		if create {
 			//CREATE ((NAME))
 			if self.cmd.len() == 2 {
-				create_dir(con.unwrap(),&self.cmd[1],None);
+				create_dir(con.as_ref().unwrap(),&self.cmd[1],None);
 			} else if ( self.cmd.len() == 4 ) {
 				//CREATE ((NAME)) UNDER <DIR ID>
 				if self.cmd[2] == "UNDER" {
-					create_dir(con.unwrap(),&self.cmd[1],Some(self.cmd[3].parse::<i32>().unwrap()));
+					create_dir(con.as_ref().unwrap(),&self.cmd[1],Some(self.cmd[3].parse::<i32>().unwrap()));
 				} 
 			}
 		}
 		if delete {
 			if self.cmd.len() == 2 {
-				delete_dir(con.unwrap(),self.cmd[1].parse::<i32>().unwrap());
+				delete_dir(con.as_ref().unwrap(),self.cmd[1].parse::<i32>().unwrap());
 			}
 		}
 		ic_response::from_str(retstr)
 	}
 }
 impl ic_execute for ic_null {
-	fn exec(&self,con: Option<&MysqlConnection>) -> ic_response {
+	type Connection = MysqlConnection;
+	fn exec(&mut self,con: Option<&mut Self::Connection>) -> ic_response {
 		ic_response::null_response()
 	}
 }
 impl ic_execute for ic_unbaked_entry {
-	fn exec(&self,con: Option<&MysqlConnection>) -> ic_response {
+	type Connection = MysqlConnection;
+	fn exec(&mut self,con: Option<&mut Self::Connection>) -> ic_response {
 		let mut get = false;
 		let mut create = false;
 		let mut delete = false;
@@ -383,18 +386,18 @@ impl ic_execute for ic_unbaked_entry {
 		if delete {
 			//"DELETE <ID>"
 			if self.cmd.len() == 2 {
-				delete_entry(con.unwrap(),self.cmd[1].parse::<i32>().unwrap());
+				delete_entry(con.as_ref().unwrap(),self.cmd[1].parse::<i32>().unwrap());
 			}
 		}
 		if show {
-			rstr = show_entries(con.unwrap(),Some(false),Some(true));
+			rstr = show_entries(con.as_ref().unwrap(),Some(false),Some(true));
 			//return (Some(rstr.len() as i32),Some(rstr.as_bytes().to_vec()));
 			return ic_response::from_str(rstr);
 		}
 		if get {
 			//GET 1 file.txt
 			use models::Entry;
-			let e = get_entry_by_id(con.unwrap(),self.cmd[1].parse::<i32>().unwrap());
+			let e = get_entry_by_id(con.as_ref().unwrap(),self.cmd[1].parse::<i32>().unwrap());
 			
 			if self.cmd.len() == 3 {
 				if e.type_ == "ipfs_file" {
@@ -428,7 +431,8 @@ impl ic_execute for ic_unbaked_entry {
 	}
 }
 impl ic_execute for ic_tag {
-	fn exec(&self,con: Option<&MysqlConnection>) -> ic_response {
+	type Connection = MysqlConnection;
+	fn exec(&mut self,con: Option<&mut Self::Connection>) -> ic_response {
 		let mut delete = false;
 		let mut show = false;
 		let mut create = false;
@@ -448,12 +452,12 @@ impl ic_execute for ic_tag {
 		}
 		if delete {
 			if self.cmd.len() == 2 {
-				delete_tag(&con.unwrap(), (&self.cmd[1]).parse::<i32>().unwrap());
+				delete_tag(&con.as_ref().unwrap(), (&self.cmd[1]).parse::<i32>().unwrap());
 			}
 		}
 
 		if show {
-			rstr = show_tags(&con.unwrap(),Some(true));
+			rstr = show_tags(&con.as_ref().unwrap(),Some(true));
 			//return (if rstr.len() != 0 {Some(rstr.len() as i32)} else {None},if rstr.len() != 0 {Some(rstr)} else {None});
 			return ic_response::from_str(rstr);
 		}
@@ -461,29 +465,29 @@ impl ic_execute for ic_tag {
 		if create {
 			//CREATE <TAG>
 			if self.cmd.len() == 2 {
-				create_tag(&con.unwrap(), &self.cmd[1]);
+				create_tag(&con.as_ref().unwrap(), &self.cmd[1]);
 			}
 		}
 
 		if tagdir == 1{
 			//DIR <DIRID> <TAGID>
 			if self.cmd.len() == 3 {
-				tag_dir(&con.unwrap(), (&self.cmd[1]).parse::<i32>().unwrap(),(&self.cmd[2]).parse::<i32>().unwrap());
+				tag_dir(&con.as_ref().unwrap(), (&self.cmd[1]).parse::<i32>().unwrap(),(&self.cmd[2]).parse::<i32>().unwrap());
 			}
 		} else if tagdir == -1 {
 			//UNDIR <DIRID> <TAGID>
 			if self.cmd.len() == 3 {
-				untag_dir(&con.unwrap(), (&self.cmd[1]).parse::<i32>().unwrap(),(&self.cmd[2]).parse::<i32>().unwrap());
+				untag_dir(&con.as_ref().unwrap(), (&self.cmd[1]).parse::<i32>().unwrap(),(&self.cmd[2]).parse::<i32>().unwrap());
 			}
 		}
 
 		if tagentry == 1{
 			if self.cmd.len() == 3 {
-				tag_entry(&con.unwrap(), (&self.cmd[1]).parse::<i32>().unwrap(),(&self.cmd[2]).parse::<i32>().unwrap());
+				tag_entry(&con.as_ref().unwrap(), (&self.cmd[1]).parse::<i32>().unwrap(),(&self.cmd[2]).parse::<i32>().unwrap());
 			}
 		} else if tagentry == -1 {
 			if self.cmd.len() == 3 {
-				untag_entry(&con.unwrap(), (&self.cmd[1]).parse::<i32>().unwrap(),(&self.cmd[2]).parse::<i32>().unwrap());
+				untag_entry(&con.as_ref().unwrap(), (&self.cmd[1]).parse::<i32>().unwrap(),(&self.cmd[2]).parse::<i32>().unwrap());
 			}
 		}
 		//(Some(4),Some("OK.\n".to_string()))
@@ -492,20 +496,20 @@ impl ic_execute for ic_tag {
 }
 pub fn handle_dir(cmd_opts: ic_command) -> ic_response {
 	use self::schema::dir::dsl::*;
-	let connection = establish_connection();
-	let cmd_parsed = cmd_opts.parse();
-	cmd_parsed.exec(Some(&connection))
+	let mut connection = establish_connection();
+	let mut cmd_parsed = cmd_opts.parse();
+	cmd_parsed.exec(Some(&mut connection))
 	//str::from_utf8(&cmd_parsed.exec(Some(&connection)).1.unwrap_or("INVALID".as_bytes().to_vec())).unwrap().to_string()
 }
 #[tokio::main]
 pub async fn handle_entry(cmd_opts: ic_command) -> ic_response {
-	let connection = establish_connection();
-	let cmd_parsed = cmd_opts.parse();
-	cmd_parsed.exec(Some(&connection))
+	let mut connection = establish_connection();
+	let mut cmd_parsed = cmd_opts.parse();
+	cmd_parsed.exec(Some(&mut connection))
 }
 pub fn handle_tag(cmd_opts: ic_command) -> ic_response {
-	let connection = establish_connection();
-	let cmd_parsed = cmd_opts.parse();
-	cmd_parsed.exec(Some(&connection))
+	let mut connection = establish_connection();
+	let mut cmd_parsed = cmd_opts.parse();
+	cmd_parsed.exec(Some(&mut connection))
 }
 
