@@ -12,24 +12,17 @@ fn main() {
 
 	let mut getmode = false;
 	let mut writemode = false;
-	//while input != "EXIT" {
 	while ! input.check_exit() {
-		//input = String::new();
 		input.flush();
-		//print!("> ");
-		//stdin().read_line(&mut input).expect("Error reading line");
-		//input = input.trim_right().to_string();
 		input.prompt();
 		
 		writemode = input.is_writemode();
 		getmode = input.is_getmode(); 
 		if ! writemode && ! getmode{
-		//write false get false (read)
+		//write false get false (read mode)
 			stream.send(input.to_ic_command()); 
 			if ! input.check_exit() { 
-				//let br = stream.read(&mut buff).unwrap();
 				let sr = stream.recieve();
-				//print!("{}",str::from_utf8(&buff[..br]).expect("Error converting buffer."));
 				print!("{}",sr);
 			}
 		}else if ! getmode {
@@ -49,6 +42,7 @@ fn main() {
 			stream.data_send(input.input_str.as_bytes());
 		
 		} else {
+		//write false get true (get mode)
 			if ! (input.fmt_str.len() == 4) && input.fmt_str.len() >= 2{
 				println!("File name?");
 				input.fmt_str.push("AS".to_string());

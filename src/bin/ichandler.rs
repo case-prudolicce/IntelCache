@@ -376,6 +376,7 @@ impl ic_input {
 	pub fn is_getmode(&self) -> bool {
 		if self.fmt_str[0] == "GET" {true} else {false}
 	}
+
 	fn format_input(&mut self) {
 		//format the input
 		//check for ((tokens That are included between these))
