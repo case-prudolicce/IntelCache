@@ -253,7 +253,9 @@ impl ic_server {
 				println!("Sending {} bytes to {}",icr.internal_val.0.unwrap(),c.addr());
 				c.write(&icr.internal_val.1.unwrap());
 			}
-			
+			else {
+				return Ok(());
+			}
 		}
 	}
 
@@ -317,14 +319,16 @@ impl ic_execute for ic_dir {
 	fn exec(&mut self,con: Option<&mut Self::Connection>) -> ic_response {
 		let mut create = false;
 		let mut delete = false;
+		let mut show = false;
 		let mut retstr: String = "OK.\n".to_string();
 		match self.cmd[0].as_str() {
 		"DELETE" => delete = true,
-		"SHOW" => retstr = show_dirs(con.as_ref().unwrap()),
+		"SHOW" => show = true,
 		"CREATE" => create = true,
 		_ => eprintln!("{} is not a valid subcommand of DIR",self.cmd[0]),
 		}
 
+		
 		if create {
 			//CREATE ((NAME))
 			if self.cmd.len() == 2 {
@@ -334,6 +338,13 @@ impl ic_execute for ic_dir {
 				if self.cmd[2] == "UNDER" {
 					create_dir(con.as_ref().unwrap(),&self.cmd[1],Some(self.cmd[3].parse::<i32>().unwrap()));
 				} 
+			}
+		}
+		if show {
+			if self.cmd.len() == 2 {
+				retstr = show_dirs(con.as_ref().unwrap(),Some(self.cmd[1].parse::<i32>().unwrap()))
+			} else {
+				retstr = show_dirs(con.as_ref().unwrap(),None)
 			}
 		}
 		if delete {
@@ -503,7 +514,7 @@ impl ic_execute for ic_tag {
 impl Display for ic_command {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		let mut s = String::new();
-		println!("ic_command#to_string: cmd is ({:?})",self.cmd);
+		//println!("ic_command#to_string: cmd is ({:?})",self.cmd);
 		for c in &self.cmd {
 			s.push_str(&c);
 			s.push(' ');

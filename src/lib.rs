@@ -72,10 +72,19 @@ pub fn delete_dir(conn: &MysqlConnection,dirid: i32) {
 	diesel::delete(dir.filter(id.eq(dirid))).execute(conn).unwrap();
 }
 
-pub fn show_dirs(conn: &MysqlConnection) -> String{
+pub fn show_dirs(conn: &MysqlConnection,by_id: Option<i32>) -> String{
 	use self::schema::dir::dsl::*;
 	use schema::dir;
-	let results = dir.load::<Dir>(conn).expect("Error loading dirs");
+	let results: Vec<Dir>;
+	if by_id != None {
+		if by_id.unwrap() != 0 {
+			results = dir.filter(dir::loc.eq(by_id.unwrap())).load::<Dir>(conn).expect("Error loading dirs");
+		} else {
+			results = dir.filter(dir::loc.is_null()).load::<Dir>(conn).expect("Error loading dirs");
+		}
+	} else {
+		results = dir.load::<Dir>(conn).expect("Error loading dirs");
+	}
 	let mut retstr = String::new();
 	
 	for d in results {

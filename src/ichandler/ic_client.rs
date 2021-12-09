@@ -60,7 +60,7 @@ impl ic_connection {
 	}
 	
 	pub fn send(&mut self,icc: ic_command) {
-		println!("ic_connection#send: sending ({:?})",icc.to_string());
+		//println!("ic_connection#send: sending ({:?})",icc.to_string());
 		self.con_stream.write(icc.to_string().as_bytes()).unwrap();
 	}
 	pub fn data_send(&mut self,d: &[u8]) {
@@ -125,10 +125,10 @@ impl ic_execute for ic_input_command<'_> {
 	type Connection = ic_connection;
 
 	fn exec(&mut self,mut con: Option<&mut Self::Connection>) -> ic_response {
-		println!("ic_input_command#exec: mode is {:?}",self.get_mode());
+		//println!("ic_input_command#exec: mode is {:?}",self.get_mode());
 		match self.get_mode() {
 		ic_input_cmd_mode::READ =>{
-			println!("ic_input_command#exec: ic_command is ({:?})",self.to_ic_command().cmd);
+			//println!("ic_input_command#exec: ic_command is ({:?})",self.to_ic_command().cmd);
 			con.as_mut().unwrap().send(self.to_ic_command()); 
 			if ! (self.cmd[0] == "EXIT") { 
 				let sr = con.as_mut().unwrap().recieve();
@@ -259,9 +259,15 @@ impl ic_input_command<'_> {
 			fmt_vec.push(self.cmd[3].clone());
 			return ic_command::from_formated_vec(fmt_vec);
 		},
+		"ls" => {
+			fmt_vec.push("DIR".to_string());
+			fmt_vec.push("SHOW".to_string());
+			fmt_vec.push(self.ref_in.pwd.to_string());
+			return ic_command::from_formated_vec(fmt_vec);
+		},
 		_ => return ic_command::from_formated_vec(self.cmd.clone()),
 		}
-		ic_command::from_formated_vec(self.cmd)
+		ic_command::from_formated_vec(self.cmd.clone())
 	}
 
 	fn string_wrap(&self,s: String) -> String {
