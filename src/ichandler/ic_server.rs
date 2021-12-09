@@ -8,13 +8,15 @@ use std::fs::File;
 use tar::Archive;
 use std::net::{TcpStream, SocketAddrV4, Ipv4Addr, TcpListener};
 use std::io::{stdout,stdin,Read, Error,Write};
+use std::fmt::Display;
+use std::fmt;
 
 use super::ic_execute;
 
 #[derive(Clone)]
 pub struct ic_response { pub internal_val: (Option<i32>,Option<Vec<u8>>), }
 #[derive(Clone)]
-pub struct ic_command { pub cmd: Vec<String>, }
+pub struct ic_command { pub cmd: Vec<String>,pub data: Vec<u8> }
 #[derive(Clone)]
 pub struct ic_unbaked_entry { cmd: Vec<String>,n: String, t: String,loc: i32 }
 pub struct ic_dir { cmd: Vec<String>, }
@@ -36,13 +38,14 @@ impl ic_null {
 }
 impl ic_command {
 	pub fn from_response(r: ic_response) -> ic_command {
-		let mut proto_iccmd = ic_command { cmd: Vec::new() };
-		let rret = r.internal_val.1.unwrap();
+		let mut proto_iccmd = ic_command { cmd: Vec::new(), data: Vec::new() };
+		let rret = r.internal_val.1.as_ref().unwrap();
 		proto_iccmd.from_string(str::from_utf8(&rret).unwrap().to_string());
+		println!("ic_command#from_response: ic_response is ({:?},{:?})",r.internal_val.0,r.internal_val.1);
 		proto_iccmd
 	}
 	pub fn new(raw_cmd: String) -> ic_command {
-		let mut proto_iccmd = ic_command { cmd: Vec::new() };
+		let mut proto_iccmd = ic_command { cmd: Vec::new(), data: Vec::new() };
 		proto_iccmd.from_string(raw_cmd);
 		proto_iccmd
 	}
@@ -86,7 +89,7 @@ impl ic_command {
 	}
 	
 	pub fn from_formated_vec(input: Vec<String>) -> ic_command {
-		ic_command { cmd:input }
+		ic_command { cmd:input,data: Vec::new() }
 	}
 
 	pub fn parse(&self) -> Box<dyn ic_execute<Connection = MysqlConnection>> {
@@ -212,6 +215,7 @@ impl ic_client {
 			println!("All {} Bytes recieved!\n{:?}",bytes_to_read.unwrap(),databuf);
 			return ic_response::data_response(databuf);
 		} else { 
+			//EXIT IF bytes_read = 0
 			let bytes_read = self.con_stream.read(&mut self.buffer).unwrap();
 			let cmd = str::from_utf8(&self.buffer[..bytes_read]).unwrap();
 			println!("COMMAND READ: {}",cmd);
@@ -240,7 +244,9 @@ impl ic_server {
 			} else if icr.is_getting() {
 				println!("Expecting {} bytes from {}",icr.get_size(),c.addr());
 				entry = ic_unbaked_entry::from_ic_command(ic_command::from_response(icr.clone()));
+				println!("ic_server#handle_client: halfbaked entry is ready ((cmd: {:?},type: {},name: {},loc: {})",entry.cmd,entry.t,entry.n,entry.loc);
 				let d = c.read(Some(icr.get_size()));
+				println!("ic_server#handle_client: Bytes recieved({:?})",d.internal_val.1.as_ref().unwrap());
 				println!("Got bytes,baking....");
 				entry.bake(&d.internal_val.1.unwrap());
 			} else if icr.is_sending() {
@@ -494,6 +500,18 @@ impl ic_execute for ic_tag {
 		ic_response::from_str(rstr)
 	}
 }
+impl Display for ic_command {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		let mut s = String::new();
+		println!("ic_command#to_string: cmd is ({:?})",self.cmd);
+		for c in &self.cmd {
+			s.push_str(&c);
+			s.push(' ');
+		}
+		write!(f,"{}", s)
+	}
+}
+
 pub fn handle_dir(cmd_opts: ic_command) -> ic_response {
 	use self::schema::dir::dsl::*;
 	let mut connection = establish_connection();

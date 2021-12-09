@@ -17,12 +17,13 @@ pub enum ic_input_cmd_mode {
 	GET,
 	WRITE,
 	EXIT,
+	NONE,
 }
 
-pub struct ic_input { pub input_str: String,pub fmt_str: Vec<String> }
+pub struct ic_input { pub input_str: String,pub fmt_str: Vec<String>, pub pwd: i32 }
 impl ic_input {
 	pub fn new() -> ic_input {
-		let mut proto_ici = ic_input { input_str: "".to_string(), fmt_str: Vec::new() };
+		let mut proto_ici = ic_input { input_str: "".to_string(), fmt_str: Vec::new(),pwd: -1 };
 		proto_ici.fmt_str.push(String::new());
 		proto_ici
 	}
@@ -39,9 +40,8 @@ impl ic_input {
 		stdin().read_line(&mut self.input_str).expect("Error reading line");
 		self.input_str = self.input_str.trim_right().to_string();
 		let s = &self.input_str;
-		ic_input_command::from_string(s.to_string())
+		ic_input_command::from_input(self)
 	}
-
 	
 	pub fn write_entry() -> String {
 		Command::new("vim").arg("/tmp/tmpentry").status().expect("Failed to open editor");
@@ -57,13 +57,10 @@ impl ic_connection {
 	pub fn connect(ip: &str) -> ic_connection {
 		ic_connection { con_stream: TcpStream::connect(ip.to_owned()+":64209").expect("could not connect"),con_buff: vec![0;512],con_filebuff: Vec::new() }
 	}
+	
 	pub fn send(&mut self,icc: ic_command) {
-		let mut cc_str = String::new();
-		for c in icc.cmd {
-			cc_str += &(c + " ");
-		}
-		cc_str = cc_str.trim_start().to_string();
-		self.con_stream.write(cc_str.as_bytes()).unwrap();
+		println!("ic_connection#send: sending ({:?})",icc.to_string());
+		self.con_stream.write(icc.to_string().as_bytes()).unwrap();
 	}
 	pub fn data_send(&mut self,d: &[u8]) {
 		self.con_stream.write(d).unwrap();
@@ -127,9 +124,10 @@ impl ic_execute for ic_input_command {
 	type Connection = ic_connection;
 
 	fn exec(&mut self,mut con: Option<&mut Self::Connection>) -> ic_response {
-		//println!("ICMD MODE {:?}",self.get_mode());
+		println!("ic_input_command#exec: mode is {:?}",self.get_mode());
 		match self.get_mode() {
 		ic_input_cmd_mode::READ =>{
+			println!("ic_input_command#exec: ic_command is ({:?})",self.to_ic_command().cmd);
 			con.as_mut().unwrap().send(self.to_ic_command()); 
 			if ! (self.cmd[0] == "EXIT") { 
 				let sr = con.as_mut().unwrap().recieve();
@@ -137,7 +135,6 @@ impl ic_execute for ic_input_command {
 			};
 		},
 		ic_input_cmd_mode::WRITE => {
-			//println!("ICMD WRITEMODE: {:?}",self.cmd);
 			if self.cmd.len() > 1 {
 				self.databuff = ic_input::write_entry().as_bytes().to_vec();
 			} else {
@@ -150,7 +147,7 @@ impl ic_execute for ic_input_command {
 			}
 			con.as_mut().unwrap().send(self.to_ic_command());
 			thread::sleep(time::Duration::from_millis(10));
-			con.as_mut().unwrap().data_send(self.to_string().as_bytes());
+			con.as_mut().unwrap().data_send(&self.databuff);
 		},
 		ic_input_cmd_mode::GET => {
 			if ! (self.cmd.len() == 4) && self.cmd.len() >= 2{
@@ -166,23 +163,28 @@ impl ic_execute for ic_input_command {
 		ic_input_cmd_mode::EXIT => {
 			process::exit(1);
 		},
+		ic_input_cmd_mode::NONE => {
+			//Do not send or recieve
+			if self.cmd[0] == "CD" {
+			}
+		},
 		_ => { eprintln!("ERR: NOT MATCHED: {:?}", self.get_mode()) }
 		};
 		ic_response::null_response()
 	}
 }
 impl ic_input_command {
-	pub fn from_string(s:String) -> ic_input_command {
+	pub fn from_input(input: &mut ic_input) -> ic_input_command {
 		//format the input
 		//check for ((tokens That are included between these))
 		//If found, concat to one str
 		let mut con = false;
 		let mut concatenated_str = String::new();
 		let mut fcmd = Vec::new();
-		if s.split_whitespace().collect::<Vec<&str>>().len() == 0 {
+		if input.input_str.split_whitespace().collect::<Vec<&str>>().len() == 0 {
 			return ic_input_command { cmd:Vec::new(), databuff: vec![0;512]}
 		}
-		for c in s.split_whitespace() {
+		for c in input.input_str.split_whitespace() {
 			if ! con { 
 				if c.len() > 1 {
 					if c.chars().nth(0).unwrap() == '\"' && ! (c.chars().nth(c.len()-1).unwrap() == '\"'){ 
@@ -216,12 +218,14 @@ impl ic_input_command {
 		if self.cmd[0] == "GET" {true} else {false}
 	}
 	pub fn get_mode(&self) -> ic_input_cmd_mode {
-		if ! self.is_writemode() && ! self.is_getmode() && self.cmd[0] != "EXIT" {
+		if ! (self.cmd[0] == "CD") && ! self.is_writemode() && ! self.is_getmode() && self.cmd[0] != "EXIT" {
 			return ic_input_cmd_mode::READ;
-		} else if ! self.is_getmode() && self.cmd[0] != "EXIT" {
+		} else if ! (self.cmd[0] == "CD") && ! self.is_getmode() && self.cmd[0] != "EXIT" {
 			return ic_input_cmd_mode::WRITE;
-		} else if self.cmd[0] != "EXIT" { 
+		} else if ! (self.cmd[0] == "CD") && self.cmd[0] != "EXIT" { 
 			return ic_input_cmd_mode::GET;
+		} else if self.cmd[0] == "CD" {
+			return ic_input_cmd_mode::NONE
 		} else {
 			return ic_input_cmd_mode::EXIT;
 		}
@@ -244,6 +248,8 @@ impl ic_input_command {
 			return ic_command::from_formated_vec(fmt_vec);
 		},
 		"GET" => {
+			//GET 11 [AS <name>]
+			//ENTRY GET 11 <name>
 			fmt_vec.push("ENTRY".to_string());
 			fmt_vec.push("GET".to_string());
 			fmt_vec.push(self.string_wrap(self.cmd[1].clone()));

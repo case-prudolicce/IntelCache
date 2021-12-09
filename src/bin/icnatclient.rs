@@ -10,7 +10,7 @@ fn main() {
 	while ! input.check_exit() {
 		input.flush();
 		let mut input_cmd = input.prompt();
-		//println!("INPUTCMD: {:?}",input_cmd.cmd);
+		println!("CLIENT#MAIN: exec on ({:?})",input_cmd.cmd);
 		input_cmd.exec(Some(&mut stream));
 	}
 }
