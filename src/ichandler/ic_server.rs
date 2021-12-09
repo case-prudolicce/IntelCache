@@ -20,12 +20,18 @@ pub struct ic_command { pub cmd: Vec<String>,pub data: Vec<u8> }
 #[derive(Clone)]
 pub struct ic_unbaked_entry { cmd: Vec<String>,n: String, t: String,loc: i32 }
 pub struct ic_dir { cmd: Vec<String>, }
+pub struct ic_all { cmd: Vec<String>, }
 pub struct ic_tag {cmd: Vec<String>,}
 pub struct ic_null {}
 //Server
 pub struct ic_server {}
 //Server side client
 pub struct ic_client { con_stream: TcpStream,buffer: Vec<u8>,}
+impl ic_all {
+	pub fn new(args: Vec<String>) -> ic_all {
+		ic_all { cmd: args }
+	}
+}
 impl ic_dir {
 	pub fn new(args: Vec<String>) -> ic_dir {
 		ic_dir { cmd: args }
@@ -98,12 +104,15 @@ impl ic_command {
 		//1: dir
 		//2: unbaked_entry
 		//3: tag
+		//4: show
 		//-1: exit
+		if self.cmd.len() <= 0 {return Box::new(ic_null::new())}
 		let mut return_type = 0;
 		match self.cmd[0].as_str() {
 		"DIR" => return_type = 1,
 		"ENTRY" => return_type = 2,
 		"TAG" => return_type = 3,
+		"SHOW" => return_type = 4,
 		"EXIT" => return_type = -1,
 		_ => (),
 		}
@@ -118,6 +127,8 @@ impl ic_command {
 			return Box::new(ic_unbaked_entry::new(self.cmd[1..].to_vec()));
 		} else if return_type == 3 {
 			return Box::new(ic_tag::new(self.cmd[1..].to_vec()));
+		} else if return_type == 4 {
+			return Box::new(ic_all::new(self.cmd[1..].to_vec()));
 		} else {
 			return Box::new(ic_null::new());
 		}
@@ -279,39 +290,26 @@ impl ic_server {
 
 //TRAITS
 //ic_execute TRAIT IMPLs
+impl ic_execute for ic_all {
+	type Connection = MysqlConnection;
+	fn exec(&mut self,con: Option<&mut Self::Connection>) -> ic_response {
+		let mut retstr: String = "OK.\n".to_string();
+		println!("ic_all#exec: cmd looks like {:?}",self.cmd);
+		if self.cmd.len() == 1 {
+			retstr = show_dirs(con.as_ref().unwrap(),Some(self.cmd[0].parse::<i32>().unwrap()));
+			retstr += &show_entries(con.as_ref().unwrap(),Some(false),Some(true));
+		} else {
+			retstr = show_dirs(con.as_ref().unwrap(),None);
+			retstr += &show_entries(con.as_ref().unwrap(),Some(false),Some(true));
+		}
+		ic_response::from_str(retstr)
+	}
+}
 impl ic_execute for ic_command {
 	type Connection = MysqlConnection;
 	
 	fn exec(&mut self,con: Option<&mut Self::Connection>) -> ic_response {
-		
-		let mut DirEntry = 0; //Dir = 1, Entry = -1
-		let mut tagging = false;
-	
-		if self.cmd.len() < 1 { return ic_response::null_response() };
-		match self.cmd[0].as_str() {
-		"DIR" => DirEntry = 1,
-		"ENTRY" => DirEntry = -1,
-		"TAG" => tagging = true,
-		"EXIT" => return ic_response::exit_response(),
-		_ => eprintln!("Invalid."),
-		}
-		
-		let retsize: Option<i32>;
-		let retdata: Vec<u8>;
-		if ! tagging {
-			//Dir handling
-			if DirEntry == 1 {
-				return handle_dir(self.clone());
-			} else if DirEntry == -1 {
-			//Entry handling
-				return handle_entry(self.clone());
-			}
-		}else {
-			return handle_tag(self.clone());
-			//return (if r.0 != None {Some(r.0.unwrap())} else {None},if r.1 != None {Some(r.1.unwrap().as_bytes().to_vec())} else {None})
-			
-		}
-		ic_response::null_response()
+		handle(self.clone())
 	}
 }
 impl ic_execute for ic_dir {
@@ -465,7 +463,7 @@ impl ic_execute for ic_tag {
 		"UNDIR" => tagdir = -1,
 		"ENTRY" => tagentry = 1,
 		"UNENTRY" => tagentry = -1,
-		_ => eprintln!("{} is not a valid subcommand of TAG.",self.cmd[0]),
+		_ => panic!("{} is not a valid subcommand of TAG.",self.cmd[0]),
 		}
 		if delete {
 			if self.cmd.len() == 2 {
@@ -523,22 +521,9 @@ impl Display for ic_command {
 	}
 }
 
-pub fn handle_dir(cmd_opts: ic_command) -> ic_response {
-	use self::schema::dir::dsl::*;
-	let mut connection = establish_connection();
-	let mut cmd_parsed = cmd_opts.parse();
-	cmd_parsed.exec(Some(&mut connection))
-	//str::from_utf8(&cmd_parsed.exec(Some(&connection)).1.unwrap_or("INVALID".as_bytes().to_vec())).unwrap().to_string()
-}
 #[tokio::main]
-pub async fn handle_entry(cmd_opts: ic_command) -> ic_response {
+pub async fn handle(cmd_opts: ic_command) -> ic_response {
 	let mut connection = establish_connection();
 	let mut cmd_parsed = cmd_opts.parse();
 	cmd_parsed.exec(Some(&mut connection))
 }
-pub fn handle_tag(cmd_opts: ic_command) -> ic_response {
-	let mut connection = establish_connection();
-	let mut cmd_parsed = cmd_opts.parse();
-	cmd_parsed.exec(Some(&mut connection))
-}
-

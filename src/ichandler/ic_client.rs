@@ -1,6 +1,6 @@
 use std::str;
 use std::net::TcpStream;
-use std::io::{self,BufRead,BufReader,stdout,stdin,Read,Write};
+use std::io::{ErrorKind,Error,self,BufRead,BufReader,stdout,stdin,Read,Write};
 use std::process::Command;
 use std::process;
 use std::fs;
@@ -35,7 +35,8 @@ impl ic_input {
 		self.fmt_str = Vec::new();//vec!["".to_string();512];
 	}
 	pub fn prompt(&mut self) -> ic_input_command {
-		let pwdstr = if self.pwd > 1 {self.pwd.to_string()} else {"ROOT".to_string()};
+		//println!("ic_input#prompt: pwd is at {}",self.pwd);
+		let pwdstr = if self.pwd >= 1 {self.pwd.to_string()} else {"ROOT".to_string()};
 		print!("{} > ",pwdstr);
 		stdout().flush();
 		stdin().read_line(&mut self.input_str).expect("Error reading line");
@@ -55,8 +56,13 @@ impl ic_input {
 
 pub struct ic_connection { con_stream: TcpStream,con_filebuff: Vec<u8>,con_buff: Vec<u8> }
 impl ic_connection {
-	pub fn connect(ip: &str) -> ic_connection {
-		ic_connection { con_stream: TcpStream::connect(ip.to_owned()+":64209").expect("could not connect"),con_buff: vec![0;512],con_filebuff: Vec::new() }
+	pub fn connect(ip: &str) -> Result<ic_connection,Error> {
+		let con = TcpStream::connect(ip.to_owned()+":64209");
+		if let Ok(c) = con {
+			return Ok(ic_connection { con_stream: c,con_buff: vec![0;512],con_filebuff: Vec::new() });
+		} else {
+			return Err(Error::new(ErrorKind::Other,"Failed to connect."));
+		}
 	}
 	
 	pub fn send(&mut self,icc: ic_command) {
@@ -128,7 +134,7 @@ impl ic_execute for ic_input_command<'_> {
 		//println!("ic_input_command#exec: mode is {:?}",self.get_mode());
 		match self.get_mode() {
 		ic_input_cmd_mode::READ =>{
-			//println!("ic_input_command#exec: ic_command is ({:?})",self.to_ic_command().cmd);
+			//println!("ic_input_command#exec: @ READ; ic_command is ({:?})",self.to_ic_command().cmd);
 			con.as_mut().unwrap().send(self.to_ic_command()); 
 			if ! (self.cmd[0] == "EXIT") { 
 				let sr = con.as_mut().unwrap().recieve();
@@ -165,11 +171,16 @@ impl ic_execute for ic_input_command<'_> {
 			process::exit(1);
 		},
 		ic_input_cmd_mode::NONE => {
+			//println!("ic_input_command#exec: @ NONE");
 			//Do not send or recieve
 			if self.cmd[0] == "cd" {
-				if self.cmd.len() > 1 {self.ref_in.pwd = str::parse::<i32>(&self.cmd[1]).unwrap_or(0)} else {self.ref_in.pwd = 0}
+				//println!("ic_input_command#exec: @ NONE @ cd; len is {} and parsed looks like {}",self.cmd.len(),str::parse::<i32>(&self.cmd[1]).unwrap());
+				if self.cmd.len() > 1 {self.ref_in.pwd = str::parse::<i32>(&self.cmd[1]).unwrap_or(0)} else {self.ref_in.pwd = 0;}
+				//println!("ic_input_command#exec: @ NONE @ cd; self.ref_in.pwd looks like {}",self.ref_in.pwd); 
 				return ic_response::from_str("cd ".to_string()+&self.ref_in.pwd.to_string());
-			}
+			} /*else { 
+				println!("ic_input_command#exec: @ NONE; no matches for {}",self.cmd[0]); 
+			}*/
 		},
 		_ => { eprintln!("ERR: NOT MATCHED: {:?}", self.get_mode()) }
 		};
@@ -215,30 +226,29 @@ impl ic_input_command<'_> {
 		ic_input_command { cmd:fcmd, databuff: vec![0;512],ref_in: input }
 	}
 	pub fn is_writemode(&self) -> bool {
-		if self.cmd[0] == "WRITE".to_string() {true} else {false}
+		if self.cmd[0] == "new".to_string() {true} else {false}
 	}
 	pub fn is_getmode(&self) -> bool {
-		if self.cmd[0] == "GET" {true} else {false}
+		if self.cmd[0] == "get" {true} else {false}
 	}
 	pub fn get_mode(&self) -> ic_input_cmd_mode {
-		if ! (self.cmd[0] == "cd") && ! self.is_writemode() && ! self.is_getmode() && self.cmd[0] != "EXIT" {
-			return ic_input_cmd_mode::READ;
-		} else if ! (self.cmd[0] == "cd") && ! self.is_getmode() && self.cmd[0] != "EXIT" {
-			return ic_input_cmd_mode::WRITE;
-		} else if ! (self.cmd[0] == "cd") && self.cmd[0] != "EXIT" { 
-			return ic_input_cmd_mode::GET;
-		} else if self.cmd[0] == "cd" {
-			return ic_input_cmd_mode::NONE
-		} else {
-			return ic_input_cmd_mode::EXIT;
-		}
+		if ! self.is_writemode() && ! self.is_getmode() {
+			return match self.cmd[0].as_ref() {
+			"EXIT" => ic_input_cmd_mode::EXIT,
+			"cd" => ic_input_cmd_mode::NONE,
+			_ => ic_input_cmd_mode::READ
+			}
+
+		} 
+		else if ! self.is_getmode() { return ic_input_cmd_mode::WRITE; } 
+		else { return ic_input_cmd_mode::GET; }
 	}
 	pub fn to_ic_command(&self) -> ic_command {
 		let mut fmt_vec:Vec<String> = Vec::new();
 		match self.cmd[0].as_ref() {
-		"WRITE" => {
-		//WRITE [<name>] [UNDER <dir id>]
-		//CREATE <TYPE> <NAME> <SIZE> UNDER <LOC>"
+		"new" => {
+			/*	WRITE [<name>] [UNDER <dir id>]
+				CREATE <TYPE> <NAME> <SIZE> UNDER <LOC>"*/
 			fmt_vec.push("ENTRY".to_string());
 			fmt_vec.push("CREATE".to_string());
 			fmt_vec.push(if self.databuff.len() > 65535 {"ipfs_file".to_string()} else {"text".to_string()});
@@ -250,9 +260,9 @@ impl ic_input_command<'_> {
 			}
 			return ic_command::from_formated_vec(fmt_vec);
 		},
-		"GET" => {
-			//GET 11 [AS <name>]
-			//ENTRY GET 11 <name>
+		"get" => {
+			/*	GET 11 [AS <name>]
+				ENTRY GET 11 <name>*/
 			fmt_vec.push("ENTRY".to_string());
 			fmt_vec.push("GET".to_string());
 			fmt_vec.push(self.string_wrap(self.cmd[1].clone()));
@@ -260,7 +270,11 @@ impl ic_input_command<'_> {
 			return ic_command::from_formated_vec(fmt_vec);
 		},
 		"ls" => {
-			fmt_vec.push("DIR".to_string());
+			/*	SHOW <Dir id>
+				same as 
+				DIR SHOW <ID>
+				and
+				ENTRY SHOW <ID> */
 			fmt_vec.push("SHOW".to_string());
 			fmt_vec.push(self.ref_in.pwd.to_string());
 			return ic_command::from_formated_vec(fmt_vec);

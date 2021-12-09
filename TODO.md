@@ -14,5 +14,3 @@
 # Bugs to fix
 * Print whole response, not just the buffer. [TBV]
 * Sometimes bugs when writing (not prompting for text) [inconsistent,TBV]
-* Not getting all the bytes on the server end [inconsistent,TBV]
-* Server side bugs out on EXIT and Ctrl+C
