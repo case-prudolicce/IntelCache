@@ -1,11 +1,11 @@
 # Features to add
 * README.md
 ##Subfeatures (Feature-Native\_client)
-* LS
 * IMPORT
 * CAT
 * EDIT
 * MV 
+* LS: files and dirs. (and separately ex ls f, ls d)
 * CD: print the name (from id)
 ##Maintenance (Feature-Native\_client)
 * verify id for pwd
