@@ -4,10 +4,11 @@
 * LS
 * IMPORT
 * CAT
-* CD
 * EDIT
 * MV 
+* CD: print the name (from id)
 ##Maintenance (Feature-Native\_client)
+* verify id for pwd
 #Maintenance
 * TODO: 1 (icnatclient)
 # Bugs to fix

@@ -23,7 +23,7 @@ pub enum ic_input_cmd_mode {
 pub struct ic_input { pub input_str: String,pub fmt_str: Vec<String>, pub pwd: i32 }
 impl ic_input {
 	pub fn new() -> ic_input {
-		let mut proto_ici = ic_input { input_str: "".to_string(), fmt_str: Vec::new(),pwd: -1 };
+		let mut proto_ici = ic_input { input_str: "".to_string(), fmt_str: Vec::new(),pwd: 0 };
 		proto_ici.fmt_str.push(String::new());
 		proto_ici
 	}
@@ -35,7 +35,8 @@ impl ic_input {
 		self.fmt_str = Vec::new();//vec!["".to_string();512];
 	}
 	pub fn prompt(&mut self) -> ic_input_command {
-		print!("> ");
+		let pwdstr = if self.pwd > 1 {self.pwd.to_string()} else {"ROOT".to_string()};
+		print!("{} > ",pwdstr);
 		stdout().flush();
 		stdin().read_line(&mut self.input_str).expect("Error reading line");
 		self.input_str = self.input_str.trim_right().to_string();
@@ -119,8 +120,8 @@ impl ic_connection {
 	}
 }
 
-pub struct ic_input_command { pub cmd: Vec<String>, databuff: Vec<u8> }
-impl ic_execute for ic_input_command {
+pub struct ic_input_command<'a> { pub cmd: Vec<String>, databuff: Vec<u8>,ref_in: &'a mut ic_input }
+impl ic_execute for ic_input_command<'_> {
 	type Connection = ic_connection;
 
 	fn exec(&mut self,mut con: Option<&mut Self::Connection>) -> ic_response {
@@ -165,7 +166,9 @@ impl ic_execute for ic_input_command {
 		},
 		ic_input_cmd_mode::NONE => {
 			//Do not send or recieve
-			if self.cmd[0] == "CD" {
+			if self.cmd[0] == "cd" {
+				if self.cmd.len() > 1 {self.ref_in.pwd = str::parse::<i32>(&self.cmd[1]).unwrap_or(0)} else {self.ref_in.pwd = 0}
+				return ic_response::from_str("cd ".to_string()+&self.ref_in.pwd.to_string());
 			}
 		},
 		_ => { eprintln!("ERR: NOT MATCHED: {:?}", self.get_mode()) }
@@ -173,7 +176,7 @@ impl ic_execute for ic_input_command {
 		ic_response::null_response()
 	}
 }
-impl ic_input_command {
+impl ic_input_command<'_> {
 	pub fn from_input(input: &mut ic_input) -> ic_input_command {
 		//format the input
 		//check for ((tokens That are included between these))
@@ -182,7 +185,7 @@ impl ic_input_command {
 		let mut concatenated_str = String::new();
 		let mut fcmd = Vec::new();
 		if input.input_str.split_whitespace().collect::<Vec<&str>>().len() == 0 {
-			return ic_input_command { cmd:Vec::new(), databuff: vec![0;512]}
+			return ic_input_command { cmd:Vec::new(), databuff: vec![0;512], ref_in: input}
 		}
 		for c in input.input_str.split_whitespace() {
 			if ! con { 
@@ -209,7 +212,7 @@ impl ic_input_command {
 				} else { concatenated_str.push(' '); concatenated_str.push_str(c) }
 			}
 		}
-		ic_input_command { cmd:fcmd, databuff: vec![0;512] }
+		ic_input_command { cmd:fcmd, databuff: vec![0;512],ref_in: input }
 	}
 	pub fn is_writemode(&self) -> bool {
 		if self.cmd[0] == "WRITE".to_string() {true} else {false}
@@ -218,13 +221,13 @@ impl ic_input_command {
 		if self.cmd[0] == "GET" {true} else {false}
 	}
 	pub fn get_mode(&self) -> ic_input_cmd_mode {
-		if ! (self.cmd[0] == "CD") && ! self.is_writemode() && ! self.is_getmode() && self.cmd[0] != "EXIT" {
+		if ! (self.cmd[0] == "cd") && ! self.is_writemode() && ! self.is_getmode() && self.cmd[0] != "EXIT" {
 			return ic_input_cmd_mode::READ;
-		} else if ! (self.cmd[0] == "CD") && ! self.is_getmode() && self.cmd[0] != "EXIT" {
+		} else if ! (self.cmd[0] == "cd") && ! self.is_getmode() && self.cmd[0] != "EXIT" {
 			return ic_input_cmd_mode::WRITE;
-		} else if ! (self.cmd[0] == "CD") && self.cmd[0] != "EXIT" { 
+		} else if ! (self.cmd[0] == "cd") && self.cmd[0] != "EXIT" { 
 			return ic_input_cmd_mode::GET;
-		} else if self.cmd[0] == "CD" {
+		} else if self.cmd[0] == "cd" {
 			return ic_input_cmd_mode::NONE
 		} else {
 			return ic_input_cmd_mode::EXIT;
@@ -265,7 +268,7 @@ impl ic_input_command {
 		if s.contains(char::is_whitespace) {"((".to_owned()+&s+"))"} else {s}
 	}
 }
-impl Display for ic_input_command {
+impl Display for ic_input_command<'_> {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		let mut s = String::new();
 		for c in &self.cmd {
