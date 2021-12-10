@@ -1,9 +1,13 @@
 use std::str;
 use std::io::{ErrorKind,Error,self,BufRead,BufReader,stdout,stdin,Read,Write};
+use std::fs;
 use std::thread;
 use std::net::{TcpListener,TcpStream,SocketAddrV4,Ipv4Addr};
 
-use crate::ichandler::ic_types::{ic_execute,ic_response,ic_command,ic_unbaked_entry};
+use crate::ichandler::ic_types::ic_response::ic_response;
+use crate::ichandler::ic_types::ic_command::ic_command;
+use crate::ichandler::ic_types::ic_execute::ic_execute;
+use crate::ichandler::ic_types::ic_unbaked_entry::ic_unbaked_entry;
 
 //Server
 pub struct ic_server {}
