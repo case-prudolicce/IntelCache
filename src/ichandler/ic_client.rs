@@ -1,15 +1,13 @@
 use std::str;
-use std::net::TcpStream;
-use std::io::{ErrorKind,Error,self,BufRead,BufReader,stdout,stdin,Read,Write};
-use std::process::Command;
-use std::process;
+use std::fmt;
 use std::fs;
+use std::process;
+use std::process::Command;
+use std::net::TcpStream;
 use std::{thread, time};
 use std::fmt::Display;
-use std::fmt;
-
-use super::ic_server::{ic_response,ic_command};
-use super::ic_execute;
+use std::io::{stdout,stdin,Read,ErrorKind,Error,Write};
+use crate::ichandler::ic_types::{ic_execute,ic_response,ic_command};
 
 #[derive(Debug)]
 pub enum ic_input_cmd_mode {
