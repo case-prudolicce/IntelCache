@@ -4,7 +4,7 @@ use crate::tag_entry;
 use crate::untag_dir;
 use crate::tag_dir;
 use crate::create_tag;
-use crate::ichandler::ic_types::ic_response::ic_response;
+use crate::ichandler::ic_types::ic_packet::ic_packet;
 use crate::show_tags;
 use crate::delete_tag;
 use crate::ichandler::ic_types::ic_execute::ic_execute;
@@ -17,7 +17,7 @@ impl ic_tag {
 }
 impl ic_execute for ic_tag {
 	type Connection = MysqlConnection;
-	fn exec(&mut self,con: Option<&mut Self::Connection>) -> ic_response {
+	fn exec(&mut self,con: Option<&mut Self::Connection>) -> ic_packet {
 		let mut delete = false;
 		let mut show = false;
 		let mut create = false;
@@ -44,7 +44,7 @@ impl ic_execute for ic_tag {
 		if show {
 			rstr = show_tags(&con.as_ref().unwrap(),Some(true));
 			//return (if rstr.len() != 0 {Some(rstr.len() as i32)} else {None},if rstr.len() != 0 {Some(rstr)} else {None});
-			return ic_response::from_str(rstr);
+			return ic_packet::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec()));
 		}
 
 		if create {
@@ -76,6 +76,6 @@ impl ic_execute for ic_tag {
 			}
 		}
 		//(Some(4),Some("OK.\n".to_string()))
-		ic_response::from_str(rstr)
+		ic_packet::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec()))
 	}
 }

@@ -1,5 +1,5 @@
 use diesel::MysqlConnection;
-use crate::ichandler::ic_types::ic_response::ic_response;
+use crate::ichandler::ic_types::ic_packet::ic_packet;
 use crate::ichandler::ic_types::ic_execute::ic_execute;
 use crate::delete_dir;
 use crate::show_dirs;
@@ -13,7 +13,7 @@ impl ic_dir {
 }
 impl ic_execute for ic_dir {
 	type Connection = MysqlConnection;
-	fn exec(&mut self,con: Option<&mut Self::Connection>) -> ic_response {
+	fn exec(&mut self,con: Option<&mut Self::Connection>) -> ic_packet {
 		let mut create = false;
 		let mut delete = false;
 		let mut show = false;
@@ -49,6 +49,6 @@ impl ic_execute for ic_dir {
 				delete_dir(con.as_ref().unwrap(),self.cmd[1].parse::<i32>().unwrap());
 			}
 		}
-		ic_response::from_str(retstr)
+		ic_packet::new(Some("OK!".to_string()),Some(retstr.as_bytes().to_vec()))
 	}
 }

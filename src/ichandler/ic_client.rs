@@ -7,16 +7,14 @@ use std::net::TcpStream;
 use std::{thread, time};
 use std::fmt::Display;
 use std::io::{stdout,stdin,Read,ErrorKind,Error,Write};
-use crate::ichandler::ic_types::{ic_execute::ic_execute,ic_response::ic_response,ic_command::ic_command};
+use crate::ichandler::ic_types::{ic_connection::ic_connection,ic_packet::ic_packet,ic_execute::ic_execute,ic_response::ic_response,ic_command::ic_command};
 
 #[derive(Debug)]
 #[derive(PartialEq)]
 pub enum ic_client_mode {
-	READ,
-	PREPARE_GET,
-	GET,
-	PREPARE_WRITE,
-	WRITE,
+	GET, //To local file
+	CAT, //To stdout
+	SEND,
 	EXIT,
 	NONE,
 }
@@ -57,97 +55,30 @@ impl ic_input {
 	
 }
 
-pub struct ic_client { con_stream: TcpStream,con_filebuff: Vec<u8>,con_buff: Vec<u8>,pub mode: ic_client_mode }
+pub struct ic_client { con: ic_connection,pub mode: ic_client_mode }
 impl ic_client {
-	pub fn connect(ip: &str) -> Result<ic_client,Error> {
+	pub fn connect(ip: &str) -> Result<ic_client,Error> {;
 		let con = TcpStream::connect(ip.to_owned()+":64209");
 		if let Ok(c) = con {
-			return Ok(ic_client { con_stream: c,con_buff: vec![0;512],con_filebuff: Vec::new(),mode: ic_client_mode::READ });
+			return Ok(ic_client { con: ic_connection::new(c),mode: ic_client_mode::CAT });
 		} else {
 			return Err(Error::new(ErrorKind::Other,"Failed to connect."));
 		}
 	}
 	
-	pub fn send(&mut self,icc: ic_command) {
-		//println!("ic_client#send: sending ({:?})",icc.to_string());
-		self.con_stream.write(icc.to_string().as_bytes()).unwrap();
-	}
-	pub fn data_send(&mut self,d: &[u8]) {
-		self.con_stream.write(d).unwrap();
-	}
-	pub fn recieve_data(&mut self,filename: String) {
-		let mut filesize = 0;
-		while filesize == 0 || self.con_filebuff.len() <= filesize {
-			if self.con_filebuff.len() == 0 && filesize == 0{
-				//First time setup
-				let br = self.recieve().len();
-				let mut sstr = String::new();
-				let mut sc = 1;
-				for b in self.con_buff[..br].to_vec() {
-					if b == 10 {break}
-					//println!("{}",b);
-					sstr.push(b as char);
-					sc += 1;
-				}
-				filesize = sstr.parse::<i32>().unwrap() as usize;
-				println!("Getting {} ({} bytes)",filename,filesize);
-				for b in self.con_buff[sc..].to_vec(){
-					if self.con_filebuff.len() + 1 <= filesize.try_into().unwrap(){
-						self.con_filebuff.push(b);
-					} else if (self.con_filebuff.len() + 1) as i32 == filesize as i32{
-						self.con_filebuff.push(b); 
-						//Done, write to file filename
-						fs::write(filename,self.con_filebuff.clone());
-						println!("File downloaded!");
-						return ();
-					}
-				}
-				println!("filedata now is {} out of {}",self.con_filebuff.len(),filesize);
-			} else if (self.con_filebuff.len() as i32) < filesize as i32 {
-				//Put more into filedata (until fill up)
-				println!("FILEDATA now is {} out of {}",self.con_filebuff.len(),filesize);
-				let br = self.con_stream.read(&mut self.con_buff).unwrap();
-				for b in self.con_buff[..br].to_vec() {
-					if self.con_filebuff.len() + 1 <= filesize.try_into().unwrap() {
-						self.con_filebuff.push(b);
-					}else {println!("{} + 1 == {} ({})",self.con_filebuff.len(),self.con_filebuff.len() + 1,filesize);}
-				} 
-				println!("filedata now is {} out of {}",self.con_filebuff.len(),filesize);
-			} else if (self.con_filebuff.len() as i32) == filesize as i32 {
-				//Done, write to file filename
-				fs::write(filename,self.con_filebuff.clone());
-				println!("File downloaded!");
-				return ();
-			}
-		}
-	}
-
-	pub fn recieve(&mut self) -> String {
-		let br = self.con_stream.read(&mut self.con_buff).unwrap();
-		str::from_utf8(&mut self.con_buff[..br]).unwrap().to_string()
-	}
-	
 	pub fn exec_cmd(&mut self,c: &mut ic_input_command) {
-		if (self.mode != ic_client_mode::WRITE) && (self.mode != ic_client_mode::GET) {self.update_mode(c)};
+		self.update_mode(c);
+		//println!("CLIENT MODE: {:?}",self.mode);
+		//println!("SEND IC_PACKET : {}\n{:?}",c.to_ic_command().to_ic_packet().header.unwrap_or("None".to_string()),c.to_ic_command().to_ic_packet().body);
+		self.con.send_packet(c.to_ic_command().to_ic_packet()); 
+		let sr = self.con.get_packet();
+		//println!("REVC IC_PACKET : {}\n{:?}",sr.header.unwrap_or("None".to_string()),sr.body);
 		match self.mode {
-		ic_client_mode::READ =>{
-			self.send(c.to_ic_command()); 
-			let sr = self.recieve();
-			print!("{}",sr);
-		},
-		ic_client_mode::PREPARE_WRITE => {
-			self.send(c.to_ic_command());
-			self.mode = ic_client_mode::WRITE;
-		},
-		ic_client_mode::WRITE => {
-			self.data_send(&c.databuff);
-		},
-		ic_client_mode::PREPARE_GET => {
-			self.send(c.to_ic_command());
-			self.mode = ic_client_mode::GET;
+		ic_client_mode::CAT => {
+			println!("{}",std::str::from_utf8(&sr.body.unwrap_or(Vec::new())).unwrap());
 		},
 		ic_client_mode::GET => {
-			self.recieve_data(c.cmd[3].clone()); 
+			fs::write(c.cmd[2].clone(),sr.body.unwrap());
 		},
 		ic_client_mode::EXIT => {
 			process::exit(1);
@@ -155,20 +86,19 @@ impl ic_client {
 		ic_client_mode::NONE => {
 			if c.cmd[0] == "cd" {
 				if c.cmd.len() > 1 {c.ref_in.pwd = str::parse::<i32>(&c.cmd[1]).unwrap_or(0)} else {c.ref_in.pwd = 0;}
-			} /*else { 
-				println!("ic_input_command#exec: @ NONE; no matches for {}",self.c.cmd[0]); 
-			}*/
+			} 
 		},
+		_ => {},
 		};
 	}
 
 	pub fn update_mode(&mut self,c: &ic_input_command) {
 		self.mode = match c.cmd[0].as_ref() {
-		"new" => ic_client_mode::PREPARE_WRITE,
+		"new" | "set" => ic_client_mode::SEND,
 		"exit" | "quit" => ic_client_mode::EXIT,
 		"cd" => ic_client_mode::NONE,
-		"get" => ic_client_mode::PREPARE_GET,
-		_ => ic_client_mode::READ
+		"get" => ic_client_mode::GET,
+		_ => ic_client_mode::CAT,
 		}
 	}
 }
@@ -216,8 +146,9 @@ impl ic_input_command<'_> {
 		let mut fmt_vec:Vec<String> = Vec::new();
 		match self.cmd[0].as_ref() {
 		"new" => {
-			/*	WRITE [<name>] [UNDER <dir id>]
-				CREATE <TYPE> <NAME> <SIZE> UNDER <LOC>"*/
+			/*	SEND [<name>] [UNDER <dir id>]
+				CREATE <TYPE> <NAME> <SIZE> UNDER <LOC>"
+				<DATA>*/
 			fmt_vec.push("ENTRY".to_string());
 			fmt_vec.push("CREATE".to_string());
 			fmt_vec.push(if self.databuff.len() > 65535 {"ipfs_file".to_string()} else {"text".to_string()});
@@ -227,16 +158,16 @@ impl ic_input_command<'_> {
 				fmt_vec.push(if self.cmd.len() > 3 {self.cmd[3].clone()} else {"".to_string()});
 				fmt_vec.push(if self.cmd.len() > 3 {"UNDER".to_string()} else {"".to_string()});
 			}
-			return ic_command::from_formated_vec(fmt_vec);
+			return ic_command::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
 		},
 		"get" => {
-			/*	GET 11 [AS <name>]
+			/*	GET 11 [<name>]
 				ENTRY GET 11 <name>*/
 			fmt_vec.push("ENTRY".to_string());
 			fmt_vec.push("GET".to_string());
 			fmt_vec.push(self.string_wrap(self.cmd[1].clone()));
-			fmt_vec.push(self.cmd[3].clone());
-			return ic_command::from_formated_vec(fmt_vec);
+			fmt_vec.push(self.cmd[2].clone());
+			return ic_command::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
 		},
 		"ls" => {
 			/*	SHOW <Dir id>
@@ -246,11 +177,26 @@ impl ic_input_command<'_> {
 				ENTRY SHOW <ID> */
 			fmt_vec.push("SHOW".to_string());
 			fmt_vec.push(self.ref_in.pwd.to_string());
-			return ic_command::from_formated_vec(fmt_vec);
+			return ic_command::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
 		},
-		_ => return ic_command::from_formated_vec(self.cmd.clone()),
+		"rm" => {
+			/*	ENTRY DELETE <Dir id> */
+			fmt_vec.push("ENTRY".to_string());
+			fmt_vec.push("DELETE".to_string());
+			fmt_vec.push(self.cmd[1].clone());
+			return ic_command::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
+		},
+		"set" => {
+			/*	set <eid> <newname>
+				ENTRY SET <entry id> <newname> */
+			fmt_vec.push("ENTRY".to_string());
+			fmt_vec.push("SET".to_string());
+			fmt_vec.push(self.cmd[1].clone());
+			return ic_command::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
+		},
+		_ => return ic_command::from_formated_vec(self.cmd.clone(),None),
 		}
-		ic_command::from_formated_vec(self.cmd.clone())
+		ic_command::from_formated_vec(self.cmd.clone(),Some(self.databuff.clone()))
 	}
 
 	fn string_wrap(&self,s: String) -> String {

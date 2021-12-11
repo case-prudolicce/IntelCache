@@ -409,6 +409,24 @@ pub async fn make_file_entry(conn: &MysqlConnection,name: &str,dt: Vec<u8>,locat
 	entry::table.order(entry::id.desc()).first(conn).unwrap()
 }
 
+pub async fn update_entry(conn: &MysqlConnection,uid: i32,dt: Vec<u8>,name: Option<&str>,location: Option<i32>,lbl: Option<&str>) {
+	use schema::entry;
+
+	let ipfsclient = IpfsClient::default();
+	
+	println!("size: {}",dt.len());
+	if dt.len() < 65535 {
+		diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::data.eq(&dt),entry::type_.eq("text"))).execute(conn).expect("Error updating entry.");
+	} else {
+		let mut hash = "NONE".to_string();
+		match block_on(ipfsclient.add(Cursor::new(dt))) {
+			Ok(res) => hash = res.hash,
+			Err(e) => eprintln!("error adding file to ipfs.")
+		}
+		diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::data.eq(hash.as_bytes()),entry::type_.eq("ipfs_file"))).execute(conn).expect("Error updating entry.");
+	}
+}
+
 pub fn get_entry_by_id(conn: &MysqlConnection,entryid: i32) -> Entry {
 	use schema::entry;
 	use self::schema::entry::dsl::*;

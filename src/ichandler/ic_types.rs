@@ -13,5 +13,7 @@ mod ic_tag;
 mod ic_dir;
 pub mod ic_all;
 pub mod ic_null;
+pub mod ic_packet;
+pub mod ic_connection;
 //use ic_types_impls::*;
 use crate::{untag_entry,tag_entry,untag_dir,tag_dir,create_tag,show_tags,delete_tag,establish_connection};

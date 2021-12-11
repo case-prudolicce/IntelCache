@@ -1,5 +1,5 @@
 use diesel::MysqlConnection;
-use crate::ichandler::ic_types::ic_response::ic_response;
+use crate::ichandler::ic_types::ic_packet::ic_packet;
 use crate::show_entries;
 use crate::show_dirs;
 use crate::ichandler::ic_types::ic_execute::ic_execute;
@@ -12,9 +12,8 @@ impl ic_all {
 }
 impl ic_execute for ic_all {
 	type Connection = MysqlConnection;
-	fn exec(&mut self,con: Option<&mut Self::Connection>) -> ic_response {
+	fn exec(&mut self,con: Option<&mut Self::Connection>) -> ic_packet {
 		let mut retstr: String = "OK.\n".to_string();
-		println!("ic_all#exec: cmd looks like {:?}",self.cmd);
 		if self.cmd.len() == 1 {
 			retstr = show_dirs(con.as_ref().unwrap(),Some(self.cmd[0].parse::<i32>().unwrap()));
 			retstr += &show_entries(con.as_ref().unwrap(),Some(false),Some(true));
@@ -22,6 +21,6 @@ impl ic_execute for ic_all {
 			retstr = show_dirs(con.as_ref().unwrap(),None);
 			retstr += &show_entries(con.as_ref().unwrap(),Some(false),Some(true));
 		}
-		ic_response::from_str(retstr)
+		ic_packet::new(Some("OK!".to_string()),Some(retstr.as_bytes().to_vec()))
 	}
 }
