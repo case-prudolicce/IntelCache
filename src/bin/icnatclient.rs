@@ -47,7 +47,7 @@ fn main() {
 				client.exec_cmd(&mut input_cmd);
 				input_cmd.databuff = ic_input::write_entry().as_bytes().to_vec();
 				input_cmd.cmd[0] = "set".to_string();
-				println!("IC_COMMAND: {:?}",input_cmd.to_ic_command().cmd);
+				//println!("IC_COMMAND: {:?}",input_cmd.to_ic_command().cmd);
 			}
 		},
 		_ => {}

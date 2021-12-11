@@ -71,6 +71,14 @@ pub fn delete_dir(conn: &MysqlConnection,dirid: i32) {
 	use self::schema::dir::dsl::*;
 	diesel::delete(dir.filter(id.eq(dirid))).execute(conn).unwrap();
 }
+pub fn update_dir(conn: &MysqlConnection,dirid: i32,iddest: i32,new_name: Option<&str>) {
+	use self::schema::dir::dsl::*;
+	use schema::dir;
+	//diesel::delete(dir.filter(id.eq(dirid))).execute(conn).unwrap();
+	if new_name == None {
+		diesel::update(dir::table.filter(dir::id.eq(dirid))).set(dir::loc.eq(&iddest)).execute(conn).expect("Error updating entry.");
+	}
+}
 
 pub fn show_dirs(conn: &MysqlConnection,by_id: Option<i32>) -> String{
 	use self::schema::dir::dsl::*;
@@ -271,10 +279,15 @@ pub fn make_text_entry(conn: &MysqlConnection,name: &str,data: &str,location: Op
 	entry::table.order(entry::id.desc()).first(conn).unwrap()
 }
 
-pub fn show_entries(conn: &MysqlConnection, display: Option<bool>, shortened: Option<bool>) -> String {
+pub fn show_entries(conn: &MysqlConnection, display: Option<bool>, shortened: Option<bool>, under_id: Option<i32>) -> String {
 	use self::schema::entry::dsl::*;
 	use schema::entry;
-	let results = entry.load::<Entry>(conn).expect("Error loading entries");
+	let results: Vec<Entry>;
+	if under_id == None {
+		results = entry.load::<Entry>(conn).expect("Error loading entries");
+	} else {
+		results = entry.filter(entry::loc.eq(under_id.unwrap())).load::<Entry>(conn).expect("Error loading entries");
+	}
 	
 	//if ( display.unwrap_or(false) ) {
 	//	println!("Displaying {} entries", results.len());
@@ -310,7 +323,7 @@ pub fn prompt_entry_target(conn: &MysqlConnection,prompt_string: Option<String>)
 	use self::schema::entry::dsl::*;
 	let mut n = String::new();
 
-	show_entries(conn,None,Some(true));
+	show_entries(conn,None,Some(true),None);
 	let prompt = prompt_string.unwrap_or("Entry?:".to_string());
 	println!("{}",prompt);
 	stdin().read_line(&mut n).unwrap();
