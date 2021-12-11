@@ -11,4 +11,4 @@
 #Maintenance
 * TBD
 # Bugs to fix
-* TBD
+* Server crashing on exit (empty)
