@@ -120,10 +120,21 @@ impl ic_execute for ic_unbaked_entry {
 			}
 		}
 		if set {
-			//"ENTRY SET <ID> <NEW NAME>"
+			//"ENTRY SET <ID> [<NEW NAME>] [<NEW LOC>"]
+			//"ENTRY SET <ID> [<NEW LOC>"]
 			//Data
 			if self.cmd.len() == 3 {
 				block_on(update_entry(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap(),self.d.clone(),None,None,None));
+			} else if self.cmd.len() == 4 {
+				let pnl = self.cmd[3].parse::<i32>().unwrap_or(-1);
+				if pnl == -1 {
+					block_on(update_entry(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap(),self.d.clone(),Some(&self.cmd[3]),None,None));
+				} else {
+					block_on(update_entry(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap(),self.d.clone(),None,Some(self.cmd[3].parse::<i32>().unwrap()),None));
+				}
+			} else if self.cmd.len() == 5 {
+				//new name comes after
+				block_on(update_entry(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap(),self.d.clone(),Some(&self.cmd[3]),Some(self.cmd[4].parse::<i32>().unwrap()),None));
 			}
 		}
 		ic_packet::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec()))

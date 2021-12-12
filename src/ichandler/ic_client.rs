@@ -206,16 +206,38 @@ impl ic_input_command<'_> {
 				ENTRY MOVE <entryid> <dirid>
 			*/
 			//IF ending with /
-			fmt_vec.push("DIR".to_string());
-			fmt_vec.push("SET".to_string());
-			fmt_vec.push(self.cmd[1].clone());
-			fmt_vec.push(self.cmd[2].clone());
-			//Else
-			//fmt_vec.push("ENTRY".to_string());
-			//fmt_vec.push("SET".to_string());
-			//fmt_vec.push(self.cmd[1].clone());
-			//fmt_vec.push(self.cmd[2].clone());
+			if self.cmd[1].chars().last().unwrap() == '/' {
+				fmt_vec.push("DIR".to_string());
+				fmt_vec.push("SET".to_string());
+				fmt_vec.push(self.cmd[1][..self.cmd[1].len() - 1].to_string());
+				fmt_vec.push(self.cmd[2].clone());
+			} else {
+				fmt_vec.push("ENTRY".to_string());
+				fmt_vec.push("SET".to_string());
+				fmt_vec.push(self.cmd[1].clone());
+				fmt_vec.push(self.cmd[2].clone());
+			}
 			
+			return ic_command::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
+		},
+		"mkdir" => {
+			/*	mkdir 
+				DIR CREATE ((name)) UNDER <DIRID>
+			*/
+			fmt_vec.push("DIR".to_string());
+			fmt_vec.push("CREATE".to_string());
+			fmt_vec.push(self.cmd[1].clone());
+			fmt_vec.push("UNDER".to_string());
+			fmt_vec.push(self.ref_in.pwd.to_string());
+			return ic_command::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
+		},
+		"rmdir" => {
+			/*	rmdir dirid
+				DIR DELETE ((name)) UNDER <DIRID>
+			*/
+			fmt_vec.push("DIR".to_string());
+			fmt_vec.push("DELETE".to_string());
+			fmt_vec.push(self.cmd[1].clone());
 			return ic_command::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
 		},
 		_ => return ic_command::from_formated_vec(self.cmd.clone(),None),
