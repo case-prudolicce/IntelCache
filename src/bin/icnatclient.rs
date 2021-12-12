@@ -27,6 +27,32 @@ fn main() {
 				input_cmd.databuff = ic_input::write_entry().as_bytes().to_vec();
 			}
 		},
+		"import" => {
+			//import <path> <name>
+			if input_cmd.cmd.len() > 2 {
+				input_cmd.databuff = fs::read(&input_cmd.cmd[1]).unwrap();
+			} else if input_cmd.cmd.len() == 2 {
+				input_cmd.cmd.push(String::new());
+				println!("Name?");
+				let mut n = String::new();
+				stdin().read_line(&mut n).unwrap();
+				input_cmd.cmd[2] = n.trim_end().to_string();
+				input_cmd.databuff = fs::read(&input_cmd.cmd[1]).unwrap();
+			} else {
+				//name AND path
+				input_cmd.cmd.push(String::new());
+				input_cmd.cmd.push(String::new());
+				let mut p = String::new();
+				let mut n = String::new();
+				println!("Path?");
+				stdin().read_line(&mut p).unwrap();
+				println!("Name?");
+				stdin().read_line(&mut n).unwrap();
+				input_cmd.cmd[1] = p.trim_end().to_string();
+				input_cmd.cmd[2] = n.trim_end().to_string();
+				input_cmd.databuff = fs::read(&input_cmd.cmd[1]).unwrap();
+			}
+		},
 		"get" => {
 			if input_cmd.cmd.len() == 2 {
 				input_cmd.cmd.push(String::new());

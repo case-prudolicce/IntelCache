@@ -39,7 +39,7 @@ impl ic_unbaked_entry{
 		let con = establish_connection();
 		match self.t.as_ref() {
 		"text" => Some(make_text_entry(&con,&self.n,str::from_utf8(data).unwrap(),Some(self.loc),None)),
-		"ipfs_file" => Some(block_on(make_file_entry(&con,&self.n,data.to_vec(),Some(self.loc),None))),
+		"ipfs_file" => Some(make_file_entry(&con,&self.n,data.to_vec(),Some(self.loc),None)),
 		_ => None,
 		};
 	}
@@ -68,10 +68,10 @@ impl ic_execute for ic_unbaked_entry {
 			//Data
 			if (self.cmd.len() as i32) == 6 {
 				println!("MAKING ENTRY: {} ({:?})\n{:?}",&self.cmd[3],Some(str::parse::<i32>(&self.cmd[5]).unwrap_or(1)),&self.d);
-				block_on(make_file_entry(con.as_ref().unwrap(),&self.cmd[3],self.d.clone(),Some(str::parse::<i32>(&self.cmd[5]).unwrap()),None));
+				make_file_entry(con.as_ref().unwrap(),&self.cmd[3],self.d.clone(),Some(str::parse::<i32>(&self.cmd[5]).unwrap()),None);
 			} else {
 				println!("MAKING ENTRY: {} ({})\n{:?}",&self.cmd[3],"None",&self.d);
-				block_on(make_file_entry(con.as_ref().unwrap(),&self.cmd[3],self.d.clone(),None,None));
+				make_file_entry(con.as_ref().unwrap(),&self.cmd[3],self.d.clone(),None,None);
 			}
 			return ic_packet::new(Some("OK!".to_string()),None)
 		}
@@ -100,7 +100,7 @@ impl ic_execute for ic_unbaked_entry {
 					    .try_concat())
 					{
 					    Ok(res) => {
-						fs::write(&self.cmd[2],res).unwrap();
+						fs::write(&self.cmd[3],res).unwrap();
 
 					    }
 					    Err(e) => eprintln!("error getting file: {}", e)

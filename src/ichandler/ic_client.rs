@@ -69,10 +69,10 @@ impl ic_client {
 	pub fn exec_cmd(&mut self,c: &mut ic_input_command) {
 		self.update_mode(c);
 		//println!("CLIENT MODE: {:?}",self.mode);
-		//println!("SEND IC_PACKET : {}\n{:?}",c.to_ic_command().to_ic_packet().header.unwrap_or("None".to_string()),c.to_ic_command().to_ic_packet().body);
+		println!("SEND IC_PACKET : {}\n{:?}",c.to_ic_command().to_ic_packet().header.unwrap_or("None".to_string()),c.to_ic_command().to_ic_packet().body.unwrap().len());
 		self.con.send_packet(c.to_ic_command().to_ic_packet()); 
 		let sr = self.con.get_packet();
-		//println!("RECV IC_PACKET : {}\n{:?}",sr.header.unwrap_or("None".to_string()),sr.body);
+		println!("RECV IC_PACKET : {}\n{:?}",(&sr).header.as_ref().unwrap_or(&"None".to_string()),(&sr).body.as_ref().unwrap_or(&Vec::new()).len());
 		match self.mode {
 		ic_client_mode::CAT => {
 			println!("{}",std::str::from_utf8(&sr.body.unwrap_or(Vec::new())).unwrap());
@@ -94,11 +94,11 @@ impl ic_client {
 
 	pub fn update_mode(&mut self,c: &ic_input_command) {
 		self.mode = match c.cmd[0].as_ref() {
-		"new" | "set" | "mv" => ic_client_mode::SEND,
+		"new" | "set" | "mv" | "import" => ic_client_mode::SEND,
 		"exit" | "quit" => ic_client_mode::EXIT,
 		"cd" => ic_client_mode::NONE,
 		"get" => ic_client_mode::GET,
-		_ => ic_client_mode::CAT,
+		_ => ic_client_mode::CAT, //rm
 		}
 	}
 }
@@ -145,18 +145,23 @@ impl ic_input_command<'_> {
 	pub fn to_ic_command(&self) -> ic_command {
 		let mut fmt_vec:Vec<String> = Vec::new();
 		match self.cmd[0].as_ref() {
-		"new" => {
-			/*	SEND [<name>] [UNDER <dir id>]
+		"new" | "import" => {
+			/*	new [<name>] [UNDER <dir id>]
 				CREATE <TYPE> <NAME> <SIZE> UNDER <LOC>"
 				<DATA>*/
 			fmt_vec.push("ENTRY".to_string());
 			fmt_vec.push("CREATE".to_string());
 			fmt_vec.push(if self.databuff.len() > 65535 {"ipfs_file".to_string()} else {"text".to_string()});
-			if self.cmd.len() >= 2 {
-				fmt_vec.push(self.string_wrap(self.cmd[1].clone()));
-				fmt_vec.push(self.databuff.len().to_string());
-				fmt_vec.push(if self.cmd.len() > 3 {self.cmd[3].clone()} else {"".to_string()});
-				fmt_vec.push(if self.cmd.len() > 3 {"UNDER".to_string()} else {"".to_string()});
+			if self.cmd[0] == "new" {
+				if self.cmd.len() >= 2 {
+					fmt_vec.push(self.string_wrap(self.cmd[1].clone()));
+					fmt_vec.push(self.databuff.len().to_string());
+					fmt_vec.push(if self.cmd.len() > 3 {self.cmd[3].clone()} else {"".to_string()});
+					fmt_vec.push(if self.cmd.len() > 3 {"UNDER".to_string()} else {"".to_string()});
+				}
+			}else if self.cmd[0] == "import" {
+					fmt_vec.push(self.string_wrap(self.cmd[2].clone()));
+					fmt_vec.push(self.databuff.len().to_string());
 			}
 			return ic_command::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
 		},

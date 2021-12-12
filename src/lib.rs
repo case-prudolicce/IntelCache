@@ -312,9 +312,16 @@ pub fn show_entries(conn: &MysqlConnection, display: Option<bool>, shortened: Op
 }
 
 pub fn delete_entry(conn: &MysqlConnection,entryid: i32) {
+	println!("TARGET 3 REACHED");
 	use schema::entry;
 	use self::schema::entry::dsl::*;
+	let e = get_entry_by_id(conn,entryid);
+	if e.type_ == "ipfs_file" {
+		let ipfsclient = IpfsClient::default();
+		block_on(ipfsclient.pin_rm(str::from_utf8(&e.data).unwrap(),true));
+	} 
 	diesel::delete(entry.filter(id.eq(entryid))).execute(conn).unwrap();
+	println!("TARGET 4 REACHED");
 }
 
 pub fn prompt_entry_target(conn: &MysqlConnection,prompt_string: Option<String>) -> Entry {
@@ -395,7 +402,7 @@ pub fn get_entrytags(conn: &MysqlConnection, entry_id: i32) -> String {
 	retstr
 }
 
-pub async fn make_file_entry(conn: &MysqlConnection,name: &str,dt: Vec<u8>,location: Option<i32>,lbl: Option<&str>) -> Entry {
+pub fn make_file_entry(conn: &MysqlConnection,name: &str,dt: Vec<u8>,location: Option<i32>,lbl: Option<&str>) -> Entry {
 	use schema::entry;
 
 	let ipfsclient = IpfsClient::default();
