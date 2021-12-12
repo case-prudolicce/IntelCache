@@ -4,11 +4,11 @@
 * IMPORT
 * CAT
 * MV 
-* LS: files and dirs. (and separately ex ls f, ls d)
+* LS: entries and dirs separately (ex ls f, ls d)
 * CD: print the name (from id)
 ##Maintenance (Feature-Native\_client)
-* verify id for pwd
+* verify id for pwd 
 #Maintenance
-* TBD
+* Collapse other columns on delete in sql
 # Bugs to fix
 * Server crashing on exit (empty)

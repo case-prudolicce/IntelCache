@@ -98,7 +98,7 @@ impl ic_client {
 		"exit" | "quit" => ic_client_mode::EXIT,
 		"cd" => ic_client_mode::NONE,
 		"get" => ic_client_mode::GET,
-		_ => ic_client_mode::CAT, //rm
+		_ => ic_client_mode::CAT, //rm,ls
 		}
 	}
 }
@@ -236,6 +236,58 @@ impl ic_input_command<'_> {
 				DIR DELETE ((name)) UNDER <DIRID>
 			*/
 			fmt_vec.push("DIR".to_string());
+			fmt_vec.push("DELETE".to_string());
+			fmt_vec.push(self.cmd[1].clone());
+			return ic_command::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
+		},
+		"tag" => {
+			/*	tag 10[/] <tagid>
+			*/
+			if self.cmd[1].chars().last().unwrap() == '/' {
+				fmt_vec.push("TAG".to_string());
+				fmt_vec.push("DIR".to_string());
+				fmt_vec.push(self.cmd[1][..self.cmd[1].len() - 1].to_string());
+				fmt_vec.push(self.cmd[2].clone());
+			} else {
+				fmt_vec.push("TAG".to_string());
+				fmt_vec.push("ENTRY".to_string());
+				fmt_vec.push(self.cmd[1].clone());
+				fmt_vec.push(self.cmd[2].clone());
+			}
+			return ic_command::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
+		},
+		"untag" => {
+			if self.cmd[1].chars().last().unwrap() == '/' {
+				fmt_vec.push("TAG".to_string());
+				fmt_vec.push("UNDIR".to_string());
+				fmt_vec.push(self.cmd[1][..self.cmd[1].len() - 1].to_string());
+				fmt_vec.push(self.cmd[2].clone());
+			} else {
+				fmt_vec.push("TAG".to_string());
+				fmt_vec.push("UNENTRY".to_string());
+				fmt_vec.push(self.cmd[1].clone());
+				fmt_vec.push(self.cmd[2].clone());
+			}
+			/*	untag 10[/] <tagid>
+			*/
+			return ic_command::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
+		},
+		"showtags" => {
+			/*	showtags	*/
+			fmt_vec.push("TAG".to_string());
+			fmt_vec.push("SHOW".to_string());
+			return ic_command::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
+		},
+		"mktag" => {
+			/*	showtags	*/
+			fmt_vec.push("TAG".to_string());
+			fmt_vec.push("CREATE".to_string());
+			fmt_vec.push(self.cmd[1].clone());
+			return ic_command::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
+		},
+		"rmtag" => {
+			/*	showtags	*/
+			fmt_vec.push("TAG".to_string());
 			fmt_vec.push("DELETE".to_string());
 			fmt_vec.push(self.cmd[1].clone());
 			return ic_command::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
