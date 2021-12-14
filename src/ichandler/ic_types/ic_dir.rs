@@ -5,6 +5,7 @@ use crate::delete_dir;
 use crate::show_dirs;
 use crate::create_dir;
 use crate::update_dir;
+use crate::validate_dir;
 
 pub struct ic_dir { cmd: Vec<String>, }
 impl ic_dir {
@@ -19,12 +20,14 @@ impl ic_execute for ic_dir {
 		let mut set = false;
 		let mut delete = false;
 		let mut show = false;
+		let mut validate = false;
 		let mut retstr: String = "OK.\n".to_string();
 		match self.cmd[0].as_str() {
 		"DELETE" => delete = true,
 		"SHOW" => show = true,
 		"CREATE" => create = true,
 		"SET" => set = true,
+		"VALIDATE" => validate = true,
 		_ => eprintln!("{} is not a valid subcommand of DIR",self.cmd[0]),
 		}
 
@@ -55,9 +58,17 @@ impl ic_execute for ic_dir {
 		if set {
 			//SET <ID> <DIR ID> <NEW NAME>
 			if self.cmd.len() == 3 {
-				println!("TARGET REACHED");
 				update_dir(con.as_ref().unwrap(),self.cmd[1].parse::<i32>().unwrap(),self.cmd[2].parse::<i32>().unwrap(),None);
 			} //ELSE update name as well 
+		}
+		if validate {
+			let n = validate_dir(con.as_ref().unwrap(),self.cmd[1].parse::<i32>().unwrap());
+			if n != None {
+				return ic_packet::new(Some("true".to_string()),Some(n.unwrap().as_bytes().to_vec()));
+			} else {
+				return ic_packet::new(Some("false".to_string()),None);
+			}
+			
 		}
 		ic_packet::new(Some("OK!".to_string()),Some(retstr.as_bytes().to_vec()))
 	}

@@ -19,10 +19,10 @@ pub enum ic_client_mode {
 	NONE,
 }
 
-pub struct ic_input { pub input_str: String,pub fmt_str: Vec<String>, pub pwd: i32 }
+pub struct ic_input { pub input_str: String,pub fmt_str: Vec<String>, pub pwd: i32, pwdstr: String}
 impl ic_input {
 	pub fn new() -> ic_input {
-		let mut proto_ici = ic_input { input_str: "".to_string(), fmt_str: Vec::new(),pwd: 0 };
+		let mut proto_ici = ic_input { input_str: "".to_string(), fmt_str: Vec::new(),pwd: 0,pwdstr: "ROOT".to_string() };
 		proto_ici.fmt_str.push(String::new());
 		proto_ici
 	}
@@ -37,13 +37,32 @@ impl ic_input {
 	
 	pub fn prompt(&mut self) -> ic_input_command {
 		//println!("ic_input#prompt: pwd is at {}",self.pwd);
-		let pwdstr = if self.pwd >= 1 {self.pwd.to_string()} else {"ROOT".to_string()};
-		print!("{} > ",pwdstr);
+		print!("{} > ",self.pwdstr);
 		stdout().flush();
 		stdin().read_line(&mut self.input_str).expect("Error reading line");
 		self.input_str = self.input_str.trim_right().to_string();
 		let s = &self.input_str;
 		ic_input_command::from_input(self)
+	}
+	
+	pub fn set_pwd(&mut self, pwdid: i32,client: &mut ic_client) -> bool {
+		if pwdid < 0 {println!("NS1");return false;}
+		else if pwdid == 0 {self.pwd = pwdid;self.pwdstr = "ROOT".to_string();return true;}
+		let mut p = Vec::<String>::new();
+		p.push("DIR".to_string());
+		p.push("VALIDATE".to_string());
+		p.push(pwdid.to_string());
+		let icp = ic_input_command::from_vec(self,p);
+		
+		//-> DIR VERIFY <DIRID>
+		//<- true/false {Dir name/None}
+		client.con.send_packet(icp.to_ic_command().to_ic_packet());
+		let resp = client.con.get_packet();
+		if resp.header.as_ref().unwrap() == "true" {
+			self.pwdstr = str::from_utf8(&resp.body.unwrap()).unwrap().to_string();
+			self.pwd = pwdid;
+			return true;
+		} else { return false; }
 	}
 	
 	pub fn write_entry() -> String {
@@ -69,10 +88,10 @@ impl ic_client {
 	pub fn exec_cmd(&mut self,c: &mut ic_input_command) {
 		self.update_mode(c);
 		//println!("CLIENT MODE: {:?}",self.mode);
-		println!("SEND IC_PACKET : {}\n{:?}",c.to_ic_command().to_ic_packet().header.unwrap_or("None".to_string()),c.to_ic_command().to_ic_packet().body.unwrap().len());
+		//println!("SEND IC_PACKET : {}\n{:?}",c.to_ic_command().to_ic_packet().header.unwrap_or("None".to_string()),c.to_ic_command().to_ic_packet().body.unwrap().len());
 		self.con.send_packet(c.to_ic_command().to_ic_packet()); 
 		let sr = self.con.get_packet();
-		println!("RECV IC_PACKET : {}\n{:?}",(&sr).header.as_ref().unwrap_or(&"None".to_string()),(&sr).body.as_ref().unwrap_or(&Vec::new()).len());
+		//println!("RECV IC_PACKET : {}\n{:?}",(&sr).header.as_ref().unwrap_or(&"None".to_string()),(&sr).body.as_ref().unwrap_or(&Vec::new()).len());
 		match self.mode {
 		ic_client_mode::CAT => {
 			println!("{}",std::str::from_utf8(&sr.body.unwrap_or(Vec::new())).unwrap());
@@ -85,7 +104,10 @@ impl ic_client {
 		},
 		ic_client_mode::NONE => {
 			if c.cmd[0] == "cd" {
-				if c.cmd.len() > 1 {c.ref_in.pwd = str::parse::<i32>(&c.cmd[1]).unwrap_or(0)} else {c.ref_in.pwd = 0;}
+				let res = if c.cmd.len() > 1 {
+					c.ref_in.set_pwd(str::parse::<i32>(&c.cmd[1]).unwrap_or(-1),self)
+				} else {c.ref_in.set_pwd(0,self)};
+				if !res {println!("Ok!.\n")} else {println!("Ok!.\n")};
 			} 
 		},
 		_ => {},
@@ -138,6 +160,43 @@ impl ic_input_command<'_> {
 						concatenated_str.push_str(c);
 					} 
 				} else { concatenated_str.push(' '); concatenated_str.push_str(c) }
+			}
+		}
+		ic_input_command { cmd:fcmd, databuff: vec![0;512],ref_in: input }
+	}
+	pub fn from_vec<'a>(input: &'a mut ic_input,v: Vec<String>) -> ic_input_command<'a> {
+		//format the input
+		//check for ((tokens That are included between these))
+		//If found, concat to one str
+		let mut con = false;
+		let mut concatenated_str = String::new();
+		let mut fcmd = Vec::new();
+		if v.len() == 0 {
+			return ic_input_command { cmd:Vec::new(), databuff: vec![0;512], ref_in: input}
+		}
+		for c in v {
+			if ! con { 
+				if c.len() > 1 {
+					if c.chars().nth(0).unwrap() == '\"' && ! (c.chars().nth(c.len()-1).unwrap() == '\"'){ 
+						con = true; 
+						concatenated_str.push_str(&c[1..].to_string());
+					} else {
+						fcmd.push(c.to_string()); 
+					}
+				} else { fcmd.push(c.to_string()) }
+			} else { 
+				if c.len() > 1 {
+					if c.chars().nth(c.len()-1).unwrap() == '\"' {
+						concatenated_str.push(' ');
+						concatenated_str.push_str(&c[..c.len() - 1]);
+						fcmd.push(concatenated_str);
+						concatenated_str = String::new();
+						con = false 
+					}else { 
+						concatenated_str.push(' ');
+						concatenated_str.push_str(&c);
+					} 
+				} else { concatenated_str.push(' '); concatenated_str.push_str(&c) }
 			}
 		}
 		ic_input_command { cmd:fcmd, databuff: vec![0;512],ref_in: input }

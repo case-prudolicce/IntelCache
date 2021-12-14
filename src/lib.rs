@@ -456,3 +456,14 @@ pub fn get_entry_by_id(conn: &MysqlConnection,entryid: i32) -> Entry {
 	
 	entry::table.filter(entry::id.eq(entryid)).get_result::<Entry>(conn).unwrap()
 }
+
+//Returns dir name from id or none is invalid
+pub fn validate_dir(conn: &MysqlConnection,dirid: i32) -> Option<String> {
+	use self::schema::dir::dsl::*;
+	use schema::dir;
+	let d = dir::table.filter(dir::id.eq(dirid)).select(dir::name).load::<String>(conn);
+	match d {
+	Ok(n) => return Some(n[0].clone()),
+	Err(e) => return None,
+	}
+}
