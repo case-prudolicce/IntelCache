@@ -12,3 +12,4 @@
 * Collapse other columns on delete in sql
 # Bugs to fix
 * Server crashing on exit (empty)
+* double "((" wraps (IMPORT name prompt)
