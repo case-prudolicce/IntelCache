@@ -1,9 +1,7 @@
 # Features to add
 * README.md
 ##Subfeatures (Feature-Native\_client)
-* IMPORT
 * CAT
-* MV 
 * LS: entries and dirs separately (ex ls f, ls d)
 * LS: With id.
 ##Maintenance (Feature-Native\_client)
