@@ -6,9 +6,8 @@
 * MV 
 * LS: entries and dirs separately (ex ls f, ls d)
 * LS: With id.
-* CD: print the name (from id)
 ##Maintenance (Feature-Native\_client)
-* verify id for pwd 
+* TBD
 #Maintenance
 * TBD
 # Bugs to fix
