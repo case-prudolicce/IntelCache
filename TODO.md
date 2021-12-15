@@ -10,7 +10,7 @@
 ##Maintenance (Feature-Native\_client)
 * verify id for pwd 
 #Maintenance
-* Collapse other columns on delete in sql
+* TBD
 # Bugs to fix
 * Server crashing on exit (empty)
 * double "((" wraps (IMPORT name prompt)

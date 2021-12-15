@@ -28,23 +28,23 @@ CREATE TABLE tag (
 CREATE TABLE entry_tags ( 
 	entryid INTEGER NOT NULL, 
 	tagid INTEGER NOT NULL,
-	CONSTRAINT fk_etags_e FOREIGN KEY (entryid) REFERENCES entry (id),
-	CONSTRAINT fk_etags_t FOREIGN KEY (tagid) REFERENCES tag (id),
+	CONSTRAINT fk_etags_e FOREIGN KEY (entryid) REFERENCES entry (id) ON DELETE CASCADE,
+	CONSTRAINT fk_etags_t FOREIGN KEY (tagid) REFERENCES tag (id) ON DELETE CASCADE,
 	CONSTRAINT pk_etags PRIMARY KEY (entryid,tagid)
 );
 
 CREATE TABLE dir_tags ( 
 	dirid INTEGER NOT NULL, 
 	tagid INTEGER NOT NULL,
-	CONSTRAINT fk_dtags_d FOREIGN KEY (dirid) REFERENCES dir (id),
-	CONSTRAINT fk_dtags_t FOREIGN KEY (tagid) REFERENCES tag (id),
+	CONSTRAINT fk_dtags_d FOREIGN KEY (dirid) REFERENCES dir (id) ON DELETE CASCADE,
+	CONSTRAINT fk_dtags_t FOREIGN KEY (tagid) REFERENCES tag (id) ON DELETE CASCADE,
 	CONSTRAINT pk_dtags PRIMARY KEY (dirid,tagid)
 );
 
 CREATE TABLE links (
 	linkname VARCHAR(200) NOT NULL,
 	eid INTEGER NOT NULL,
-	CONSTRAINT fk_links_e FOREIGN KEY (eid) REFERENCES entry (id),
+	CONSTRAINT fk_links_e FOREIGN KEY (eid) REFERENCES entry (id) ON DELETE CASCADE,
 	CONSTRAINT pk_links PRIMARY KEY (linkname,eid) 
 );
 
