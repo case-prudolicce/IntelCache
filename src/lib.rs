@@ -318,6 +318,7 @@ pub fn show_entries(conn: &MysqlConnection, display: Option<bool>, shortened: Op
 pub fn delete_entry(conn: &MysqlConnection,entryid: i32) {
 	use schema::entry;
 	use self::schema::entry::dsl::*;
+	//println!("delete_entry called");
 	let e = get_entry_by_id(conn,entryid);
 	if e.type_ == "ipfs_file" {
 		let ipfsclient = IpfsClient::default();
@@ -454,6 +455,7 @@ pub fn get_entry_by_id(conn: &MysqlConnection,entryid: i32) -> Entry {
 	use schema::entry;
 	use self::schema::entry::dsl::*;
 	
+	//println!("get_entry_by_id: entryid {}",entryid);
 	entry::table.filter(entry::id.eq(entryid)).get_result::<Entry>(conn).unwrap()
 }
 

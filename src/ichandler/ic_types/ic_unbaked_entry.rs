@@ -48,7 +48,7 @@ impl ic_execute for ic_unbaked_entry {
 	type Connection = MysqlConnection;
 	fn exec(&mut self,con: Option<&mut Self::Connection>) -> ic_packet {
 		let mut get = false;
-		let mut set = true;
+		let mut set = false;
 		let mut create = false;
 		let mut delete = false;
 		let mut show = false;

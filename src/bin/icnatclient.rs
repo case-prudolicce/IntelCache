@@ -81,25 +81,5 @@ fn main() {
 		//println!("INPUT COMMAND: {:?}\n{:?}",input_cmd.cmd,input_cmd.databuff);
 		//println!("IC COMMAND: {:?}\n{:?}",input_cmd.to_ic_command().cmd,input_cmd.to_ic_command().data);
 		client.exec_cmd(&mut input_cmd);
-		//println!("POST COMMAND: {:?}",input_cmd.cmd);
-		//println!("MODE: {:?}",client.mode);
-		//match client.mode {
-		//GET => {
-		//	if ! (input_cmd.cmd.len() == 4) && input_cmd.cmd.len() >= 2{
-		//		println!("File name?");
-		//		input_cmd.cmd.push("AS".to_string());
-		//		input_cmd.cmd.push(String::new());
-		//		stdin().read_line(&mut input_cmd.cmd[3]).unwrap();
-		//		input_cmd.cmd[3] = input_cmd.cmd[3].trim_end().to_string();
-		//	} else {println!("{} {}",! (input_cmd.cmd.len() == 4),input_cmd.cmd.len() >= 2)}
-		//	client.exec_cmd(&mut input_cmd);
-		//},
-		//SEND => {
-		//	}
-		//	client.exec_cmd(&mut input_cmd);
-		//}
-		//_ => {},
-		//}
-		//println!("REPOST COMMAND: {:?}",input_cmd.cmd);
 	}
 }
