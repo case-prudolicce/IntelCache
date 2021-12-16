@@ -7,6 +7,7 @@
 ##Maintenance (Feature-Native\_client)
 * TBD
 #Maintenance
-* TBD
+* Client Config file (to get editor to use)
 # Bugs to fix
 * double "((" wraps (IMPORT name prompt)
+* client crash on CD
