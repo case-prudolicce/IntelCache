@@ -90,6 +90,7 @@ impl ic_client {
 		//println!("CLIENT MODE: {:?}",self.mode);
 		//println!("SEND IC_PACKET : {}\n{:?}",c.to_ic_command().to_ic_packet().header.unwrap_or("None".to_string()),c.to_ic_command().to_ic_packet().body.unwrap().len());
 		let mut sr: ic_packet = ic_packet::new_empty();
+		//println!("RECV IC_PACKET : {}\n{:?}",(&sr).header.as_ref().unwrap_or(&"None".to_string()),(&sr).body.as_ref().unwrap_or(&Vec::new()).len());
 		if self.mode != ic_client_mode::NONE {
 			self.con.send_packet(c.to_ic_command().to_ic_packet()); 
 			sr = self.con.get_packet();
@@ -215,13 +216,13 @@ impl ic_input_command<'_> {
 			fmt_vec.push(if self.databuff.len() > 65535 {"ipfs_file".to_string()} else {"text".to_string()});
 			if self.cmd[0] == "new" {
 				if self.cmd.len() >= 2 {
-					fmt_vec.push(self.string_wrap(self.cmd[1].clone()));
+					fmt_vec.push(self.cmd[1].clone());
 					fmt_vec.push(self.databuff.len().to_string());
 					fmt_vec.push(if self.cmd.len() > 3 {self.cmd[3].clone()} else {"".to_string()});
 					fmt_vec.push(if self.cmd.len() > 3 {"UNDER".to_string()} else {"".to_string()});
 				}
 			}else if self.cmd[0] == "import" {
-					fmt_vec.push(self.string_wrap(self.cmd[2].clone()));
+					fmt_vec.push(self.cmd[2].clone());
 					fmt_vec.push(self.databuff.len().to_string());
 			}
 			return ic_command::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
@@ -242,7 +243,11 @@ impl ic_input_command<'_> {
 				and
 				ENTRY SHOW <ID> */
 			fmt_vec.push("SHOW".to_string());
-			fmt_vec.push(self.ref_in.pwd.to_string());
+			if self.cmd.len() >= 2 {
+				fmt_vec.push(self.cmd[1].clone());
+			} else {
+				fmt_vec.push(self.ref_in.pwd.to_string());
+			}
 			return ic_command::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
 		},
 		"rm" => {
