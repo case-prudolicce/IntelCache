@@ -89,9 +89,11 @@ impl ic_client {
 		self.update_mode(c);
 		//println!("CLIENT MODE: {:?}",self.mode);
 		//println!("SEND IC_PACKET : {}\n{:?}",c.to_ic_command().to_ic_packet().header.unwrap_or("None".to_string()),c.to_ic_command().to_ic_packet().body.unwrap().len());
-		self.con.send_packet(c.to_ic_command().to_ic_packet()); 
-		let sr = self.con.get_packet();
-		//println!("RECV IC_PACKET : {}\n{:?}",(&sr).header.as_ref().unwrap_or(&"None".to_string()),(&sr).body.as_ref().unwrap_or(&Vec::new()).len());
+		let mut sr: ic_packet = ic_packet::new_empty();
+		if self.mode != ic_client_mode::NONE {
+			self.con.send_packet(c.to_ic_command().to_ic_packet()); 
+			sr = self.con.get_packet();
+		}
 		match self.mode {
 		ic_client_mode::CAT => {
 			println!("{}",std::str::from_utf8(&sr.body.unwrap_or(Vec::new())).unwrap());
@@ -110,7 +112,7 @@ impl ic_client {
 				if !res {println!("Ok!.\n")} else {println!("Ok!.\n")};
 			} 
 		},
-		_ => {},
+		_ => { },
 		};
 	}
 
