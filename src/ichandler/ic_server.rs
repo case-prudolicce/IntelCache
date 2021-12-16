@@ -19,7 +19,7 @@ impl ic_server {
 		let mut entry: ic_unbaked_entry = ic_unbaked_entry::new_empty();
 		loop {
 			let p = c.get_packet();
-			//println!("RECV IC_PACKET : {}\n{:?}",(&p).header.as_ref().unwrap_or(&"None".to_string()),(&p).body.as_ref().unwrap().len());
+			println!("RECV IC_PACKET : {}\n{:?}",(&p).header.as_ref().unwrap_or(&"None".to_string()),(&p).body.as_ref().unwrap().len());
 			let mut icc = ic_command::from_packet(p); 
 			//println!("IC_COMMAND: {:?}\n{:?}",icc.cmd,icc.data);
 			let icp = icc.exec(None);
@@ -28,7 +28,7 @@ impl ic_server {
 				c.send_packet(icp);
 				return Ok(());
 			}
-			//println!("SEND ICP_PACKET : {}\n{:?}",(&icp).header.as_ref().unwrap_or(&"None".to_string()),(&icp).body.as_ref().unwrap_or(&Vec::new()).len());
+			println!("SEND ICP_PACKET : {}\n{:?}",(&icp).header.as_ref().unwrap_or(&"None".to_string()),(&icp).body.as_ref().unwrap_or(&Vec::new()).len());
 			c.send_packet(icp);
 		}
 	}

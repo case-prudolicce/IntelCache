@@ -82,7 +82,11 @@ impl ic_execute for ic_unbaked_entry {
 			}
 		}
 		if show {
-			rstr = show_entries(con.as_ref().unwrap(),Some(false),Some(true),None);
+			if self.cmd.len() >= 3 {
+				rstr = show_entries(con.as_ref().unwrap(),Some(false),Some(true),Some(self.cmd[2].parse::<i32>().unwrap()));
+			} else {
+				rstr = show_entries(con.as_ref().unwrap(),Some(false),Some(true),None);
+			}
 			//return (Some(rstr.len() as i32),Some(rstr.as_bytes().to_vec()));
 			return ic_packet::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec()));
 		}

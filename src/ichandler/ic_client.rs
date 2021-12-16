@@ -242,10 +242,27 @@ impl ic_input_command<'_> {
 				DIR SHOW <ID>
 				and
 				ENTRY SHOW <ID> */
-			fmt_vec.push("SHOW".to_string());
 			if self.cmd.len() >= 2 {
-				fmt_vec.push(self.cmd[1].clone());
+				if self.cmd[1].parse::<i32>().unwrap_or(-1) == -1 {
+					match self.cmd[1].chars().nth(0).unwrap() {
+					'f' => {
+						fmt_vec.push("ENTRY".to_string());
+						fmt_vec.push("SHOW".to_string());
+						fmt_vec.push(self.cmd[1][1..].to_string());
+					},
+					'd' => {
+						fmt_vec.push("DIR".to_string());
+						fmt_vec.push("SHOW".to_string());
+						fmt_vec.push(self.cmd[1][1..].to_string());
+					}
+					'a' => {
+						fmt_vec.push("SHOW".to_string());
+					}
+					_ =>(),
+					};
+				} else { fmt_vec.push("SHOW".to_string());fmt_vec.push(self.cmd[1].clone()) }
 			} else {
+				fmt_vec.push("SHOW".to_string());
 				fmt_vec.push(self.ref_in.pwd.to_string());
 			}
 			return ic_command::from_formated_vec(fmt_vec,Some(self.databuff.clone()));

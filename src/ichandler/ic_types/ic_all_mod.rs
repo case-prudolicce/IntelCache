@@ -14,13 +14,13 @@ impl ic_execute for ic_all {
 	type Connection = MysqlConnection;
 	fn exec(&mut self,con: Option<&mut Self::Connection>) -> ic_packet {
 		let mut retstr: String = "OK.\n".to_string();
-		println!("DEBUG 1: {:?}",self.cmd);
 		if self.cmd.len() == 1 {
-			println!("TARGET 2 REACHED");
 			retstr = show_dirs(con.as_ref().unwrap(),Some(self.cmd[0].parse::<i32>().unwrap()));
 			retstr += &show_entries(con.as_ref().unwrap(),Some(false),Some(true),Some(self.cmd[0].parse::<i32>().unwrap()));
-			println!("DEBUG 2: {}",retstr);
-		} 
+		} else {
+			retstr = show_dirs(con.as_ref().unwrap(),None);
+			retstr += &show_entries(con.as_ref().unwrap(),Some(false),Some(true),None);
+		}
 		ic_packet::new(Some("OK!".to_string()),Some(retstr.as_bytes().to_vec()))
 	}
 }
