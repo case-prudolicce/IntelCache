@@ -23,7 +23,7 @@ impl ic_execute for ic_tag {
 		let mut create = false;
 		let mut tagdir = 0;
 		let mut tagentry = 0;
-		let mut rstr = "OK.\n".to_string();
+		let mut rstr = "".to_string();
 
 		match self.cmd[0].as_str() {
 		"DELETE" => delete = true,

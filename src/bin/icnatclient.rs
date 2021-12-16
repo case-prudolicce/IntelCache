@@ -6,6 +6,15 @@ use IntelCache::ichandler::ic_client::ic_client_mode::GET;
 use IntelCache::ichandler::ic_client::ic_client_mode::SEND;
 use std::process;
 use std::io::{stdout,stdin};
+use std::process::Command;
+use std::env;
+pub fn write_entry() -> String {
+	let editor = env::var("EDITOR").expect("No Editor env found.");
+	Command::new(editor).arg("/tmp/tmpentry").status().expect("Failed to open editor");
+	let ret = str::from_utf8(&fs::read("/tmp/tmpentry").unwrap()).unwrap().to_string();
+	fs::remove_file("/tmp/tmpentry").unwrap();
+	ret
+}
 
 fn main() {
 	let mut client = ic_client::connect("127.0.0.1").unwrap_or_else(|x| {println!("Failed to connect");process::exit(1)});
@@ -17,14 +26,14 @@ fn main() {
 		match input_cmd.cmd[0].as_ref() {
 		"new" => {
 			if input_cmd.cmd.len() > 1 {
-				input_cmd.databuff = ic_input::write_entry().as_bytes().to_vec();
+				input_cmd.databuff = write_entry().as_bytes().to_vec();
 			} else {
 				input_cmd.cmd.push(String::new());
 				println!("Name?");
 				let mut n = String::new();
 				stdin().read_line(&mut n).unwrap();
 				input_cmd.cmd[1] = n;
-				input_cmd.databuff = ic_input::write_entry().as_bytes().to_vec();
+				input_cmd.databuff = write_entry().as_bytes().to_vec();
 			}
 		},
 		"import" => {
@@ -71,7 +80,7 @@ fn main() {
 				input_cmd.cmd[0] = "get".to_string();
 				input_cmd.cmd.push("/tmp/tmpentry".to_string());
 				client.exec_cmd(&mut input_cmd);
-				input_cmd.databuff = ic_input::write_entry().as_bytes().to_vec();
+				input_cmd.databuff = write_entry().as_bytes().to_vec();
 				input_cmd.cmd[0] = "set".to_string();
 				//println!("IC_COMMAND: {:?}",input_cmd.to_ic_command().cmd);
 			}

@@ -7,7 +7,7 @@ use crate::ichandler::ic_types::ic_null;
 use crate::ichandler::ic_types::ic_all;
 use crate::ichandler::ic_types::ic_dir;
 use crate::ichandler::ic_types::ic_tag;
-use crate::ichandler::ic_types::ic_unbaked_entry;
+use crate::ichandler::ic_types::ic_entry;
 use crate::ichandler::ic_types::ic_packet;
 use std::str;
 
@@ -93,7 +93,7 @@ impl ic_command {
 		} else if return_type == 1 {
 			return Box::new(ic_dir::new(self.cmd[1..].to_vec()));
 		} else if return_type == 2 {
-			return Box::new(ic_unbaked_entry::from_ic_command(self.clone()));
+			return Box::new(ic_entry::from_ic_command(self.clone()));
 		} else if return_type == 3 {
 			return Box::new(ic_tag::new(self.cmd[1..].to_vec()));
 		} else if return_type == 4 {

@@ -21,7 +21,7 @@ impl ic_execute for ic_dir {
 		let mut delete = false;
 		let mut show = false;
 		let mut validate = false;
-		let mut retstr: String = "OK.\n".to_string();
+		let mut retstr: String = "".to_string();
 		match self.cmd[0].as_str() {
 		"DELETE" => delete = true,
 		"SHOW" => show = true,

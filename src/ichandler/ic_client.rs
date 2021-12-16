@@ -2,7 +2,6 @@ use std::str;
 use std::fmt;
 use std::fs;
 use std::process;
-use std::process::Command;
 use std::net::TcpStream;
 use std::{thread, time};
 use std::fmt::Display;
@@ -65,12 +64,6 @@ impl ic_input {
 		} else { return false; }
 	}
 	
-	pub fn write_entry() -> String {
-		Command::new("vim").arg("/tmp/tmpentry").status().expect("Failed to open editor");
-		let ret = str::from_utf8(&fs::read("/tmp/tmpentry").unwrap()).unwrap().to_string();
-		fs::remove_file("/tmp/tmpentry").unwrap();
-		ret
-	}
 	
 }
 

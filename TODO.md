@@ -1,17 +1,18 @@
 # Features to add
 * Links
-## Subfeatures (Feature-Native\_client)
-* CAT
+* ENTRY DISPLAY command
 # Maintenance
-* Client Config file (to get editor to use)
-* unbaked entry -> entry
-* Better return packets.
+* TBD
 # Bugs to fix
 * TBD
+
 # Before 1.0
 * README.md
+## Cleanup
 * Warning suppression
-# Hardening
+* Comment removal
+## Hardening
 * crash on cd wrong id
 * crash on wrong rm arg
 ## Crates.io publication
+* Documentation/Minor tweaks

@@ -9,14 +9,14 @@ use crate::ichandler::ic_types::ic_packet;
 use crate::ichandler::ic_types::ic_connection;
 use crate::ichandler::ic_types::ic_command;
 use crate::ichandler::ic_types::ic_execute;
-use crate::ichandler::ic_types::ic_unbaked_entry;
+use crate::ichandler::ic_types::ic_entry;
 
 //Server
 pub struct ic_server {}
 impl ic_server {
 	pub fn handle_client(&self,mut c: ic_connection) -> Result<(),Error> {
 		println!("Connection received! {:?} is sending data.", c.addr());
-		let mut entry: ic_unbaked_entry = ic_unbaked_entry::new_empty();
+		let mut entry: ic_entry = ic_entry::new_empty();
 		loop {
 			let p = c.get_packet();
 			println!("RECV IC_PACKET : {}\n{:?}",(&p).header.as_ref().unwrap_or(&"None".to_string()),(&p).body.as_ref().unwrap().len());

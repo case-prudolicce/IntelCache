@@ -22,17 +22,17 @@ use tar::Archive;
 
 
 #[derive(Clone)]
-pub struct ic_unbaked_entry { pub cmd: Vec<String>,pub n: String, pub t: String,pub loc: i32,pub d: Vec<u8> }
-impl ic_unbaked_entry{
-	pub fn new(args: Vec<String>) -> ic_unbaked_entry {
-		ic_unbaked_entry { cmd: args,n:"".to_string(),t:"".to_string(),loc:0,d: Vec::new()}
+pub struct ic_entry { pub cmd: Vec<String>,pub n: String, pub t: String,pub loc: i32,pub d: Vec<u8> }
+impl ic_entry{
+	pub fn new(args: Vec<String>) -> ic_entry {
+		ic_entry { cmd: args,n:"".to_string(),t:"".to_string(),loc:0,d: Vec::new()}
 	}
-	pub fn from_ic_command(icc: ic_command) -> ic_unbaked_entry {
+	pub fn from_ic_command(icc: ic_command) -> ic_entry {
 		//println!("ICC @ UNBAKED_ENTRY: {:?}",icc.cmd,icc.data);
-		ic_unbaked_entry { cmd: icc.cmd.clone(),n:icc.cmd[0].to_owned(),t:icc.cmd[1].to_owned(),loc:if icc.cmd.len() == 7 {icc.cmd[6].parse::<i32>().unwrap()} else {1},d: icc.data }
+		ic_entry { cmd: icc.cmd.clone(),n:icc.cmd[0].to_owned(),t:icc.cmd[1].to_owned(),loc:if icc.cmd.len() == 7 {icc.cmd[6].parse::<i32>().unwrap()} else {1},d: icc.data }
 	}
-	pub fn new_empty() -> ic_unbaked_entry {
-		ic_unbaked_entry { cmd: Vec::new(),n:"".to_string(),t:"".to_string(),loc:0,d: Vec::new() }
+	pub fn new_empty() -> ic_entry {
+		ic_entry { cmd: Vec::new(),n:"".to_string(),t:"".to_string(),loc:0,d: Vec::new() }
 	}
 	pub fn bake(&self,data: &[u8]) {
 		println!("Baking {} ({} {}) with data.",self.n,self.t,self.loc);
@@ -44,7 +44,7 @@ impl ic_unbaked_entry{
 		};
 	}
 }
-impl ic_execute for ic_unbaked_entry {
+impl ic_execute for ic_entry {
 	type Connection = MysqlConnection;
 	fn exec(&mut self,con: Option<&mut Self::Connection>) -> ic_packet {
 		let mut get = false;
@@ -52,7 +52,7 @@ impl ic_execute for ic_unbaked_entry {
 		let mut create = false;
 		let mut delete = false;
 		let mut show = false;
-		let mut rstr = "OK.\n".to_string();
+		let mut rstr = "".to_string();
 
 		match self.cmd[1].as_str() {
 		"DELETE" => delete = true,
