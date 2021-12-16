@@ -8,6 +8,7 @@
 * TBD
 #Maintenance
 * Client Config file (to get editor to use)
+* unbaked entry -> entry
 # Bugs to fix
 * double "((" wraps (IMPORT name prompt)
 * client crash on CD
