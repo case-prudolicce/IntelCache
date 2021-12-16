@@ -9,5 +9,4 @@
 #Maintenance
 * TBD
 # Bugs to fix
-* Server crashing on exit (empty)
 * double "((" wraps (IMPORT name prompt)

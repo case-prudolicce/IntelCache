@@ -11,7 +11,7 @@ fn main() {
 	let mut client = ic_client::connect("127.0.0.1").unwrap_or_else(|x| {println!("Failed to connect");process::exit(1)});
 	let mut input = ic_input::new();
 
-	while ! input.check_exit() {
+	loop {
 		input.flush();
 		let mut input_cmd = input.prompt();
 		match input_cmd.cmd[0].as_ref() {

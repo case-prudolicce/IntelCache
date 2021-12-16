@@ -23,6 +23,11 @@ impl ic_server {
 			let mut icc = ic_command::from_packet(p); 
 			//println!("IC_COMMAND: {:?}\n{:?}",icc.cmd,icc.data);
 			let icp = icc.exec(None);
+			if icp.header == None && icp.body == None {
+				println!("{:?} disconnected.",c.con.peer_addr());
+				c.send_packet(icp);
+				return Ok(());
+			}
 			//println!("SEND ICP_PACKET : {}\n{:?}",(&icp).header.as_ref().unwrap_or(&"None".to_string()),(&icp).body.as_ref().unwrap_or(&Vec::new()).len());
 			c.send_packet(icp);
 		}

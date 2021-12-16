@@ -28,7 +28,7 @@ impl ic_input {
 	}
 	
 	pub fn check_exit(&self) -> bool {
-		return if self.fmt_str.len() > 0 && self.fmt_str[0] == "EXIT" {true} else {false};
+		return if self.fmt_str.len() > 0 && self.fmt_str[0] == "exit" {true} else {false};
 	}
 	pub fn flush(&mut self) {
 		self.input_str = String::new();
@@ -351,6 +351,10 @@ impl ic_input_command<'_> {
 			fmt_vec.push(self.cmd[1].clone());
 			return ic_command::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
 		},
+		"exit" => {
+			fmt_vec.push("EXIT".to_string());
+			return ic_command::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
+		}
 		_ => return ic_command::from_formated_vec(self.cmd.clone(),None),
 		}
 		ic_command::from_formated_vec(self.cmd.clone(),Some(self.databuff.clone()))
