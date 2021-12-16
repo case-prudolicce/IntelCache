@@ -1,16 +1,16 @@
 use diesel::MysqlConnection;
 use crate::ichandler::ic_types::ic_packet;
-use crate::show_entries;
-use crate::delete_entry;
+use crate::ichandler::lib_backend::show_entries;
+use crate::ichandler::lib_backend::delete_entry;
 use crate::ichandler::ic_types::ic_execute;
-use crate::make_file_entry;
-use crate::block_on;
-use crate::make_text_entry;
-use crate::establish_connection;
+use crate::ichandler::lib_backend::make_file_entry;
+use crate::ichandler::lib_backend::make_text_entry;
+use crate::ichandler::lib_backend::establish_connection;
 use crate::ichandler::ic_types::ic_command;
-use crate::get_entry_by_id;
-use crate::update_entry;
+use crate::ichandler::lib_backend::get_entry_by_id;
+use crate::ichandler::lib_backend::update_entry;
 
+use futures::executor::block_on;
 use std::str;
 use std::fs::File;
 use std::fs;
@@ -88,7 +88,7 @@ impl ic_execute for ic_unbaked_entry {
 		}
 		if get {
 			//ENTRY GET 1 file.txt
-			use crate::models::Entry;
+			use crate::ichandler::lib_backend::models::Entry;
 			let e = get_entry_by_id(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap());
 			
 			if self.cmd.len() == 4 {

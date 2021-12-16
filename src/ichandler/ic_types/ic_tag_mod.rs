@@ -1,12 +1,12 @@
 use diesel::MysqlConnection;
-use crate::untag_entry;
-use crate::tag_entry;
-use crate::untag_dir;
-use crate::tag_dir;
-use crate::create_tag;
+use crate::ichandler::lib_backend::untag_entry;
+use crate::ichandler::lib_backend::tag_entry;
+use crate::ichandler::lib_backend::untag_dir;
+use crate::ichandler::lib_backend::tag_dir;
+use crate::ichandler::lib_backend::create_tag;
 use crate::ichandler::ic_types::ic_packet;
-use crate::show_tags;
-use crate::delete_tag;
+use crate::ichandler::lib_backend::show_tags;
+use crate::ichandler::lib_backend::delete_tag;
 use crate::ichandler::ic_types::ic_execute;
 
 pub struct ic_tag {cmd: Vec<String>,}
