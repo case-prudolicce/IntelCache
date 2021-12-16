@@ -1,7 +1,7 @@
 use std::str;
 use std::fs;
 use IntelCache::ichandler::ic_client::*;
-use IntelCache::ichandler::ic_types::ic_execute::ic_execute;
+use IntelCache::ichandler::ic_types::ic_execute;
 use IntelCache::ichandler::ic_client::ic_client_mode::GET;
 use IntelCache::ichandler::ic_client::ic_client_mode::SEND;
 use std::process;

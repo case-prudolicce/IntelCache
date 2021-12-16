@@ -5,15 +5,28 @@ use std::fmt::Display;
 
 use diesel::MysqlConnection;
 //pub mod ic_types_impls;
-pub mod ic_response;
-pub mod ic_execute;
-pub mod ic_command;
-pub mod ic_unbaked_entry;
-mod ic_tag;
-mod ic_dir;
-pub mod ic_all;
-pub mod ic_null;
-pub mod ic_packet;
-pub mod ic_connection;
+mod ic_all_mod;
+mod ic_response_mod;
+mod ic_execute_mod;
+mod ic_command_mod;
+mod ic_unbaked_entry_mod;
+mod ic_tag_mod;
+mod ic_dir_mod;
+mod ic_null_mod;
+mod ic_packet_mod;
+mod ic_connection_mod;
+
+pub use self::ic_all_mod::ic_all as ic_all;
+pub use self::ic_response_mod::ic_response as ic_response;
+pub use self::ic_execute_mod::ic_execute as ic_execute;
+pub use self::ic_command_mod::ic_command as ic_command;
+pub use self::ic_unbaked_entry_mod::ic_unbaked_entry as ic_unbaked_entry;
+pub use self::ic_null_mod::ic_null as ic_null;
+pub use self::ic_packet_mod::ic_packet as ic_packet;
+pub use self::ic_connection_mod::ic_connection as ic_connection;
+
+pub use self::ic_tag_mod::ic_tag as ic_tag;
+pub use self::ic_dir_mod::ic_dir as ic_dir;
+
 //use ic_types_impls::*;
 use crate::{untag_entry,tag_entry,untag_dir,tag_dir,create_tag,show_tags,delete_tag,establish_connection};

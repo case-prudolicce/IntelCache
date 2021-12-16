@@ -7,7 +7,7 @@ use std::net::TcpStream;
 use std::{thread, time};
 use std::fmt::Display;
 use std::io::{stdout,stdin,Read,ErrorKind,Error,Write};
-use crate::ichandler::ic_types::{ic_connection::ic_connection,ic_packet::ic_packet,ic_execute::ic_execute,ic_response::ic_response,ic_command::ic_command};
+use crate::ichandler::ic_types::{ic_connection,ic_packet,ic_execute,ic_response,ic_command};
 
 #[derive(Debug)]
 #[derive(PartialEq)]

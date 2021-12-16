@@ -1,5 +1,5 @@
 use diesel::MysqlConnection;
-use crate::ichandler::ic_types::ic_packet::ic_packet;
+use crate::ichandler::ic_types::ic_packet;
 
 pub trait ic_execute {
 	type Connection;

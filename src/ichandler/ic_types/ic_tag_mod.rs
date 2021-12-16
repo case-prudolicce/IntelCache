@@ -4,10 +4,10 @@ use crate::tag_entry;
 use crate::untag_dir;
 use crate::tag_dir;
 use crate::create_tag;
-use crate::ichandler::ic_types::ic_packet::ic_packet;
+use crate::ichandler::ic_types::ic_packet;
 use crate::show_tags;
 use crate::delete_tag;
-use crate::ichandler::ic_types::ic_execute::ic_execute;
+use crate::ichandler::ic_types::ic_execute;
 
 pub struct ic_tag {cmd: Vec<String>,}
 impl ic_tag {

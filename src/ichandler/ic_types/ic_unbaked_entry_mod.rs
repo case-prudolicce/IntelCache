@@ -1,13 +1,13 @@
 use diesel::MysqlConnection;
-use crate::ichandler::ic_types::ic_packet::ic_packet;
+use crate::ichandler::ic_types::ic_packet;
 use crate::show_entries;
 use crate::delete_entry;
-use crate::ichandler::ic_types::ic_execute::ic_execute;
+use crate::ichandler::ic_types::ic_execute;
 use crate::make_file_entry;
 use crate::block_on;
 use crate::make_text_entry;
 use crate::establish_connection;
-use crate::ichandler::ic_types::ic_command::ic_command;
+use crate::ichandler::ic_types::ic_command;
 use crate::get_entry_by_id;
 use crate::update_entry;
 

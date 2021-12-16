@@ -1,6 +1,6 @@
 use diesel::MysqlConnection;
-use crate::ichandler::ic_types::ic_packet::ic_packet;
-use crate::ichandler::ic_types::ic_execute::ic_execute;
+use crate::ichandler::ic_types::ic_packet;
+use crate::ichandler::ic_types::ic_execute;
 use crate::delete_dir;
 use crate::show_dirs;
 use crate::create_dir;
