@@ -88,9 +88,9 @@ impl ic_client {
 	pub fn exec_cmd(&mut self,c: &mut ic_input_command) {
 		self.update_mode(c);
 		//println!("CLIENT MODE: {:?}",self.mode);
-		//println!("SEND IC_PACKET : {}\n{:?}",c.to_ic_command().to_ic_packet().header.unwrap_or("None".to_string()),c.to_ic_command().to_ic_packet().body.unwrap().len());
+		println!("SEND IC_PACKET : {}\n{:?}",c.to_ic_command().to_ic_packet().header.unwrap_or("None".to_string()),c.to_ic_command().to_ic_packet().body.unwrap().len());
 		let mut sr: ic_packet = ic_packet::new_empty();
-		//println!("RECV IC_PACKET : {}\n{:?}",(&sr).header.as_ref().unwrap_or(&"None".to_string()),(&sr).body.as_ref().unwrap_or(&Vec::new()).len());
+		println!("RECV IC_PACKET : {}\n{:?}",(&sr).header.as_ref().unwrap_or(&"None".to_string()),(&sr).body.as_ref().unwrap_or(&Vec::new()).len());
 		if self.mode != ic_client_mode::NONE {
 			self.con.send_packet(c.to_ic_command().to_ic_packet()); 
 			sr = self.con.get_packet();
@@ -208,18 +208,20 @@ impl ic_input_command<'_> {
 		let mut fmt_vec:Vec<String> = Vec::new();
 		match self.cmd[0].as_ref() {
 		"new" | "import" => {
-			/*	new [<name>] [UNDER <dir id>]
-				CREATE <TYPE> <NAME> <SIZE> UNDER <LOC>"
-				<DATA>*/
 			fmt_vec.push("ENTRY".to_string());
 			fmt_vec.push("CREATE".to_string());
 			fmt_vec.push(if self.databuff.len() > 65535 {"ipfs_file".to_string()} else {"text".to_string()});
 			if self.cmd[0] == "new" {
+				/*	new [<name>] [UNDER <dir id>]
+					-------------------------------
+					CREATE <TYPE> <NAME> <SIZE> UNDER <LOC OR PWD>"
+					<DATA>*/
 				if self.cmd.len() >= 2 {
 					fmt_vec.push(self.cmd[1].clone());
 					fmt_vec.push(self.databuff.len().to_string());
 					fmt_vec.push(if self.cmd.len() > 3 {self.cmd[3].clone()} else {"".to_string()});
-					fmt_vec.push(if self.cmd.len() > 3 {"UNDER".to_string()} else {"".to_string()});
+					fmt_vec.push("UNDER".to_string());
+					fmt_vec.push(if self.cmd.len() == 5 {self.cmd[4].clone()} else {if self.ref_in.pwd != 0 {self.ref_in.pwd.to_string()} else {1.to_string()}});
 				}
 			}else if self.cmd[0] == "import" {
 					fmt_vec.push(self.cmd[2].clone());

@@ -66,11 +66,11 @@ impl ic_execute for ic_unbaked_entry {
 		if create {
 			//"ENTRY CREATE <TYPE> <NAME> <SIZE> UNDER <LOC>"
 			//Data
-			if (self.cmd.len() as i32) == 6 {
-				println!("MAKING ENTRY: {} ({:?})\n{:?}",&self.cmd[3],Some(str::parse::<i32>(&self.cmd[5]).unwrap_or(1)),&self.d);
-				make_file_entry(con.as_ref().unwrap(),&self.cmd[3],self.d.clone(),Some(str::parse::<i32>(&self.cmd[5]).unwrap()),None);
+			if (self.cmd.len() as i32) >= 7 {
+				//println!("MAKING ENTRY: {} ({:?})\n{:?}",&self.cmd[3],Some(str::parse::<i32>(&self.cmd[5]).unwrap_or(1)),&self.d);
+				make_file_entry(con.as_ref().unwrap(),&self.cmd[3],self.d.clone(),Some(str::parse::<i32>(&self.cmd[6]).unwrap()),None);
 			} else {
-				println!("MAKING ENTRY: {} ({})\n{:?}",&self.cmd[3],"None",&self.d);
+				//println!("MAKING ENTRY: {} ({})\n{:?}",&self.cmd[3],"None",&self.d);
 				make_file_entry(con.as_ref().unwrap(),&self.cmd[3],self.d.clone(),None,None);
 			}
 			return ic_packet::new(Some("OK!".to_string()),None)

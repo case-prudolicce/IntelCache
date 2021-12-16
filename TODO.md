@@ -1,12 +1,17 @@
 # Features to add
-* README.md
 * Links
-##Subfeatures (Feature-Native\_client)
+## Subfeatures (Feature-Native\_client)
 * CAT
-#Maintenance
+# Maintenance
 * Client Config file (to get editor to use)
 * unbaked entry -> entry
 * Better return packets.
 # Bugs to fix
-* new doesnt make under dir
+* TBD
+# Before 1.0
+* README.md
+* Warning suppression
+# Hardening
 * crash on cd wrong id
+* crash on wrong rm arg
+## Crates.io publication
