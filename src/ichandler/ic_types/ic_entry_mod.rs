@@ -92,7 +92,6 @@ impl IcExecute for IcEntry {
 		}
 		if get {
 			//ENTRY GET 1 file.txt
-			use crate::ichandler::lib_backend::models::Entry;
 			let e = get_entry_by_id(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap());
 			
 			if self.cmd.len() == 4 {
@@ -115,7 +114,7 @@ impl IcExecute for IcEntry {
 					let ret = fs::read(&self.cmd[3]).unwrap();
 					fs::remove_file(&self.cmd[3]).unwrap();
 					//return (Some(ret.len() as i32),Some([ret.len().to_string().as_bytes(),&[10_u8],&ret].concat()))
-					return IcPacket::new(Some("OK!".to_string()),Some(ret));;
+					return IcPacket::new(Some("OK!".to_string()),Some(ret));
 					
 				}else if e.type_ == "text" {
 					//return (Some(e.data.len() as i32),Some([e.data.len().to_string().as_bytes(),&[10_u8],&e.data].concat()));

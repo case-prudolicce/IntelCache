@@ -1,4 +1,3 @@
-use diesel::MysqlConnection;
 use crate::ichandler::ic_types::IcPacket;
 
 pub trait IcExecute {

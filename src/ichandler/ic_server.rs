@@ -1,18 +1,14 @@
-use std::str;
-use std::io::{ErrorKind,Error,self,BufRead,BufReader,stdout,stdin,Read,Write};
-use std::fs;
+use std::io::{Error};
 use std::thread;
-use std::net::{TcpListener,TcpStream,SocketAddrV4,Ipv4Addr};
+use std::net::{TcpListener,SocketAddrV4,Ipv4Addr};
 
-use crate::ichandler::ic_types::IcResponse;
-use crate::ichandler::ic_types::IcPacket;
 use crate::ichandler::ic_types::IcConnection;
 use crate::ichandler::ic_types::IcCommand;
 use crate::ichandler::ic_types::IcExecute;
 
 //Server
-pub struct ic_server {}
-impl ic_server {
+pub struct IcServer {}
+impl IcServer {
 	pub fn handle_client(&self,mut c: IcConnection) -> Result<(),Error> {
 		println!("Connection received! {:?} is sending data.", c.addr());
 		loop {

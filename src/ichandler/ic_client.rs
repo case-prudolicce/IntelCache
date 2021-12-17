@@ -4,12 +4,12 @@ use std::fs;
 use std::process;
 use std::net::TcpStream;
 use std::fmt::Display;
-use std::io::{stdout,stdin,Read,ErrorKind,Error,Write};
-use crate::ichandler::ic_types::{IcConnection,IcPacket,IcExecute,IcResponse,IcCommand};
+use std::io::{stdout,stdin,ErrorKind,Error,Write};
+use crate::ichandler::ic_types::{IcConnection,IcPacket,IcCommand};
 
 #[derive(Debug)]
 #[derive(PartialEq)]
-pub enum ic_client_mode {
+pub enum IcClientMode {
 	GET, //To local file
 	CAT, //To stdout
 	SEND,
@@ -17,10 +17,10 @@ pub enum ic_client_mode {
 	NONE,
 }
 
-pub struct ic_input { pub input_str: String,pub fmt_str: Vec<String>, pub pwd: i32, pwdstr: String}
-impl ic_input {
-	pub fn new() -> ic_input {
-		let mut proto_ici = ic_input { input_str: "".to_string(), fmt_str: Vec::new(),pwd: 0,pwdstr: "ROOT".to_string() };
+pub struct IcInput { pub input_str: String,pub fmt_str: Vec<String>, pub pwd: i32, pwdstr: String}
+impl IcInput {
+	pub fn new() -> IcInput {
+		let mut proto_ici = IcInput { input_str: "".to_string(), fmt_str: Vec::new(),pwd: 0,pwdstr: "ROOT".to_string() };
 		proto_ici.fmt_str.push(String::new());
 		proto_ici
 	}
@@ -33,23 +33,22 @@ impl ic_input {
 		self.fmt_str = Vec::new();//vec!["".to_string();512];
 	}
 	
-	pub fn prompt(&mut self) -> ic_input_command {
-		//println!("ic_input#prompt: pwd is at {}",self.pwd);
+	pub fn prompt(&mut self) -> IcInputCommand {
 		print!("{} > ",self.pwdstr);
 		stdout().flush().unwrap();
 		stdin().read_line(&mut self.input_str).expect("Error reading line");
 		self.input_str = self.input_str.trim_end().to_string();
-		ic_input_command::from_input(self)
+		IcInputCommand::from_input(self)
 	}
 	
-	pub fn set_pwd(&mut self, pwdid: i32,client: &mut ic_client) -> bool {
+	pub fn set_pwd(&mut self, pwdid: i32,client: &mut IcClient) -> bool {
 		if pwdid < 0 {println!("NS1");return false;}
 		else if pwdid == 0 {self.pwd = pwdid;self.pwdstr = "ROOT".to_string();return true;}
 		let mut p = Vec::<String>::new();
 		p.push("DIR".to_string());
 		p.push("VALIDATE".to_string());
 		p.push(pwdid.to_string());
-		let icp = ic_input_command::from_vec(self,p);
+		let icp = IcInputCommand::from_vec(self,p);
 		
 		//-> DIR VERIFY <DIRID>
 		//<- true/false {Dir name/None}
@@ -65,38 +64,38 @@ impl ic_input {
 	
 }
 
-pub struct ic_client { con: IcConnection,pub mode: ic_client_mode }
-impl ic_client {
-	pub fn connect(ip: &str) -> Result<ic_client,Error> {;
+pub struct IcClient { con: IcConnection,pub mode: IcClientMode }
+impl IcClient {
+	pub fn connect(ip: &str) -> Result<IcClient,Error> {
 		let con = TcpStream::connect(ip.to_owned()+":64209");
 		if let Ok(c) = con {
-			return Ok(ic_client { con: IcConnection::new(c),mode: ic_client_mode::CAT });
+			return Ok(IcClient { con: IcConnection::new(c),mode: IcClientMode::CAT });
 		} else {
 			return Err(Error::new(ErrorKind::Other,"Failed to connect."));
 		}
 	}
 	
-	pub fn exec_cmd(&mut self,c: &mut ic_input_command) {
+	pub fn exec_cmd(&mut self,c: &mut IcInputCommand) {
 		self.update_mode(c);
 		//println!("CLIENT MODE: {:?}",self.mode);
 		println!("SEND IC_PACKET : {}\n{:?}",c.to_ic_command().to_ic_packet().header.unwrap_or("None".to_string()),c.to_ic_command().to_ic_packet().body.unwrap().len());
 		let mut sr: IcPacket = IcPacket::new_empty();
 		println!("RECV IC_PACKET : {}\n{:?}",(&sr).header.as_ref().unwrap_or(&"None".to_string()),(&sr).body.as_ref().unwrap_or(&Vec::new()).len());
-		if self.mode != ic_client_mode::NONE {
+		if self.mode != IcClientMode::NONE {
 			self.con.send_packet(c.to_ic_command().to_ic_packet()); 
 			sr = self.con.get_packet();
 		}
 		match self.mode {
-		ic_client_mode::CAT => {
+		IcClientMode::CAT => {
 			println!("{}",std::str::from_utf8(&sr.body.unwrap_or(Vec::new())).unwrap());
 		},
-		ic_client_mode::GET => {
+		IcClientMode::GET => {
 			fs::write(c.cmd[2].clone(),sr.body.unwrap()).unwrap();
 		},
-		ic_client_mode::EXIT => {
+		IcClientMode::EXIT => {
 			process::exit(1);
 		},
-		ic_client_mode::NONE => {
+		IcClientMode::NONE => {
 			if c.cmd[0] == "cd" {
 				let res = if c.cmd.len() > 1 {
 					c.ref_in.set_pwd(str::parse::<i32>(&c.cmd[1]).unwrap_or(-1),self)
@@ -108,20 +107,20 @@ impl ic_client {
 		};
 	}
 
-	pub fn update_mode(&mut self,c: &ic_input_command) {
+	pub fn update_mode(&mut self,c: &IcInputCommand) {
 		self.mode = match c.cmd[0].as_ref() {
-		"new" | "set" | "mv" | "import" => ic_client_mode::SEND,
-		"exit" | "quit" => ic_client_mode::EXIT,
-		"cd" => ic_client_mode::NONE,
-		"get" => ic_client_mode::GET,
-		_ => ic_client_mode::CAT, //rm,ls
+		"new" | "set" | "mv" | "import" => IcClientMode::SEND,
+		"exit" | "quit" => IcClientMode::EXIT,
+		"cd" => IcClientMode::NONE,
+		"get" => IcClientMode::GET,
+		_ => IcClientMode::CAT, //rm,ls
 		}
 	}
 }
 
-pub struct ic_input_command<'a> { pub cmd: Vec<String>, pub databuff: Vec<u8>,pub ref_in: &'a mut ic_input }
-impl ic_input_command<'_> {
-	pub fn from_input(input: &mut ic_input) -> ic_input_command {
+pub struct IcInputCommand<'a> { pub cmd: Vec<String>, pub databuff: Vec<u8>,pub ref_in: &'a mut IcInput }
+impl IcInputCommand<'_> {
+	pub fn from_input(input: &mut IcInput) -> IcInputCommand {
 		//format the input
 		//check for ((tokens That are included between these))
 		//If found, concat to one str
@@ -129,7 +128,7 @@ impl ic_input_command<'_> {
 		let mut concatenated_str = String::new();
 		let mut fcmd = Vec::new();
 		if input.input_str.split_whitespace().collect::<Vec<&str>>().len() == 0 {
-			return ic_input_command { cmd:Vec::new(), databuff: vec![0;512], ref_in: input}
+			return IcInputCommand { cmd:Vec::new(), databuff: vec![0;512], ref_in: input}
 		}
 		for c in input.input_str.split_whitespace() {
 			if ! con { 
@@ -156,9 +155,9 @@ impl ic_input_command<'_> {
 				} else { concatenated_str.push(' '); concatenated_str.push_str(c) }
 			}
 		}
-		ic_input_command { cmd:fcmd, databuff: vec![0;512],ref_in: input }
+		IcInputCommand { cmd:fcmd, databuff: vec![0;512],ref_in: input }
 	}
-	pub fn from_vec<'a>(input: &'a mut ic_input,v: Vec<String>) -> ic_input_command<'a> {
+	pub fn from_vec<'a>(input: &'a mut IcInput,v: Vec<String>) -> IcInputCommand<'a> {
 		//format the input
 		//check for ((tokens That are included between these))
 		//If found, concat to one str
@@ -166,7 +165,7 @@ impl ic_input_command<'_> {
 		let mut concatenated_str = String::new();
 		let mut fcmd = Vec::new();
 		if v.len() == 0 {
-			return ic_input_command { cmd:Vec::new(), databuff: vec![0;512], ref_in: input}
+			return IcInputCommand { cmd:Vec::new(), databuff: vec![0;512], ref_in: input}
 		}
 		for c in v {
 			if ! con { 
@@ -193,7 +192,7 @@ impl ic_input_command<'_> {
 				} else { concatenated_str.push(' '); concatenated_str.push_str(&c) }
 			}
 		}
-		ic_input_command { cmd:fcmd, databuff: vec![0;512],ref_in: input }
+		IcInputCommand { cmd:fcmd, databuff: vec![0;512],ref_in: input }
 	}
 	pub fn to_ic_command(&self) -> IcCommand {
 		let mut fmt_vec:Vec<String> = Vec::new();
@@ -380,7 +379,7 @@ impl ic_input_command<'_> {
 		if s.contains(char::is_whitespace) {"((".to_owned()+&s+"))"} else {s}
 	}
 }
-impl Display for ic_input_command<'_> {
+impl Display for IcInputCommand<'_> {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		let mut s = String::new();
 		for c in &self.cmd {

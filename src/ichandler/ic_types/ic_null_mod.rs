@@ -1,4 +1,3 @@
-use crate::ichandler::ic_types::*;
 use diesel::MysqlConnection;
 
 use crate::ichandler::ic_types::IcPacket;

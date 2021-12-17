@@ -36,7 +36,7 @@ impl IcExecute for IcDir {
 			//CREATE ((NAME))
 			if self.cmd.len() == 2 {
 				create_dir(con.as_ref().unwrap(),&self.cmd[1],None);
-			} else if ( self.cmd.len() == 4 ) {
+			} else if self.cmd.len() == 4 {
 				//CREATE ((NAME)) UNDER <DIR ID>
 				if self.cmd[2] == "UNDER" {
 					create_dir(con.as_ref().unwrap(),&self.cmd[1],Some(self.cmd[3].parse::<i32>().unwrap()));

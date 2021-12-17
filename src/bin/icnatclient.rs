@@ -14,8 +14,8 @@ pub fn write_entry() -> String {
 }
 
 fn main() {
-	let mut client = ic_client::connect("127.0.0.1").unwrap_or_else(|_| {println!("Failed to connect");process::exit(1)});
-	let mut input = ic_input::new();
+	let mut client = IcClient::connect("127.0.0.1").unwrap_or_else(|_| {println!("Failed to connect");process::exit(1)});
+	let mut input = IcInput::new();
 
 	loop {
 		input.flush();
