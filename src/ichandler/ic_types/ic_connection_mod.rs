@@ -1,6 +1,6 @@
 use crate::ichandler::ic_types::ic_packet;
 use std::net::TcpStream;
-use std::io::{stdout,stdin,Read,ErrorKind,Error,Write};
+use std::io::{Read,Write};
 
 pub struct ic_connection { pub con: TcpStream,local_buffer: Vec<u8>,final_buffer: Vec<u8>}
 impl ic_connection {

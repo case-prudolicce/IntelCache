@@ -10,7 +10,7 @@ use futures::executor::block_on;
 pub mod models;
 pub mod schema;
 
-use self::models::{entrytag,new_entrytag,NewEntry, Entry, new_dirtag, dirtag, Tag, NewTag, Dir, NewDir};
+use self::models::{EntryTag,NewEntryTag,NewEntry, Entry, NewDirTag, DirTag, Tag, NewTag, Dir, NewDir};
 
 pub fn establish_connection() -> MysqlConnection {
 	dotenv().ok();
@@ -64,7 +64,7 @@ pub fn show_dirs(conn: &MysqlConnection,by_id: Option<i32>) -> String{
 	
 	for d in results {
 		let location = if d.loc.unwrap_or(-1) == -1 {"ROOT".to_string()} else {dir::table.filter(dir::id.eq(d.loc.unwrap())).select(dir::name).get_result::<String>(conn).unwrap()};
-		let tags = get_dirtags(conn,d.id);
+		let tags = get_dir_tags(conn,d.id);
 		retstr.push_str(format!("{} {} ({}) {}\n",d.id,d.name, location, tags).as_str())
 	}
 	retstr
@@ -129,7 +129,7 @@ pub fn prompt_tag_dir_target(conn: &MysqlConnection,prompt_string: Option<String
 	use self::schema::tag::dsl::*;
 	let mut n = String::new();
 
-	println!("{}",get_dirtags(conn,dirid));
+	println!("{}",get_dir_tags(conn,dirid));
 	let prompt = prompt_string.unwrap_or("Tag?:".to_string());
 	println!("{}",prompt);
 	stdin().read_line(&mut n).unwrap();
@@ -158,7 +158,7 @@ pub fn prompt_tag_entry_target(conn: &MysqlConnection,prompt_string: Option<Stri
 	use self::schema::tag::dsl::*;
 	let mut n = String::new();
 
-	println!("{}",get_entrytags(conn,entryid));
+	println!("{}",get_entry_tags(conn,entryid));
 	let prompt = prompt_string.unwrap_or("Tag?:".to_string());
 	println!("{}",prompt);
 	stdin().read_line(&mut n).unwrap();
@@ -186,15 +186,15 @@ pub fn delete_tag(conn: &MysqlConnection,tagid: i32) {
 	diesel::delete(tag.filter(id.eq(tagid))).execute(conn).unwrap();
 }
 
-pub fn tag_dir(conn: &MysqlConnection, dir_id: i32,tag_id: i32) -> dirtag {
+pub fn tag_dir(conn: &MysqlConnection, dir_id: i32,tag_id: i32) -> DirTag {
 	use schema::dir_tags;
 	
-	let new_dirtag = new_dirtag { dirid: dir_id,tagid: tag_id };
+	let new_dir_tag = NewDirTag { dirid: dir_id,tagid: tag_id };
 	
 	diesel::insert_into(dir_tags::table)
-		.values(&new_dirtag).execute(conn).expect("Error saving draft");
+		.values(&new_dir_tag).execute(conn).expect("Error saving draft");
 	
-	dir_tags::table.filter(dir_tags::tagid.eq(tag_id)).filter(dir_tags::dirid.eq(dir_id)).limit(1).get_result::<dirtag>(conn).unwrap()
+	dir_tags::table.filter(dir_tags::tagid.eq(tag_id)).filter(dir_tags::dirid.eq(dir_id)).limit(1).get_result::<DirTag>(conn).unwrap()
 }
 
 pub fn untag_dir(conn: &MysqlConnection,dir_id: i32, tag_id: i32) {
@@ -203,7 +203,7 @@ pub fn untag_dir(conn: &MysqlConnection,dir_id: i32, tag_id: i32) {
 	diesel::delete(dir_tags::table.filter(dir_tags::dirid.eq(dir_id)).filter(dir_tags::tagid.eq(tag_id))).execute(conn).expect("Error saving draft");
 }
 
-pub fn get_dirtags(conn: &MysqlConnection, dir_id: i32) -> String {
+pub fn get_dir_tags(conn: &MysqlConnection, dir_id: i32) -> String {
 	use schema::dir_tags;
 	use schema::tag;
 	use schema::dir;
@@ -260,7 +260,7 @@ pub fn show_entries(conn: &MysqlConnection, _display: Option<bool>, shortened: O
 	let mut retstr = String::new();
 	if ! shortened.unwrap_or(false) { 
 		for e in results {
-			let tags = get_entrytags(conn,e.id);
+			let tags = get_entry_tags(conn,e.id);
 			let text = match str::from_utf8(&e.data) {
 				Ok(v) => v,
 				Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
@@ -269,7 +269,7 @@ pub fn show_entries(conn: &MysqlConnection, _display: Option<bool>, shortened: O
 		}
 	} else {
 		for e in results {
-			let tags = get_entrytags(conn,e.id);
+			let tags = get_entry_tags(conn,e.id);
 			retstr.push_str(format!("{} {} ({}) {} {}\n",e.id,e.name,e.type_,e.loc,tags).as_str());
 		}
 	}
@@ -287,15 +287,15 @@ pub fn delete_entry(conn: &MysqlConnection,entryid: i32) {
 	diesel::delete(entry.filter(id.eq(entryid))).execute(conn).unwrap();
 }
 
-pub fn tag_entry(conn: &MysqlConnection, entry_id: i32,tag_id: i32) -> entrytag {
+pub fn tag_entry(conn: &MysqlConnection, entry_id: i32,tag_id: i32) -> EntryTag {
 	use schema::entry_tags;
 	
-	let new_entrytag = new_entrytag { entryid: entry_id,tagid: tag_id };
+	let new_entry_tag = NewEntryTag { entryid: entry_id,tagid: tag_id };
 	
 	diesel::insert_into(entry_tags::table)
-		.values(&new_entrytag).execute(conn).expect("Error saving draft");
+		.values(&new_entry_tag).execute(conn).expect("Error saving draft");
 	
-	entry_tags::table.filter(entry_tags::tagid.eq(tag_id)).filter(entry_tags::entryid.eq(entry_id)).limit(1).get_result::<entrytag>(conn).unwrap()
+	entry_tags::table.filter(entry_tags::tagid.eq(tag_id)).filter(entry_tags::entryid.eq(entry_id)).limit(1).get_result::<EntryTag>(conn).unwrap()
 }
 
 pub fn untag_entry(conn: &MysqlConnection,entry_id: i32, tag_id: i32) {
@@ -304,7 +304,7 @@ pub fn untag_entry(conn: &MysqlConnection,entry_id: i32, tag_id: i32) {
 	diesel::delete(entry_tags::table.filter(entry_tags::entryid.eq(entry_id)).filter(entry_tags::tagid.eq(tag_id))).execute(conn).expect("Error saving draft");
 }
 
-pub fn get_entrytags(conn: &MysqlConnection, entry_id: i32) -> String {
+pub fn get_entry_tags(conn: &MysqlConnection, entry_id: i32) -> String {
 	use schema::entry_tags;
 	use schema::tag;
 	use schema::entry;

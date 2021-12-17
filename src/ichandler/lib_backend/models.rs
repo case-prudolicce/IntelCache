@@ -3,7 +3,7 @@ use crate::ichandler::lib_backend::schema::entry;
 use crate::ichandler::lib_backend::schema::tag;
 use crate::ichandler::lib_backend::schema::dir_tags;
 use crate::ichandler::lib_backend::schema::entry_tags;
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::{NaiveDateTime};
 
 #[derive(Queryable)]
 pub struct Dir {
@@ -33,14 +33,14 @@ pub struct NewTag<'a> {
 }
 
 #[derive(Queryable)]
-pub struct dirtag {
+pub struct DirTag {
 	pub dirid: i32,
 	pub tagid: i32,
 }
 
 #[derive(Insertable)]
 #[table_name = "dir_tags"]
-pub struct new_dirtag {
+pub struct NewDirTag {
 	pub dirid: i32,
 	pub tagid: i32,
 }
@@ -68,14 +68,16 @@ pub struct NewEntry<'a> {
 }
 
 #[derive(Queryable)]
-pub struct entrytag {
+//pub struct entrytag {
+pub struct EntryTag {
 	pub entryid: i32,
 	pub tagid: i32,
 }
 
 #[derive(Insertable)]
 #[table_name = "entry_tags"]
-pub struct new_entrytag {
+//pub struct new_entrytag {
+pub struct NewEntryTag {
 	pub entryid: i32,
 	pub tagid: i32,
 }

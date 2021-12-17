@@ -27,6 +27,3 @@ pub use self::ic_connection_mod::ic_connection as ic_connection;
 
 pub use self::ic_tag_mod::ic_tag as ic_tag;
 pub use self::ic_dir_mod::ic_dir as ic_dir;
-
-//use ic_types_impls::*;
-use crate::ichandler::lib_backend::{untag_entry,tag_entry,untag_dir,tag_dir,create_tag,show_tags,delete_tag,establish_connection};
