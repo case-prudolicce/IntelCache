@@ -16,14 +16,14 @@ mod ic_null_mod;
 mod ic_packet_mod;
 mod ic_connection_mod;
 
-pub use self::ic_all_mod::ic_all as ic_all;
-pub use self::ic_response_mod::ic_response as ic_response;
-pub use self::ic_execute_mod::ic_execute as ic_execute;
-pub use self::ic_command_mod::ic_command as ic_command;
-pub use self::ic_entry_mod::ic_entry as ic_entry;
-pub use self::ic_null_mod::ic_null as ic_null;
-pub use self::ic_packet_mod::ic_packet as ic_packet;
-pub use self::ic_connection_mod::ic_connection as ic_connection;
+pub use self::ic_all_mod::IcAll as IcAll;
+pub use self::ic_response_mod::IcResponse as IcResponse;
+pub use self::ic_execute_mod::IcExecute as IcExecute;
+pub use self::ic_command_mod::IcCommand as IcCommand;
+pub use self::ic_entry_mod::IcEntry as IcEntry;
+pub use self::ic_null_mod::IcNull as IcNull;
+pub use self::ic_packet_mod::IcPacket as IcPacket;
+pub use self::ic_connection_mod::IcConnection as IcConnection;
 
-pub use self::ic_tag_mod::ic_tag as ic_tag;
-pub use self::ic_dir_mod::ic_dir as ic_dir;
+pub use self::ic_tag_mod::IcTag as IcTag;
+pub use self::ic_dir_mod::IcDir as IcDir;

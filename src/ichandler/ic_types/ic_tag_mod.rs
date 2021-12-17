@@ -4,20 +4,20 @@ use crate::ichandler::lib_backend::tag_entry;
 use crate::ichandler::lib_backend::untag_dir;
 use crate::ichandler::lib_backend::tag_dir;
 use crate::ichandler::lib_backend::create_tag;
-use crate::ichandler::ic_types::ic_packet;
+use crate::ichandler::ic_types::IcPacket;
 use crate::ichandler::lib_backend::show_tags;
 use crate::ichandler::lib_backend::delete_tag;
-use crate::ichandler::ic_types::ic_execute;
+use crate::ichandler::ic_types::IcExecute;
 
-pub struct ic_tag {cmd: Vec<String>,}
-impl ic_tag {
-	pub fn new(args: Vec<String>) -> ic_tag {
-		ic_tag { cmd: args }
+pub struct IcTag {cmd: Vec<String>,}
+impl IcTag {
+	pub fn new(args: Vec<String>) -> IcTag {
+		IcTag { cmd: args }
 	}
 }
-impl ic_execute for ic_tag {
+impl IcExecute for IcTag {
 	type Connection = MysqlConnection;
-	fn exec(&mut self,con: Option<&mut Self::Connection>) -> ic_packet {
+	fn exec(&mut self,con: Option<&mut Self::Connection>) -> IcPacket {
 		let mut delete = false;
 		let mut show = false;
 		let mut create = false;
@@ -44,7 +44,7 @@ impl ic_execute for ic_tag {
 		if show {
 			rstr = show_tags(&con.as_ref().unwrap(),Some(true));
 			//return (if rstr.len() != 0 {Some(rstr.len() as i32)} else {None},if rstr.len() != 0 {Some(rstr)} else {None});
-			return ic_packet::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec()));
+			return IcPacket::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec()));
 		}
 
 		if create {
@@ -76,6 +76,6 @@ impl ic_execute for ic_tag {
 			}
 		}
 		//(Some(4),Some("OK.\n".to_string()))
-		ic_packet::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec()))
+		IcPacket::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec()))
 	}
 }

@@ -1,18 +1,18 @@
 use diesel::MysqlConnection;
-use crate::ichandler::ic_types::ic_packet;
+use crate::ichandler::ic_types::IcPacket;
 use crate::ichandler::lib_backend::show_entries;
 use crate::ichandler::lib_backend::show_dirs;
-use crate::ichandler::ic_types::ic_execute;
+use crate::ichandler::ic_types::IcExecute;
 
-pub struct ic_all { cmd: Vec<String>, }
-impl ic_all {
-	pub fn new(args: Vec<String>) -> ic_all {
-		ic_all { cmd: args }
+pub struct IcAll { cmd: Vec<String>, }
+impl IcAll {
+	pub fn new(args: Vec<String>) -> IcAll {
+		IcAll { cmd: args }
 	}
 }
-impl ic_execute for ic_all {
+impl IcExecute for IcAll {
 	type Connection = MysqlConnection;
-	fn exec(&mut self,con: Option<&mut Self::Connection>) -> ic_packet {
+	fn exec(&mut self,con: Option<&mut Self::Connection>) -> IcPacket {
 		let mut retstr: String;
 		if self.cmd.len() == 1 {
 			retstr = show_dirs(con.as_ref().unwrap(),Some(self.cmd[0].parse::<i32>().unwrap()));
@@ -21,6 +21,6 @@ impl ic_execute for ic_all {
 			retstr = show_dirs(con.as_ref().unwrap(),None);
 			retstr += &show_entries(con.as_ref().unwrap(),Some(false),Some(true),None);
 		}
-		ic_packet::new(Some("OK!".to_string()),Some(retstr.as_bytes().to_vec()))
+		IcPacket::new(Some("OK!".to_string()),Some(retstr.as_bytes().to_vec()))
 	}
 }

@@ -1,18 +1,18 @@
 use crate::ichandler::ic_types::*;
 use diesel::MysqlConnection;
 
-use crate::ichandler::ic_types::ic_packet;
-use crate::ichandler::ic_types::ic_execute;
+use crate::ichandler::ic_types::IcPacket;
+use crate::ichandler::ic_types::IcExecute;
 
-pub struct ic_null {}
-impl ic_null {
-	pub fn new() -> ic_null {
-		ic_null { }
+pub struct IcNull {}
+impl IcNull {
+	pub fn new() -> IcNull {
+		IcNull { }
 	}
 }
-impl ic_execute for ic_null {
+impl IcExecute for IcNull {
 	type Connection = MysqlConnection;
-	fn exec(&mut self,_con: Option<&mut Self::Connection>) -> ic_packet {
-		ic_packet::new_empty()
+	fn exec(&mut self,_con: Option<&mut Self::Connection>) -> IcPacket {
+		IcPacket::new_empty()
 	}
 }

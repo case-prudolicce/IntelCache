@@ -4,21 +4,21 @@ use std::fs;
 use std::thread;
 use std::net::{TcpListener,TcpStream,SocketAddrV4,Ipv4Addr};
 
-use crate::ichandler::ic_types::ic_response;
-use crate::ichandler::ic_types::ic_packet;
-use crate::ichandler::ic_types::ic_connection;
-use crate::ichandler::ic_types::ic_command;
-use crate::ichandler::ic_types::ic_execute;
+use crate::ichandler::ic_types::IcResponse;
+use crate::ichandler::ic_types::IcPacket;
+use crate::ichandler::ic_types::IcConnection;
+use crate::ichandler::ic_types::IcCommand;
+use crate::ichandler::ic_types::IcExecute;
 
 //Server
 pub struct ic_server {}
 impl ic_server {
-	pub fn handle_client(&self,mut c: ic_connection) -> Result<(),Error> {
+	pub fn handle_client(&self,mut c: IcConnection) -> Result<(),Error> {
 		println!("Connection received! {:?} is sending data.", c.addr());
 		loop {
 			let p = c.get_packet();
 			println!("RECV IC_PACKET : {}\n{:?}",(&p).header.as_ref().unwrap_or(&"None".to_string()),(&p).body.as_ref().unwrap().len());
-			let mut icc = ic_command::from_packet(p); 
+			let mut icc = IcCommand::from_packet(p); 
 			//println!("IC_COMMAND: {:?}\n{:?}",icc.cmd,icc.data);
 			let icp = icc.exec(None);
 			if icp.header == None && icp.body == None {
@@ -41,7 +41,7 @@ impl ic_server {
 			match stream {
 				Err(e) => { eprintln!("failed: {}",e) },
 				Ok(stream) => { thread::spawn(  move || {
-						self.handle_client(ic_connection::new(stream)).unwrap_or_else(|error| eprintln!("{:?}",error));
+						self.handle_client(IcConnection::new(stream)).unwrap_or_else(|error| eprintln!("{:?}",error));
 					});
 				},
 			}

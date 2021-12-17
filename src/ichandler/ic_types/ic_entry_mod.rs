@@ -1,12 +1,12 @@
 use diesel::MysqlConnection;
-use crate::ichandler::ic_types::ic_packet;
+use crate::ichandler::ic_types::IcPacket;
 use crate::ichandler::lib_backend::show_entries;
 use crate::ichandler::lib_backend::delete_entry;
-use crate::ichandler::ic_types::ic_execute;
+use crate::ichandler::ic_types::IcExecute;
 use crate::ichandler::lib_backend::make_file_entry;
 use crate::ichandler::lib_backend::make_text_entry;
 use crate::ichandler::lib_backend::establish_connection;
-use crate::ichandler::ic_types::ic_command;
+use crate::ichandler::ic_types::IcCommand;
 use crate::ichandler::lib_backend::get_entry_by_id;
 use crate::ichandler::lib_backend::update_entry;
 
@@ -22,17 +22,17 @@ use tar::Archive;
 
 
 #[derive(Clone)]
-pub struct ic_entry { pub cmd: Vec<String>,pub n: String, pub t: String,pub loc: i32,pub d: Vec<u8> }
-impl ic_entry{
-	pub fn new(args: Vec<String>) -> ic_entry {
-		ic_entry { cmd: args,n:"".to_string(),t:"".to_string(),loc:0,d: Vec::new()}
+pub struct IcEntry { pub cmd: Vec<String>,pub n: String, pub t: String,pub loc: i32,pub d: Vec<u8> }
+impl IcEntry{
+	pub fn new(args: Vec<String>) -> IcEntry {
+		IcEntry { cmd: args,n:"".to_string(),t:"".to_string(),loc:0,d: Vec::new()}
 	}
-	pub fn from_ic_command(icc: ic_command) -> ic_entry {
+	pub fn from_ic_command(icc: IcCommand) -> IcEntry {
 		//println!("ICC @ UNBAKED_ENTRY: {:?}",icc.cmd,icc.data);
-		ic_entry { cmd: icc.cmd.clone(),n:icc.cmd[0].to_owned(),t:icc.cmd[1].to_owned(),loc:if icc.cmd.len() == 7 {icc.cmd[6].parse::<i32>().unwrap()} else {1},d: icc.data }
+		IcEntry { cmd: icc.cmd.clone(),n:icc.cmd[0].to_owned(),t:icc.cmd[1].to_owned(),loc:if icc.cmd.len() == 7 {icc.cmd[6].parse::<i32>().unwrap()} else {1},d: icc.data }
 	}
-	pub fn new_empty() -> ic_entry {
-		ic_entry { cmd: Vec::new(),n:"".to_string(),t:"".to_string(),loc:0,d: Vec::new() }
+	pub fn new_empty() -> IcEntry {
+		IcEntry { cmd: Vec::new(),n:"".to_string(),t:"".to_string(),loc:0,d: Vec::new() }
 	}
 	pub fn bake(&self,data: &[u8]) {
 		println!("Baking {} ({} {}) with data.",self.n,self.t,self.loc);
@@ -44,9 +44,9 @@ impl ic_entry{
 		};
 	}
 }
-impl ic_execute for ic_entry {
+impl IcExecute for IcEntry {
 	type Connection = MysqlConnection;
-	fn exec(&mut self,con: Option<&mut Self::Connection>) -> ic_packet {
+	fn exec(&mut self,con: Option<&mut Self::Connection>) -> IcPacket {
 		let mut get = false;
 		let mut set = false;
 		let mut create = false;
@@ -73,7 +73,7 @@ impl ic_execute for ic_entry {
 				//println!("MAKING ENTRY: {} ({})\n{:?}",&self.cmd[3],"None",&self.d);
 				make_file_entry(con.as_ref().unwrap(),&self.cmd[3],self.d.clone(),None,None);
 			}
-			return ic_packet::new(Some("OK!".to_string()),None)
+			return IcPacket::new(Some("OK!".to_string()),None)
 		}
 		if delete {
 			//"ENTRY DELETE <ID>"
@@ -88,7 +88,7 @@ impl ic_execute for ic_entry {
 				rstr = show_entries(con.as_ref().unwrap(),Some(false),Some(true),None);
 			}
 			//return (Some(rstr.len() as i32),Some(rstr.as_bytes().to_vec()));
-			return ic_packet::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec()));
+			return IcPacket::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec()));
 		}
 		if get {
 			//ENTRY GET 1 file.txt
@@ -115,11 +115,11 @@ impl ic_execute for ic_entry {
 					let ret = fs::read(&self.cmd[3]).unwrap();
 					fs::remove_file(&self.cmd[3]).unwrap();
 					//return (Some(ret.len() as i32),Some([ret.len().to_string().as_bytes(),&[10_u8],&ret].concat()))
-					return ic_packet::new(Some("OK!".to_string()),Some(ret));;
+					return IcPacket::new(Some("OK!".to_string()),Some(ret));;
 					
 				}else if e.type_ == "text" {
 					//return (Some(e.data.len() as i32),Some([e.data.len().to_string().as_bytes(),&[10_u8],&e.data].concat()));
-					return ic_packet::new(Some("OK!".to_string()),Some(e.data));
+					return IcPacket::new(Some("OK!".to_string()),Some(e.data));
 				}
 			}
 		}
@@ -141,6 +141,6 @@ impl ic_execute for ic_entry {
 				block_on(update_entry(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap(),self.d.clone(),Some(&self.cmd[3]),Some(self.cmd[4].parse::<i32>().unwrap()),None));
 			}
 		}
-		ic_packet::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec()))
+		IcPacket::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec()))
 	}
 }

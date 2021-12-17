@@ -1,21 +1,21 @@
 use diesel::MysqlConnection;
-use crate::ichandler::ic_types::ic_packet;
-use crate::ichandler::ic_types::ic_execute;
+use crate::ichandler::ic_types::IcPacket;
+use crate::ichandler::ic_types::IcExecute;
 use crate::ichandler::lib_backend::delete_dir;
 use crate::ichandler::lib_backend::show_dirs;
 use crate::ichandler::lib_backend::create_dir;
 use crate::ichandler::lib_backend::update_dir;
 use crate::ichandler::lib_backend::validate_dir;
 
-pub struct ic_dir { cmd: Vec<String>, }
-impl ic_dir {
-	pub fn new(args: Vec<String>) -> ic_dir {
-		ic_dir { cmd: args }
+pub struct IcDir { cmd: Vec<String>, }
+impl IcDir {
+	pub fn new(args: Vec<String>) -> IcDir {
+		IcDir { cmd: args }
 	}
 }
-impl ic_execute for ic_dir {
+impl IcExecute for IcDir {
 	type Connection = MysqlConnection;
-	fn exec(&mut self,con: Option<&mut Self::Connection>) -> ic_packet {
+	fn exec(&mut self,con: Option<&mut Self::Connection>) -> IcPacket {
 		let mut create = false;
 		let mut set = false;
 		let mut delete = false;
@@ -64,12 +64,12 @@ impl ic_execute for ic_dir {
 		if validate {
 			let n = validate_dir(con.as_ref().unwrap(),self.cmd[1].parse::<i32>().unwrap());
 			if n != None {
-				return ic_packet::new(Some("true".to_string()),Some(n.unwrap().as_bytes().to_vec()));
+				return IcPacket::new(Some("true".to_string()),Some(n.unwrap().as_bytes().to_vec()));
 			} else {
-				return ic_packet::new(Some("false".to_string()),None);
+				return IcPacket::new(Some("false".to_string()),None);
 			}
 			
 		}
-		ic_packet::new(Some("OK!".to_string()),Some(retstr.as_bytes().to_vec()))
+		IcPacket::new(Some("OK!".to_string()),Some(retstr.as_bytes().to_vec()))
 	}
 }

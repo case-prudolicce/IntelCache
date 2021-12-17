@@ -2,25 +2,25 @@ use diesel::MysqlConnection;
 use crate::ichandler::lib_backend::establish_connection;
 use std::fmt::Display;
 use std::fmt;
-use crate::ichandler::ic_types::ic_execute;
-use crate::ichandler::ic_types::ic_null;
-use crate::ichandler::ic_types::ic_all;
-use crate::ichandler::ic_types::ic_dir;
-use crate::ichandler::ic_types::ic_tag;
-use crate::ichandler::ic_types::ic_entry;
-use crate::ichandler::ic_types::ic_packet;
+use crate::ichandler::ic_types::IcExecute;
+use crate::ichandler::ic_types::IcNull;
+use crate::ichandler::ic_types::IcAll;
+use crate::ichandler::ic_types::IcDir;
+use crate::ichandler::ic_types::IcTag;
+use crate::ichandler::ic_types::IcEntry;
+use crate::ichandler::ic_types::IcPacket;
 use std::str;
 
 #[derive(Clone)]
-pub struct ic_command { pub cmd: Vec<String>,pub data: Vec<u8> }
-impl ic_command {
-	pub fn from_packet(p: ic_packet) -> ic_command {
-		let mut proto_iccmd = ic_command { cmd:Vec::new(),data: p.body.unwrap_or(Vec::new()) };
+pub struct IcCommand { pub cmd: Vec<String>,pub data: Vec<u8> }
+impl IcCommand {
+	pub fn from_packet(p: IcPacket) -> IcCommand {
+		let mut proto_iccmd = IcCommand { cmd:Vec::new(),data: p.body.unwrap_or(Vec::new()) };
 		proto_iccmd.from_string(p.header.unwrap_or("".to_string()));
 		proto_iccmd
 	}
-	pub fn new(raw_cmd: String) -> ic_command {
-		let mut proto_iccmd = ic_command { cmd: Vec::new(), data: Vec::new() };
+	pub fn new(raw_cmd: String) -> IcCommand {
+		let mut proto_iccmd = IcCommand { cmd: Vec::new(), data: Vec::new() };
 		proto_iccmd.from_string(raw_cmd);
 		proto_iccmd
 	}
@@ -63,11 +63,11 @@ impl ic_command {
 		retve
 	}
 	
-	pub fn from_formated_vec(input: Vec<String>,d: Option<Vec<u8>>) -> ic_command {
-		ic_command { cmd:input,data: d.unwrap_or(Vec::new()) }
+	pub fn from_formated_vec(input: Vec<String>,d: Option<Vec<u8>>) -> IcCommand {
+		IcCommand { cmd:input,data: d.unwrap_or(Vec::new()) }
 	}
 
-	pub fn parse(&self) -> Box<dyn ic_execute<Connection = MysqlConnection>> {
+	pub fn parse(&self) -> Box<dyn IcExecute<Connection = MysqlConnection>> {
 		//Returns an ic_execute by parsing cmd
 		//0: null
 		//1: dir
@@ -75,7 +75,7 @@ impl ic_command {
 		//3: tag
 		//4: show
 		//-1: exit
-		if self.cmd.len() <= 0 {return Box::new(ic_null::new())}
+		if self.cmd.len() <= 0 {return Box::new(IcNull::new())}
 		let mut return_type = 0;
 		match self.cmd[0].as_str() {
 		"DIR" => return_type = 1,
@@ -87,23 +87,23 @@ impl ic_command {
 		}
 
 		if return_type == 0 {
-			return Box::new(ic_null::new());
+			return Box::new(IcNull::new());
 		} else if return_type == -1 {
-			return Box::new(ic_null::new());
+			return Box::new(IcNull::new());
 		} else if return_type == 1 {
-			return Box::new(ic_dir::new(self.cmd[1..].to_vec()));
+			return Box::new(IcDir::new(self.cmd[1..].to_vec()));
 		} else if return_type == 2 {
-			return Box::new(ic_entry::from_ic_command(self.clone()));
+			return Box::new(IcEntry::from_ic_command(self.clone()));
 		} else if return_type == 3 {
-			return Box::new(ic_tag::new(self.cmd[1..].to_vec()));
+			return Box::new(IcTag::new(self.cmd[1..].to_vec()));
 		} else if return_type == 4 {
-			return Box::new(ic_all::new(self.cmd[1..].to_vec()));
+			return Box::new(IcAll::new(self.cmd[1..].to_vec()));
 		} else {
-			return Box::new(ic_null::new());
+			return Box::new(IcNull::new());
 		}
 	}
 	
-	pub fn to_ic_packet(&self) -> ic_packet {
+	pub fn to_ic_packet(&self) -> IcPacket {
 		let mut s = String::new();
 		for t in &self.cmd {
 			if t.contains(char::is_whitespace) {
@@ -111,17 +111,17 @@ impl ic_command {
 			}else {s.push_str(&(t.to_owned()+" "))}
 		}
 		s = s.trim_end().to_string();
-		ic_packet::new(Some(s),Some(self.clone().data))
+		IcPacket::new(Some(s),Some(self.clone().data))
 	}
 }
-impl ic_execute for ic_command {
+impl IcExecute for IcCommand {
 	type Connection = MysqlConnection;
 	
-	fn exec(&mut self,_con: Option<&mut Self::Connection>) -> ic_packet {
+	fn exec(&mut self,_con: Option<&mut Self::Connection>) -> IcPacket {
 		handle(self.clone())
 	}
 }
-impl Display for ic_command {
+impl Display for IcCommand {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		let mut s = String::new();
 		//println!("ic_command#to_string: cmd is ({:?})",self.cmd);
@@ -134,7 +134,7 @@ impl Display for ic_command {
 }
 
 #[tokio::main]
-pub async fn handle(cmd_opts: ic_command) -> ic_packet {
+pub async fn handle(cmd_opts: IcCommand) -> IcPacket {
 	let mut connection = establish_connection();
 	let mut cmd_parsed = cmd_opts.parse();
 	cmd_parsed.exec(Some(&mut connection))

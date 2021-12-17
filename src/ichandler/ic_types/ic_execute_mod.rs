@@ -1,8 +1,8 @@
 use diesel::MysqlConnection;
-use crate::ichandler::ic_types::ic_packet;
+use crate::ichandler::ic_types::IcPacket;
 
-pub trait ic_execute {
+pub trait IcExecute {
 	type Connection;
 	
-	fn exec(&mut self,con: Option<&mut Self::Connection>) -> ic_packet;
+	fn exec(&mut self,con: Option<&mut Self::Connection>) -> IcPacket;
 }

@@ -1,20 +1,20 @@
-use crate::ichandler::ic_types::ic_packet;
+use crate::ichandler::ic_types::IcPacket;
 use std::net::TcpStream;
 use std::io::{Read,Write};
 
-pub struct ic_connection { pub con: TcpStream,local_buffer: Vec<u8>,final_buffer: Vec<u8>}
-impl ic_connection {
-	pub fn new(c: TcpStream) -> ic_connection {
-		ic_connection { con: c,local_buffer: vec![0;512],final_buffer: Vec::new() }
+pub struct IcConnection { pub con: TcpStream,local_buffer: Vec<u8>,final_buffer: Vec<u8>}
+impl IcConnection {
+	pub fn new(c: TcpStream) -> IcConnection {
+		IcConnection { con: c,local_buffer: vec![0;512],final_buffer: Vec::new() }
 	}
 	
-	pub fn send_packet(&mut self,ic_p: ic_packet) {
+	pub fn send_packet(&mut self,ic_p: IcPacket) {
 		//println!("IC_PACKET: {}\n{:?}",(&ic_p).header.as_ref().unwrap_or(&"".to_string()),ic_p.body.as_ref().unwrap());
 		//println!("PACKED: {:?}",ic_p.pack());
 		self.con.write(&ic_p.pack()).unwrap();
 	}
 	
-	pub fn get_packet(&mut self) -> ic_packet {
+	pub fn get_packet(&mut self) -> IcPacket {
 		let headersize: usize;
 		let bodysize: usize;
 		//let mut header = String::new();
@@ -110,7 +110,7 @@ impl ic_connection {
 			}
 		}
 		//println!("BODY: {:?}",self.final_buffer);
-		ic_packet::new(Some(header),Some(self.final_buffer.clone()))
+		IcPacket::new(Some(header),Some(self.final_buffer.clone()))
 	}
 
 	pub fn addr(&self) -> String {

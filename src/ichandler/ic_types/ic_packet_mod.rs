@@ -1,11 +1,11 @@
 #[derive(Clone)]
-pub struct ic_packet { pub header: Option<String>,pub body: Option<Vec<u8>> }
-impl ic_packet {
-	pub fn new(h: Option<String>, d: Option<Vec<u8>>) -> ic_packet {
-		ic_packet { header: h, body: d }
+pub struct IcPacket { pub header: Option<String>,pub body: Option<Vec<u8>> }
+impl IcPacket {
+	pub fn new(h: Option<String>, d: Option<Vec<u8>>) -> IcPacket {
+		IcPacket { header: h, body: d }
 	}
-	pub fn new_empty() -> ic_packet {
-		ic_packet { header: None, body: None }
+	pub fn new_empty() -> IcPacket {
+		IcPacket { header: None, body: None }
 	}
 	
 	pub fn pack(&self) -> Vec<u8> {
