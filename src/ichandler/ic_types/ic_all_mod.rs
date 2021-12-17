@@ -13,7 +13,7 @@ impl ic_all {
 impl ic_execute for ic_all {
 	type Connection = MysqlConnection;
 	fn exec(&mut self,con: Option<&mut Self::Connection>) -> ic_packet {
-		let mut retstr = "".to_string();
+		let mut retstr: String;
 		if self.cmd.len() == 1 {
 			retstr = show_dirs(con.as_ref().unwrap(),Some(self.cmd[0].parse::<i32>().unwrap()));
 			retstr += &show_entries(con.as_ref().unwrap(),Some(false),Some(true),Some(self.cmd[0].parse::<i32>().unwrap()));

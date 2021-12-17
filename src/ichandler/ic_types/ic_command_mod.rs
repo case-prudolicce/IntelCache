@@ -117,7 +117,7 @@ impl ic_command {
 impl ic_execute for ic_command {
 	type Connection = MysqlConnection;
 	
-	fn exec(&mut self,con: Option<&mut Self::Connection>) -> ic_packet {
+	fn exec(&mut self,_con: Option<&mut Self::Connection>) -> ic_packet {
 		handle(self.clone())
 	}
 }

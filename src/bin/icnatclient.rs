@@ -1,11 +1,8 @@
 use std::str;
 use std::fs;
 use IntelCache::ichandler::ic_client::*;
-use IntelCache::ichandler::ic_types::ic_execute;
-use IntelCache::ichandler::ic_client::ic_client_mode::GET;
-use IntelCache::ichandler::ic_client::ic_client_mode::SEND;
 use std::process;
-use std::io::{stdout,stdin};
+use std::io::{stdin};
 use std::process::Command;
 use std::env;
 pub fn write_entry() -> String {
@@ -17,7 +14,7 @@ pub fn write_entry() -> String {
 }
 
 fn main() {
-	let mut client = ic_client::connect("127.0.0.1").unwrap_or_else(|x| {println!("Failed to connect");process::exit(1)});
+	let mut client = ic_client::connect("127.0.0.1").unwrap_or_else(|_| {println!("Failed to connect");process::exit(1)});
 	let mut input = ic_input::new();
 
 	loop {

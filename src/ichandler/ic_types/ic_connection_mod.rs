@@ -15,9 +15,10 @@ impl ic_connection {
 	}
 	
 	pub fn get_packet(&mut self) -> ic_packet {
-		let mut headersize = 0;
-		let mut bodysize = 0;
-		let mut header = String::new();
+		let headersize: usize;
+		let bodysize: usize;
+		//let mut header = String::new();
+		let header: String;
 		//flush buffers
 		self.local_buffer = vec![0;512];
 		self.final_buffer = Vec::new();

@@ -3,7 +3,6 @@ use std::fmt;
 use std::fs;
 use std::process;
 use std::net::TcpStream;
-use std::{thread, time};
 use std::fmt::Display;
 use std::io::{stdout,stdin,Read,ErrorKind,Error,Write};
 use crate::ichandler::ic_types::{ic_connection,ic_packet,ic_execute,ic_response,ic_command};
@@ -37,10 +36,9 @@ impl ic_input {
 	pub fn prompt(&mut self) -> ic_input_command {
 		//println!("ic_input#prompt: pwd is at {}",self.pwd);
 		print!("{} > ",self.pwdstr);
-		stdout().flush();
+		stdout().flush().unwrap();
 		stdin().read_line(&mut self.input_str).expect("Error reading line");
-		self.input_str = self.input_str.trim_right().to_string();
-		let s = &self.input_str;
+		self.input_str = self.input_str.trim_end().to_string();
 		ic_input_command::from_input(self)
 	}
 	
@@ -93,7 +91,7 @@ impl ic_client {
 			println!("{}",std::str::from_utf8(&sr.body.unwrap_or(Vec::new())).unwrap());
 		},
 		ic_client_mode::GET => {
-			fs::write(c.cmd[2].clone(),sr.body.unwrap());
+			fs::write(c.cmd[2].clone(),sr.body.unwrap()).unwrap();
 		},
 		ic_client_mode::EXIT => {
 			process::exit(1);
@@ -376,7 +374,6 @@ impl ic_input_command<'_> {
 		}
 		_ => return ic_command::from_formated_vec(self.cmd.clone(),None),
 		}
-		ic_command::from_formated_vec(self.cmd.clone(),Some(self.databuff.clone()))
 	}
 
 	fn string_wrap(&self,s: String) -> String {

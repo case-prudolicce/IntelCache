@@ -12,7 +12,7 @@ impl ic_null {
 }
 impl ic_execute for ic_null {
 	type Connection = MysqlConnection;
-	fn exec(&mut self,con: Option<&mut Self::Connection>) -> ic_packet {
+	fn exec(&mut self,_con: Option<&mut Self::Connection>) -> ic_packet {
 		ic_packet::new_empty()
 	}
 }
