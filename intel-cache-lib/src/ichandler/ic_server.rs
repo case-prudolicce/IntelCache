@@ -5,22 +5,27 @@ use std::net::{TcpListener,SocketAddrV4,Ipv4Addr};
 use crate::ichandler::ic_types::IcConnection;
 use crate::ichandler::ic_types::IcCommand;
 use crate::ichandler::ic_types::IcExecute;
+use crate::ichandler::ic_types::IcPacket;
 
 pub struct IcServer {}
 impl IcServer {
 	pub fn handle_client(&self,mut c: IcConnection) -> Result<(),Error> {
 		println!("Connection received! {:?} is sending data.", c.addr());
 		loop {
-			let p = c.get_packet();
-			println!("[DEBUG#IcServer.handle_client] RECIEVING IC_PACKET : {} ({:?})",(&p).header.as_ref().unwrap_or(&"None".to_string()),(&p).body.as_ref().unwrap().len());
-			let mut icc = IcCommand::from_packet(p); 
-			let icp = icc.exec(None);
-			if icp.header == None && icp.body == None {
-				println!("{:?} disconnected.",c.con.peer_addr());
-				c.send_packet(icp);
-				return Ok(());
-			}
-			println!("[DEBUG#IcServer.handle_client] SENDING ICP_PACKET : {}\n{:?}",(&icp).header.as_ref().unwrap_or(&"None".to_string()),(&icp).body.as_ref().unwrap_or(&Vec::new()).len());
+			let p = c.get_packet().unwrap();
+			//println!("[DEBUG#IcServer.handle_client] RECIEVING IC_PACKET : {} ({:?})",(&p).header.as_ref().unwrap_or(&"None".to_string()),(&p).body.as_ref().unwrap().len());
+			let mut icp: IcPacket;
+			let mut icc: IcCommand;
+			if (&p).header.as_ref() != None {
+				icc = IcCommand::from_packet(p.clone()); 
+				icp = icc.exec(None);
+				if (&p).header.as_ref().unwrap() == "EXIT" /*&& icp.body == None*/ {
+					println!("{:?} disconnected.",c.con.peer_addr());
+					c.send_packet(icp);
+					return Ok(());
+				}
+			} else { icp = IcCommand::from_packet(p.clone()).exec(None) }
+			//println!("[DEBUG#IcServer.handle_client] SENDING ICP_PACKET : {} ({:?})",(&icp).header.as_ref().unwrap_or(&"None".to_string()),(&icp).body.as_ref().unwrap_or(&Vec::new()).len());
 			c.send_packet(icp);
 		}
 	}

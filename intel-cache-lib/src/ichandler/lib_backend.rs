@@ -11,6 +11,7 @@ pub mod models;
 pub mod schema;
 
 use self::models::{EntryTag,NewEntryTag,NewEntry, Entry, NewDirTag, DirTag, Tag, NewTag, Dir, NewDir};
+use crate::ichandler::ic_types::IcError;
 
 pub fn establish_connection() -> MysqlConnection {
 	dotenv().ok();
@@ -263,7 +264,7 @@ pub fn show_entries(conn: &MysqlConnection, _display: Option<bool>, shortened: O
 	retstr
 }
 
-pub fn delete_entry(conn: &MysqlConnection,entryid: i32) {
+pub fn delete_entry(conn: &MysqlConnection,entryid: i32) -> Result<(),IcError>{
 	use self::schema::entry::dsl::*;
 	if get_entry_by_id(conn,entryid) != None {
 		let e = get_entry_by_id(conn,entryid).unwrap();
@@ -272,8 +273,8 @@ pub fn delete_entry(conn: &MysqlConnection,entryid: i32) {
 			block_on(ipfsclient.pin_rm(str::from_utf8(&e.data).unwrap(),true)).unwrap();
 		} 
 		diesel::delete(entry.filter(id.eq(entryid))).execute(conn).unwrap();
-	}
-}
+		return Ok(());
+	} else { return Err(IcError("Entry id not found".to_string())) } }
 
 pub fn tag_entry(conn: &MysqlConnection, entry_id: i32,tag_id: i32) -> EntryTag {
 	use schema::entry_tags;

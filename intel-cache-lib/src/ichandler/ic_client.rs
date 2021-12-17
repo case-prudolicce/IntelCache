@@ -53,7 +53,7 @@ impl IcInput {
 		
 		
 		client.con.send_packet(icp.to_ic_command().to_ic_packet());
-		let resp = client.con.get_packet();
+		let resp = client.con.get_packet().unwrap();
 		if resp.header.as_ref().unwrap() == "true" {
 			self.pwdstr = str::from_utf8(&resp.body.unwrap()).unwrap().to_string();
 			self.pwd = pwdid;
@@ -77,34 +77,40 @@ impl IcClient {
 	
 	pub fn exec_cmd(&mut self,c: &mut IcInputCommand) {
 		self.update_mode(c);
-		let mut sr: IcPacket = IcPacket::new_empty();
-		if self.mode != IcClientMode::NONE {
-			println!("[DEBUG#IcClient.exec_cmd] SENDING IC_PACKET : {} ({:?})",c.to_ic_command().to_ic_packet().header.unwrap_or("None".to_string()),c.to_ic_command().to_ic_packet().body.unwrap().len());
-			self.con.send_packet(c.to_ic_command().to_ic_packet()); 
-			sr = self.con.get_packet();
-			println!("[DEBUG#IcClient.exec_cmd] RECIEVING IC_PACKET : {} ({:?})",(&sr).header.as_ref().unwrap_or(&"None".to_string()),(&sr).body.as_ref().unwrap_or(&Vec::new()).len());
-		}
-		match self.mode {
-		IcClientMode::CAT => {
-			println!("{}",std::str::from_utf8(&sr.body.unwrap_or(Vec::new())).unwrap());
-		},
-		IcClientMode::GET => {
-			fs::write(c.cmd[2].clone(),sr.body.unwrap()).unwrap();
-		},
-		IcClientMode::EXIT => {
+		//Check connection
+		if self.con.check_connection() {
+			let mut sr: IcPacket = IcPacket::new_empty();
+			if self.mode != IcClientMode::NONE {
+				//println!("[DEBUG#IcClient.exec_cmd] SENDING IC_PACKET : {} ({:?})",c.to_ic_command().to_ic_packet().header.unwrap_or("None".to_string()),c.to_ic_command().to_ic_packet().body.unwrap().len());
+				self.con.send_packet(c.to_ic_command().to_ic_packet()); 
+				sr = self.con.get_packet().unwrap();
+				//println!("[DEBUG#IcClient.exec_cmd] RECIEVING IC_PACKET : {} ({:?})",(&sr).header.as_ref().unwrap_or(&"None".to_string()),(&sr).body.as_ref().unwrap_or(&Vec::new()).len());
+			}
+			match self.mode {
+			IcClientMode::CAT => {
+				println!("{}",std::str::from_utf8(&sr.body.unwrap_or(Vec::new())).unwrap());
+			},
+			IcClientMode::GET => {
+				fs::write(c.cmd[2].clone(),sr.body.unwrap()).unwrap();
+			},
+			IcClientMode::EXIT => {
+				process::exit(1);
+			},
+			IcClientMode::NONE => {
+				//println!("[DEBUG#IcClient.exec_cmd] Command putted client to NONE mode, not sending packets");
+				if c.cmd[0] == "cd" {
+					let result = if c.cmd.len() > 1 {
+						c.ref_in.set_pwd(str::parse::<i32>(&c.cmd[1]).unwrap_or(-1),self)
+					} else {c.ref_in.set_pwd(0,self)};
+					if !result {println!("Not set!\n")} else {println!("Set!\n")};
+				} 
+			},
+			_ => { },
+			};
+		} else {
+			println!("Server closed.");
 			process::exit(1);
-		},
-		IcClientMode::NONE => {
-			println!("[DEBUG#IcClient.exec_cmd] Command putted client to NONE mode, not sending packets");
-			if c.cmd[0] == "cd" {
-				let result = if c.cmd.len() > 1 {
-					c.ref_in.set_pwd(str::parse::<i32>(&c.cmd[1]).unwrap_or(-1),self)
-				} else {c.ref_in.set_pwd(0,self)};
-				if !result {println!("Not set!\n")} else {println!("Set!\n")};
-			} 
-		},
-		_ => { },
-		};
+		}
 	}
 
 	pub fn update_mode(&mut self,c: &IcInputCommand) {
@@ -333,7 +339,7 @@ impl IcInputCommand<'_> {
 		},
 		"exit" => {
 			fmt_vec.push("EXIT".to_string());
-			return IcCommand::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
+			return IcCommand::from_formated_vec(fmt_vec,None);
 		}
 		_ => return IcCommand::from_formated_vec(self.cmd.clone(),None),
 		}

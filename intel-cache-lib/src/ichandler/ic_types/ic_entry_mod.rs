@@ -72,7 +72,11 @@ impl IcExecute for IcEntry {
 		}
 		if delete {
 			if self.cmd.len() == 3 {
-				delete_entry(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap());
+				let res = delete_entry(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap());
+				match res {
+				Ok(e) => return IcPacket::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec())),
+				Err(err) => return IcPacket::new(Some("Err.".to_string()),None),
+				}
 			}
 		}
 		if show {

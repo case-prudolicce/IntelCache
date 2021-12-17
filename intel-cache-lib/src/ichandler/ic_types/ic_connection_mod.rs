@@ -1,4 +1,4 @@
-use crate::ichandler::ic_types::IcPacket;
+use crate::ichandler::ic_types::{IcPacket,IcError};
 use std::net::TcpStream;
 use std::io::{Read,Write};
 
@@ -8,12 +8,15 @@ impl IcConnection {
 		IcConnection { con: c,local_buffer: vec![0;512],final_buffer: Vec::new() }
 	}
 	
-	pub fn send_packet(&mut self,ic_p: IcPacket) {
-		self.con.write(&ic_p.pack()).unwrap();
+	pub fn send_packet(&mut self,ic_p: IcPacket) -> Result<(),IcError> {
+		return match self.con.write(&ic_p.pack()) {
+		Ok(_e) => Ok(()),
+		Err(_err) => Err(IcError("Error sending IcPacket.".to_string())),
+		}
 	}
 	
-	pub fn get_packet(&mut self) -> IcPacket {
-		let headersize: usize;
+	pub fn get_packet(&mut self) -> Result<IcPacket,IcError> {
+		let mut headersize: usize;
 		let bodysize: usize;
 		let header: String;
 		self.local_buffer = vec![0;512];
@@ -26,7 +29,11 @@ impl IcConnection {
 			sstr.push(b as char);
 			buffer_pointer += 1;
 		}
-		headersize = sstr.parse::<i32>().unwrap() as usize;
+
+		match sstr.parse::<i32>() {
+		Ok(e) => headersize = e as usize,
+		Err(_err) => return Err(IcError("Error getting IcPacket.".to_string())),
+		}
 		
 		//Get header
 		if headersize <= 512 {
@@ -97,10 +104,22 @@ impl IcConnection {
 				
 			}
 		}
-		IcPacket::new(Some(header),Some(self.final_buffer.clone()))
+		Ok(IcPacket::new(Some(header),Some(self.final_buffer.clone())))
 	}
 
 	pub fn addr(&self) -> String {
 		self.con.peer_addr().unwrap().to_string()
+	}
+	
+	pub fn check_connection(&mut self) -> bool {
+		return match self.send_packet(IcPacket::new_empty()) {
+		Ok(_) => {
+			match self.get_packet() {
+			Ok(_) => true,
+			Err(_) => false,
+			}
+		},
+		Err(_) => {false},
+		}
 	}
 }

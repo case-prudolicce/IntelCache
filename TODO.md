@@ -9,9 +9,8 @@
 # Before 1.0
 * README.md
 ## Hardening
-* rm <wrong id> will return "OK!" (Should return "Err.").
-* crash if server reboots
-* ls has 512 empty buffer
+* rm has 512 empty buffer sent
+* ls has 512 empty buffer sent
 ### Needed features
 * Native client: raw cmd
 ## Post Hardening Cleanup
