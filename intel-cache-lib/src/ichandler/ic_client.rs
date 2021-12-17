@@ -64,7 +64,7 @@ impl IcInput {
 	
 }
 
-pub struct IcClient { con: IcConnection,pub mode: IcClientMode }
+pub struct IcClient { con: IcConnection,mode: IcClientMode }
 impl IcClient {
 	pub fn connect(ip: &str) -> Result<IcClient,Error> {
 		let con = TcpStream::connect(ip.to_owned()+":64209");
@@ -113,7 +113,7 @@ impl IcClient {
 		}
 	}
 
-	pub fn update_mode(&mut self,c: &IcInputCommand) {
+	fn update_mode(&mut self,c: &IcInputCommand) {
 		self.mode = match c.cmd[0].as_ref() {
 		"new" | "set" | "mv" | "import" => IcClientMode::SEND,
 		"exit" | "quit" => IcClientMode::EXIT,
