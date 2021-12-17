@@ -76,6 +76,18 @@ fn main() {
 				input_cmd.cmd[0] = "set".to_string();
 			}
 		},
+		"rm" => { //Verify removed id (To be implemented somewhere else)
+			if input_cmd.cmd.len() >= 2 {
+				if input_cmd.cmd[1].parse::<i32>().unwrap_or(-1) == -1
+				{
+					println!("{} is an invalid entry id.",input_cmd.cmd[1]);
+					continue;
+				}
+			} else {
+				println!("rm requires an entry id.");
+				continue;
+			}
+		},
 		_ => {}
 		};
 		client.exec_cmd(&mut input_cmd);

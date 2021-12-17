@@ -84,31 +84,33 @@ impl IcExecute for IcEntry {
 			return IcPacket::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec()));
 		}
 		if get {
-			let e = get_entry_by_id(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap());
-			
-			if self.cmd.len() == 4 {
-				if e.type_ == "ipfs_file" {
-					let client = IpfsClient::default();
-					match block_on(client
-					    .get(str::from_utf8(&e.data).unwrap())
-					    .map_ok(|chunk| chunk.to_vec())
-					    .try_concat())
-					{
-					    Ok(res) => {
-						fs::write(&self.cmd[3],res).unwrap();
+			if get_entry_by_id(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap()) != None {
+				let e = get_entry_by_id(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap()).unwrap();
+				
+				if self.cmd.len() == 4 {
+					if e.type_ == "ipfs_file" {
+						let client = IpfsClient::default();
+						match block_on(client
+						    .get(str::from_utf8(&e.data).unwrap())
+						    .map_ok(|chunk| chunk.to_vec())
+						    .try_concat())
+						{
+						    Ok(res) => {
+							fs::write(&self.cmd[3],res).unwrap();
 
-					    }
-					    Err(e) => eprintln!("error getting file: {}", e)
+						    }
+						    Err(e) => eprintln!("error getting file: {}", e)
+						}
+						let mut archive = Archive::new(File::open(&self.cmd[3]).unwrap());
+						archive.unpack(".").unwrap();
+						fs::rename(str::from_utf8(&e.data).unwrap(),&self.cmd[3]).unwrap();
+						let ret = fs::read(&self.cmd[3]).unwrap();
+						fs::remove_file(&self.cmd[3]).unwrap();
+						return IcPacket::new(Some("OK!".to_string()),Some(ret));
+						
+					}else if e.type_ == "text" {
+						return IcPacket::new(Some("OK!".to_string()),Some(e.data));
 					}
-					let mut archive = Archive::new(File::open(&self.cmd[3]).unwrap());
-					archive.unpack(".").unwrap();
-					fs::rename(str::from_utf8(&e.data).unwrap(),&self.cmd[3]).unwrap();
-					let ret = fs::read(&self.cmd[3]).unwrap();
-					fs::remove_file(&self.cmd[3]).unwrap();
-					return IcPacket::new(Some("OK!".to_string()),Some(ret));
-					
-				}else if e.type_ == "text" {
-					return IcPacket::new(Some("OK!".to_string()),Some(e.data));
 				}
 			}
 		}

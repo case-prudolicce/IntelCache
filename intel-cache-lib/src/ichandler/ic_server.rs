@@ -12,7 +12,7 @@ impl IcServer {
 		println!("Connection received! {:?} is sending data.", c.addr());
 		loop {
 			let p = c.get_packet();
-			//println!("RECV IC_PACKET : {}\n{:?}",(&p).header.as_ref().unwrap_or(&"None".to_string()),(&p).body.as_ref().unwrap().len());
+			println!("[DEBUG#IcServer.handle_client] RECIEVING IC_PACKET : {} ({:?})",(&p).header.as_ref().unwrap_or(&"None".to_string()),(&p).body.as_ref().unwrap().len());
 			let mut icc = IcCommand::from_packet(p); 
 			let icp = icc.exec(None);
 			if icp.header == None && icp.body == None {
@@ -20,7 +20,7 @@ impl IcServer {
 				c.send_packet(icp);
 				return Ok(());
 			}
-			//println!("SEND ICP_PACKET : {}\n{:?}",(&icp).header.as_ref().unwrap_or(&"None".to_string()),(&icp).body.as_ref().unwrap_or(&Vec::new()).len());
+			println!("[DEBUG#IcServer.handle_client] SENDING ICP_PACKET : {}\n{:?}",(&icp).header.as_ref().unwrap_or(&"None".to_string()),(&icp).body.as_ref().unwrap_or(&Vec::new()).len());
 			c.send_packet(icp);
 		}
 	}

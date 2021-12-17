@@ -46,6 +46,7 @@ pub struct NewDirTag {
 }
 
 #[derive(Queryable)]
+#[derive(PartialEq)]
 pub struct Entry {
 	pub id: i32,
 	pub name: String,

@@ -265,12 +265,14 @@ pub fn show_entries(conn: &MysqlConnection, _display: Option<bool>, shortened: O
 
 pub fn delete_entry(conn: &MysqlConnection,entryid: i32) {
 	use self::schema::entry::dsl::*;
-	let e = get_entry_by_id(conn,entryid);
-	if e.type_ == "ipfs_file" {
-		let ipfsclient = IpfsClient::default();
-		block_on(ipfsclient.pin_rm(str::from_utf8(&e.data).unwrap(),true)).unwrap();
-	} 
-	diesel::delete(entry.filter(id.eq(entryid))).execute(conn).unwrap();
+	if get_entry_by_id(conn,entryid) != None {
+		let e = get_entry_by_id(conn,entryid).unwrap();
+		if e.type_ == "ipfs_file" {
+			let ipfsclient = IpfsClient::default();
+			block_on(ipfsclient.pin_rm(str::from_utf8(&e.data).unwrap(),true)).unwrap();
+		} 
+		diesel::delete(entry.filter(id.eq(entryid))).execute(conn).unwrap();
+	}
 }
 
 pub fn tag_entry(conn: &MysqlConnection, entry_id: i32,tag_id: i32) -> EntryTag {
@@ -345,25 +347,30 @@ pub async fn update_entry(conn: &MysqlConnection,uid: i32,dt: Vec<u8>,n: Option<
 	use schema::entry;
 
 	let ipfsclient = IpfsClient::default();
-	let e = get_entry_by_id(conn,uid);
-	
-	println!("size: {}",dt.len());
-	if dt.len() < 65535 {
-		diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::data.eq(&dt),entry::type_.eq("text"),entry::name.eq(n.unwrap_or(&e.name)),entry::loc.eq(l.unwrap_or(e.loc)))).execute(conn).expect("Error updating entry.");
-	} else {
-		let mut hash = "NONE".to_string();
-		match block_on(ipfsclient.add(Cursor::new(dt))) {
-			Ok(res) => hash = res.hash,
-			Err(_e) => eprintln!("error adding file to ipfs.")
+	if get_entry_by_id(conn,uid) != None {
+		let e = get_entry_by_id(conn,uid).unwrap();
+		
+		if dt.len() < 65535 {
+			diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::data.eq(&dt),entry::type_.eq("text"),entry::name.eq(n.unwrap_or(&e.name)),entry::loc.eq(l.unwrap_or(e.loc)))).execute(conn).expect("Error updating entry.");
+		} else {
+			let mut hash = "NONE".to_string();
+			match block_on(ipfsclient.add(Cursor::new(dt))) {
+				Ok(res) => hash = res.hash,
+				Err(_e) => eprintln!("error adding file to ipfs.")
+			}
+			diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::data.eq(hash.as_bytes()),entry::type_.eq("text"),entry::name.eq(n.unwrap_or(&e.name)),entry::loc.eq(l.unwrap_or(e.loc)))).execute(conn).expect("Error updating entry.");
 		}
-		diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::data.eq(hash.as_bytes()),entry::type_.eq("text"),entry::name.eq(n.unwrap_or(&e.name)),entry::loc.eq(l.unwrap_or(e.loc)))).execute(conn).expect("Error updating entry.");
 	}
 }
 
-pub fn get_entry_by_id(conn: &MysqlConnection,entryid: i32) -> Entry {
+pub fn get_entry_by_id(conn: &MysqlConnection,entryid: i32) -> Option<Entry> {
 	use schema::entry;
 	
-	entry::table.filter(entry::id.eq(entryid)).get_result::<Entry>(conn).unwrap()
+	let r = entry::table.filter(entry::id.eq(entryid)).get_result::<Entry>(conn);
+	return match r {
+		Ok(entry) => Some(entry),
+		Err(e) => None,
+	} 
 }
 
 pub fn validate_dir(conn: &MysqlConnection,dirid: i32) -> Option<String> {
