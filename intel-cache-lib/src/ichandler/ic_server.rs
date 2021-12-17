@@ -6,23 +6,21 @@ use crate::ichandler::ic_types::IcConnection;
 use crate::ichandler::ic_types::IcCommand;
 use crate::ichandler::ic_types::IcExecute;
 
-//Server
 pub struct IcServer {}
 impl IcServer {
 	pub fn handle_client(&self,mut c: IcConnection) -> Result<(),Error> {
 		println!("Connection received! {:?} is sending data.", c.addr());
 		loop {
 			let p = c.get_packet();
-			println!("RECV IC_PACKET : {}\n{:?}",(&p).header.as_ref().unwrap_or(&"None".to_string()),(&p).body.as_ref().unwrap().len());
+			//println!("RECV IC_PACKET : {}\n{:?}",(&p).header.as_ref().unwrap_or(&"None".to_string()),(&p).body.as_ref().unwrap().len());
 			let mut icc = IcCommand::from_packet(p); 
-			//println!("IC_COMMAND: {:?}\n{:?}",icc.cmd,icc.data);
 			let icp = icc.exec(None);
 			if icp.header == None && icp.body == None {
 				println!("{:?} disconnected.",c.con.peer_addr());
 				c.send_packet(icp);
 				return Ok(());
 			}
-			println!("SEND ICP_PACKET : {}\n{:?}",(&icp).header.as_ref().unwrap_or(&"None".to_string()),(&icp).body.as_ref().unwrap_or(&Vec::new()).len());
+			//println!("SEND ICP_PACKET : {}\n{:?}",(&icp).header.as_ref().unwrap_or(&"None".to_string()),(&icp).body.as_ref().unwrap_or(&Vec::new()).len());
 			c.send_packet(icp);
 		}
 	}

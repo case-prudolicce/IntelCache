@@ -43,24 +43,20 @@ impl IcExecute for IcTag {
 
 		if show {
 			rstr = show_tags(&con.as_ref().unwrap(),Some(true));
-			//return (if rstr.len() != 0 {Some(rstr.len() as i32)} else {None},if rstr.len() != 0 {Some(rstr)} else {None});
 			return IcPacket::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec()));
 		}
 
 		if create {
-			//CREATE <TAG>
 			if self.cmd.len() == 2 {
 				create_tag(&con.as_ref().unwrap(), &self.cmd[1]);
 			}
 		}
 
 		if tagdir == 1{
-			//DIR <DIRID> <TAGID>
 			if self.cmd.len() == 3 {
 				tag_dir(&con.as_ref().unwrap(), (&self.cmd[1]).parse::<i32>().unwrap(),(&self.cmd[2]).parse::<i32>().unwrap());
 			}
 		} else if tagdir == -1 {
-			//UNDIR <DIRID> <TAGID>
 			if self.cmd.len() == 3 {
 				untag_dir(&con.as_ref().unwrap(), (&self.cmd[1]).parse::<i32>().unwrap(),(&self.cmd[2]).parse::<i32>().unwrap());
 			}
@@ -75,7 +71,6 @@ impl IcExecute for IcTag {
 				untag_entry(&con.as_ref().unwrap(), (&self.cmd[1]).parse::<i32>().unwrap(),(&self.cmd[2]).parse::<i32>().unwrap());
 			}
 		}
-		//(Some(4),Some("OK.\n".to_string()))
 		IcPacket::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec()))
 	}
 }

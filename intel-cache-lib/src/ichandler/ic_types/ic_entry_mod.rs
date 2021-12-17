@@ -28,7 +28,6 @@ impl IcEntry{
 		IcEntry { cmd: args,n:"".to_string(),t:"".to_string(),loc:0,d: Vec::new()}
 	}
 	pub fn from_ic_command(icc: IcCommand) -> IcEntry {
-		//println!("ICC @ UNBAKED_ENTRY: {:?}",icc.cmd,icc.data);
 		IcEntry { cmd: icc.cmd.clone(),n:icc.cmd[0].to_owned(),t:icc.cmd[1].to_owned(),loc:if icc.cmd.len() == 7 {icc.cmd[6].parse::<i32>().unwrap()} else {1},d: icc.data }
 	}
 	pub fn new_empty() -> IcEntry {
@@ -64,19 +63,14 @@ impl IcExecute for IcEntry {
 		}
 		
 		if create {
-			//"ENTRY CREATE <TYPE> <NAME> <SIZE> UNDER <LOC>"
-			//Data
 			if (self.cmd.len() as i32) >= 7 {
-				//println!("MAKING ENTRY: {} ({:?})\n{:?}",&self.cmd[3],Some(str::parse::<i32>(&self.cmd[5]).unwrap_or(1)),&self.d);
 				make_file_entry(con.as_ref().unwrap(),&self.cmd[3],self.d.clone(),Some(str::parse::<i32>(&self.cmd[6]).unwrap()),None);
 			} else {
-				//println!("MAKING ENTRY: {} ({})\n{:?}",&self.cmd[3],"None",&self.d);
 				make_file_entry(con.as_ref().unwrap(),&self.cmd[3],self.d.clone(),None,None);
 			}
 			return IcPacket::new(Some("OK!".to_string()),None)
 		}
 		if delete {
-			//"ENTRY DELETE <ID>"
 			if self.cmd.len() == 3 {
 				delete_entry(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap());
 			}
@@ -87,11 +81,9 @@ impl IcExecute for IcEntry {
 			} else {
 				rstr = show_entries(con.as_ref().unwrap(),Some(false),Some(true),None);
 			}
-			//return (Some(rstr.len() as i32),Some(rstr.as_bytes().to_vec()));
 			return IcPacket::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec()));
 		}
 		if get {
-			//ENTRY GET 1 file.txt
 			let e = get_entry_by_id(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap());
 			
 			if self.cmd.len() == 4 {
@@ -113,19 +105,14 @@ impl IcExecute for IcEntry {
 					fs::rename(str::from_utf8(&e.data).unwrap(),&self.cmd[3]).unwrap();
 					let ret = fs::read(&self.cmd[3]).unwrap();
 					fs::remove_file(&self.cmd[3]).unwrap();
-					//return (Some(ret.len() as i32),Some([ret.len().to_string().as_bytes(),&[10_u8],&ret].concat()))
 					return IcPacket::new(Some("OK!".to_string()),Some(ret));
 					
 				}else if e.type_ == "text" {
-					//return (Some(e.data.len() as i32),Some([e.data.len().to_string().as_bytes(),&[10_u8],&e.data].concat()));
 					return IcPacket::new(Some("OK!".to_string()),Some(e.data));
 				}
 			}
 		}
 		if set {
-			//"ENTRY SET <ID> [<NEW NAME>] [<NEW LOC>"]
-			//"ENTRY SET <ID> [<NEW LOC>"]
-			//Data
 			if self.cmd.len() == 3 {
 				block_on(update_entry(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap(),self.d.clone(),None,None,None));
 			} else if self.cmd.len() == 4 {
@@ -136,7 +123,6 @@ impl IcExecute for IcEntry {
 					block_on(update_entry(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap(),self.d.clone(),None,Some(self.cmd[3].parse::<i32>().unwrap()),None));
 				}
 			} else if self.cmd.len() == 5 {
-				//new name comes after
 				block_on(update_entry(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap(),self.d.clone(),Some(&self.cmd[3]),Some(self.cmd[4].parse::<i32>().unwrap()),None));
 			}
 		}

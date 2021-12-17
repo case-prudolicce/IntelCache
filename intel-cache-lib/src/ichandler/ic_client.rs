@@ -10,8 +10,8 @@ use crate::ichandler::ic_types::{IcConnection,IcPacket,IcCommand};
 #[derive(Debug)]
 #[derive(PartialEq)]
 pub enum IcClientMode {
-	GET, //To local file
-	CAT, //To stdout
+	GET, 
+	CAT, 
 	SEND,
 	EXIT,
 	NONE,
@@ -30,7 +30,7 @@ impl IcInput {
 	}
 	pub fn flush(&mut self) {
 		self.input_str = String::new();
-		self.fmt_str = Vec::new();//vec!["".to_string();512];
+		self.fmt_str = Vec::new();
 	}
 	
 	pub fn prompt(&mut self) -> IcInputCommand {
@@ -50,8 +50,8 @@ impl IcInput {
 		p.push(pwdid.to_string());
 		let icp = IcInputCommand::from_vec(self,p);
 		
-		//-> DIR VERIFY <DIRID>
-		//<- true/false {Dir name/None}
+		
+		
 		client.con.send_packet(icp.to_ic_command().to_ic_packet());
 		let resp = client.con.get_packet();
 		if resp.header.as_ref().unwrap() == "true" {
@@ -77,10 +77,9 @@ impl IcClient {
 	
 	pub fn exec_cmd(&mut self,c: &mut IcInputCommand) {
 		self.update_mode(c);
-		//println!("CLIENT MODE: {:?}",self.mode);
-		println!("SEND IC_PACKET : {}\n{:?}",c.to_ic_command().to_ic_packet().header.unwrap_or("None".to_string()),c.to_ic_command().to_ic_packet().body.unwrap().len());
+		//println!("SEND IC_PACKET : {}\n{:?}",c.to_ic_command().to_ic_packet().header.unwrap_or("None".to_string()),c.to_ic_command().to_ic_packet().body.unwrap().len());
 		let mut sr: IcPacket = IcPacket::new_empty();
-		println!("RECV IC_PACKET : {}\n{:?}",(&sr).header.as_ref().unwrap_or(&"None".to_string()),(&sr).body.as_ref().unwrap_or(&Vec::new()).len());
+		//println!("RECV IC_PACKET : {}\n{:?}",(&sr).header.as_ref().unwrap_or(&"None".to_string()),(&sr).body.as_ref().unwrap_or(&Vec::new()).len());
 		if self.mode != IcClientMode::NONE {
 			self.con.send_packet(c.to_ic_command().to_ic_packet()); 
 			sr = self.con.get_packet();
@@ -113,7 +112,7 @@ impl IcClient {
 		"exit" | "quit" => IcClientMode::EXIT,
 		"cd" => IcClientMode::NONE,
 		"get" => IcClientMode::GET,
-		_ => IcClientMode::CAT, //rm,ls
+		_ => IcClientMode::CAT, 
 		}
 	}
 }
@@ -121,9 +120,9 @@ impl IcClient {
 pub struct IcInputCommand<'a> { pub cmd: Vec<String>, pub databuff: Vec<u8>,pub ref_in: &'a mut IcInput }
 impl IcInputCommand<'_> {
 	pub fn from_input(input: &mut IcInput) -> IcInputCommand {
-		//format the input
-		//check for ((tokens That are included between these))
-		//If found, concat to one str
+		
+		
+		
 		let mut con = false;
 		let mut concatenated_str = String::new();
 		let mut fcmd = Vec::new();
@@ -158,9 +157,6 @@ impl IcInputCommand<'_> {
 		IcInputCommand { cmd:fcmd, databuff: vec![0;512],ref_in: input }
 	}
 	pub fn from_vec<'a>(input: &'a mut IcInput,v: Vec<String>) -> IcInputCommand<'a> {
-		//format the input
-		//check for ((tokens That are included between these))
-		//If found, concat to one str
 		let mut con = false;
 		let mut concatenated_str = String::new();
 		let mut fcmd = Vec::new();
@@ -202,10 +198,6 @@ impl IcInputCommand<'_> {
 			fmt_vec.push("CREATE".to_string());
 			fmt_vec.push(if self.databuff.len() > 65535 {"ipfs_file".to_string()} else {"text".to_string()});
 			if self.cmd[0] == "new" {
-				/*	new [<name>] [UNDER <dir id>]
-					-------------------------------
-					CREATE <TYPE> <NAME> <SIZE> UNDER <LOC OR PWD>"
-					<DATA>*/
 				if self.cmd.len() >= 2 {
 					fmt_vec.push(self.cmd[1].clone());
 					fmt_vec.push(self.databuff.len().to_string());
@@ -220,8 +212,6 @@ impl IcInputCommand<'_> {
 			return IcCommand::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
 		},
 		"get" => {
-			/*	GET 11 [<name>]
-				ENTRY GET 11 <name>*/
 			fmt_vec.push("ENTRY".to_string());
 			fmt_vec.push("GET".to_string());
 			fmt_vec.push(self.string_wrap(self.cmd[1].clone()));
@@ -229,11 +219,6 @@ impl IcInputCommand<'_> {
 			return IcCommand::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
 		},
 		"ls" => {
-			/*	SHOW <Dir id>
-				same as 
-				DIR SHOW <ID>
-				and
-				ENTRY SHOW <ID> */
 			if self.cmd.len() >= 2 {
 				if self.cmd[1].parse::<i32>().unwrap_or(-1) == -1 {
 					match self.cmd[1].chars().nth(0).unwrap() {
@@ -260,27 +245,18 @@ impl IcInputCommand<'_> {
 			return IcCommand::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
 		},
 		"rm" => {
-			/*	ENTRY DELETE <Dir id> */
 			fmt_vec.push("ENTRY".to_string());
 			fmt_vec.push("DELETE".to_string());
 			fmt_vec.push(self.cmd[1].clone());
 			return IcCommand::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
 		},
 		"set" => {
-			/*	set <eid> <newname>
-				ENTRY SET <entry id> <newname> */
 			fmt_vec.push("ENTRY".to_string());
 			fmt_vec.push("SET".to_string());
 			fmt_vec.push(self.cmd[1].clone());
 			return IcCommand::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
 		},
 		"mv" => {
-			/*	mv <ID>[/] <newdir>
-				DIR MOVE <dirid> <newdirid>
-				OR
-				ENTRY MOVE <entryid> <dirid>
-			*/
-			//IF ending with /
 			if self.cmd[1].chars().last().unwrap() == '/' {
 				fmt_vec.push("DIR".to_string());
 				fmt_vec.push("SET".to_string());
@@ -296,9 +272,6 @@ impl IcInputCommand<'_> {
 			return IcCommand::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
 		},
 		"mkdir" => {
-			/*	mkdir 
-				DIR CREATE ((name)) UNDER <DIRID>
-			*/
 			fmt_vec.push("DIR".to_string());
 			fmt_vec.push("CREATE".to_string());
 			fmt_vec.push(self.cmd[1].clone());
@@ -307,17 +280,12 @@ impl IcInputCommand<'_> {
 			return IcCommand::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
 		},
 		"rmdir" => {
-			/*	rmdir dirid
-				DIR DELETE ((name)) UNDER <DIRID>
-			*/
 			fmt_vec.push("DIR".to_string());
 			fmt_vec.push("DELETE".to_string());
 			fmt_vec.push(self.cmd[1].clone());
 			return IcCommand::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
 		},
 		"tag" => {
-			/*	tag 10[/] <tagid>
-			*/
 			if self.cmd[1].chars().last().unwrap() == '/' {
 				fmt_vec.push("TAG".to_string());
 				fmt_vec.push("DIR".to_string());
@@ -343,25 +311,20 @@ impl IcInputCommand<'_> {
 				fmt_vec.push(self.cmd[1].clone());
 				fmt_vec.push(self.cmd[2].clone());
 			}
-			/*	untag 10[/] <tagid>
-			*/
 			return IcCommand::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
 		},
 		"showtags" => {
-			/*	showtags	*/
 			fmt_vec.push("TAG".to_string());
 			fmt_vec.push("SHOW".to_string());
 			return IcCommand::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
 		},
 		"mktag" => {
-			/*	showtags	*/
 			fmt_vec.push("TAG".to_string());
 			fmt_vec.push("CREATE".to_string());
 			fmt_vec.push(self.cmd[1].clone());
 			return IcCommand::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
 		},
 		"rmtag" => {
-			/*	showtags	*/
 			fmt_vec.push("TAG".to_string());
 			fmt_vec.push("DELETE".to_string());
 			fmt_vec.push(self.cmd[1].clone());

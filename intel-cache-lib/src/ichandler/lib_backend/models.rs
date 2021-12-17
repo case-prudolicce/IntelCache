@@ -68,7 +68,6 @@ pub struct NewEntry<'a> {
 }
 
 #[derive(Queryable)]
-//pub struct entrytag {
 pub struct EntryTag {
 	pub entryid: i32,
 	pub tagid: i32,
@@ -76,7 +75,6 @@ pub struct EntryTag {
 
 #[derive(Insertable)]
 #[table_name = "entry_tags"]
-//pub struct new_entrytag {
 pub struct NewEntryTag {
 	pub entryid: i32,
 	pub tagid: i32,

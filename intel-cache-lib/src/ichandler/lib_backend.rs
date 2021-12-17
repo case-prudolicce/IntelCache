@@ -41,7 +41,6 @@ pub fn delete_dir(conn: &MysqlConnection,dirid: i32) {
 }
 pub fn update_dir(conn: &MysqlConnection,dirid: i32,iddest: i32,new_name: Option<&str>) {
 	use schema::dir;
-	//diesel::delete(dir.filter(id.eq(dirid))).execute(conn).unwrap();
 	if new_name == None {
 		diesel::update(dir::table.filter(dir::id.eq(dirid))).set(dir::loc.eq(&iddest)).execute(conn).expect("Error updating entry.");
 	}
@@ -73,9 +72,6 @@ pub fn show_dirs(conn: &MysqlConnection,by_id: Option<i32>) -> String{
 pub fn show_tags(conn: &MysqlConnection, _display: Option<bool>) -> String {
 	use self::schema::tag::dsl::*;
 	let results = tag.load::<Tag>(conn).expect("Error loading tags");
-	//if ( display.unwrap_or(false) ) {
-	//	println!("Displaying {} tags", results.len());
-	//}
 	let mut retstr = String::new();
 	for d in results {
 		retstr.push_str(&format!("{} {}\n",d.id,&d.name));
@@ -209,7 +205,6 @@ pub fn get_dir_tags(conn: &MysqlConnection, dir_id: i32) -> String {
 	use schema::dir;
 	use self::schema::dir::dsl::*;
 	let results = dir.left_join(dir_tags::table).left_join(tag::table.on(dir_tags::tagid.eq(tag::id))).filter(dir::id.eq(dir_id)).select(tag::name.nullable()).load::<Option<String>>(conn).unwrap();
-	//println!("{}",diesel::debug_query::<diesel::mysql::Mysql, _>(&dir.left_join(dir_tags::table).left_join(tag::table.on(dir_tags::tagid.eq(tag::id))).filter(dir::id.eq(dir_id)).select(tag::name.nullable())).to_string());
 	let mut retstr = String::new();
 	retstr.push_str(if results.len() <= 1 && results[0].as_ref().unwrap_or(&"NONE".to_string()) == &"NONE".to_string() {""} else {"["});
 	let rl = results.len();
@@ -218,17 +213,12 @@ pub fn get_dir_tags(conn: &MysqlConnection, dir_id: i32) -> String {
 	if rlv != "NONE".to_string() {
 		let mut c = 0;
 		for t in results {
-			//for tt in t {
-			//	retstr.push_str(if (tt.unwrap_or("NULL".to_string()) == "NULL".to_string()) {""} else {&tt.unwrap()});
-			//}
-			//println!("{} {}",dir_id, t.unwrap_or("".to_string()));
 			c += 1;
 			let p = t.unwrap_or("".to_string());
 			retstr.push_str(&p);
 			retstr.push_str(if p == "".to_string() || (p != "".to_string() && c == rl) {""} else {", "});
 		}
 	}
-	//"".to_string()
 	retstr.push_str(if rl <= 1 && rlv == "NONE".to_string() {""} else {"]"});
 	retstr
 }
@@ -254,9 +244,6 @@ pub fn show_entries(conn: &MysqlConnection, _display: Option<bool>, shortened: O
 		results = entry.filter(entry::loc.eq(under_id.unwrap())).load::<Entry>(conn).expect("Error loading entries");
 	}
 	
-	//if ( display.unwrap_or(false) ) {
-	//	println!("Displaying {} entries", results.len());
-	//}
 	let mut retstr = String::new();
 	if ! shortened.unwrap_or(false) { 
 		for e in results {
@@ -278,7 +265,6 @@ pub fn show_entries(conn: &MysqlConnection, _display: Option<bool>, shortened: O
 
 pub fn delete_entry(conn: &MysqlConnection,entryid: i32) {
 	use self::schema::entry::dsl::*;
-	//println!("delete_entry called");
 	let e = get_entry_by_id(conn,entryid);
 	if e.type_ == "ipfs_file" {
 		let ipfsclient = IpfsClient::default();
@@ -310,7 +296,6 @@ pub fn get_entry_tags(conn: &MysqlConnection, entry_id: i32) -> String {
 	use schema::entry;
 	use self::schema::entry::dsl::*;
 	let results = entry.left_join(entry_tags::table).left_join(tag::table.on(entry_tags::tagid.eq(tag::id))).filter(entry::id.eq(entry_id)).select(tag::name.nullable()).load::<Option<String>>(conn).unwrap();
-	//println!("{}",diesel::debug_query::<diesel::mysql::Mysql, _>(&dir.left_join(dir_tags::table).left_join(tag::table.on(dir_tags::tagid.eq(tag::id))).filter(dir::id.eq(dir_id)).select(tag::name.nullable())).to_string());
 	let mut retstr = String::new();
 	retstr.push_str(if results.len() <= 1 && results[0].as_ref().unwrap_or(&"NONE".to_string()) == &"NONE".to_string() {""} else {"["});
 	let rl = results.len();
@@ -319,17 +304,12 @@ pub fn get_entry_tags(conn: &MysqlConnection, entry_id: i32) -> String {
 	if rlv != "NONE".to_string() {
 		let mut c = 0;
 		for t in results {
-			//for tt in t {
-			//	retstr.push_str(if (tt.unwrap_or("NULL".to_string()) == "NULL".to_string()) {""} else {&tt.unwrap()});
-			//}
-			//println!("{} {}",dir_id, t.unwrap_or("".to_string()));
 			c += 1;
 			let p = t.unwrap_or("".to_string());
 			retstr.push_str(&p);
 			retstr.push_str(if p == "".to_string() || (p != "".to_string() && c == rl) {""} else {", "});
 		}
 	}
-	//"".to_string()
 	retstr.push_str(if rl <= 1 && rlv == "NONE".to_string() {""} else {"]"});
 	retstr
 }
@@ -383,11 +363,9 @@ pub async fn update_entry(conn: &MysqlConnection,uid: i32,dt: Vec<u8>,n: Option<
 pub fn get_entry_by_id(conn: &MysqlConnection,entryid: i32) -> Entry {
 	use schema::entry;
 	
-	//println!("get_entry_by_id: entryid {}",entryid);
 	entry::table.filter(entry::id.eq(entryid)).get_result::<Entry>(conn).unwrap()
 }
 
-//Returns dir name from id or none is invalid
 pub fn validate_dir(conn: &MysqlConnection,dirid: i32) -> Option<String> {
 	use schema::dir;
 	let d = dir::table.filter(dir::id.eq(dirid)).select(dir::name).load::<String>(conn);

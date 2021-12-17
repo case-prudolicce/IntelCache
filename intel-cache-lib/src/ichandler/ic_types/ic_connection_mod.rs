@@ -9,23 +9,16 @@ impl IcConnection {
 	}
 	
 	pub fn send_packet(&mut self,ic_p: IcPacket) {
-		//println!("IC_PACKET: {}\n{:?}",(&ic_p).header.as_ref().unwrap_or(&"".to_string()),ic_p.body.as_ref().unwrap());
-		//println!("PACKED: {:?}",ic_p.pack());
 		self.con.write(&ic_p.pack()).unwrap();
 	}
 	
 	pub fn get_packet(&mut self) -> IcPacket {
 		let headersize: usize;
 		let bodysize: usize;
-		//let mut header = String::new();
 		let header: String;
-		//flush buffers
 		self.local_buffer = vec![0;512];
 		self.final_buffer = Vec::new();
-		//Get first buffer to parse
 		let br = self.con.read(&mut self.local_buffer).unwrap();
-		//println!("FIRST BUFF: {:?}",self.local_buffer[..br].to_vec());
-		//get header size
 		let mut buffer_pointer = 1;
 		let mut sstr = String::new();
 		for b in self.local_buffer[..br].to_vec() {
@@ -34,10 +27,9 @@ impl IcConnection {
 			buffer_pointer += 1;
 		}
 		headersize = sstr.parse::<i32>().unwrap() as usize;
-		//println!("HEADER SIZE: {}",headersize);
 		
 		//Get header
-		if headersize <= 512 {//Max header size
+		if headersize <= 512 {
 			//Loop though remainder of buffer to get header
 			for b in &mut self.local_buffer[buffer_pointer..br] {
 				if (self.final_buffer.len() as i32) + 1 <= headersize as i32 {
@@ -60,7 +52,6 @@ impl IcConnection {
 		}
 		header = std::str::from_utf8(&mut self.final_buffer).unwrap().to_string();
 		buffer_pointer += 1; //To skip the next newline (after header grab)
-		//println!("HEADER: {}",header);
 		//reset size string and final_buffer
 		sstr = String::new(); 
 		self.final_buffer = Vec::new();
@@ -86,8 +77,6 @@ impl IcConnection {
 			
 		} 
 		bodysize = sstr.parse::<i32>().unwrap() as usize;
-		//println!("BODY SIZE: {}",bodysize);
-		//println!("BUFFER REMAINDER: {:?}",self.local_buffer[buffer_pointer..br].to_vec());
 		//Get body
 		//Loop though remainder of buffer to get body
 		for b in &mut self.local_buffer[buffer_pointer..br] {
@@ -98,7 +87,6 @@ impl IcConnection {
 		}
 		//Then gets new buffers to get the rest
 		while (self.final_buffer.len() as i32) < (bodysize as i32) {
-			//println!("p2");
 			buffer_pointer = 1;
 			let br = self.con.read(&mut self.local_buffer).unwrap();
 			for b in &mut self.local_buffer[..br] {
@@ -109,7 +97,6 @@ impl IcConnection {
 				
 			}
 		}
-		//println!("BODY: {:?}",self.final_buffer);
 		IcPacket::new(Some(header),Some(self.final_buffer.clone()))
 	}
 

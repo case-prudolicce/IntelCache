@@ -34,7 +34,6 @@ fn main() {
 			}
 		},
 		"import" => {
-			//import <path> <name>
 			if input_cmd.cmd.len() > 2 {
 				input_cmd.databuff = fs::read(&input_cmd.cmd[1]).unwrap();
 			} else if input_cmd.cmd.len() == 2 {
@@ -45,7 +44,6 @@ fn main() {
 				input_cmd.cmd[2] = n.trim_end().to_string();
 				input_cmd.databuff = fs::read(&input_cmd.cmd[1]).unwrap();
 			} else {
-				//name AND path
 				input_cmd.cmd.push(String::new());
 				input_cmd.cmd.push(String::new());
 				let mut p = String::new();
@@ -69,9 +67,6 @@ fn main() {
 			}
 		},
 		"edit" => {
-			//edit <ID>
-			//get <id> "/tmp/tmpentry"
-			//set <id>
 			if input_cmd.cmd.len() == 2 {
 				
 				input_cmd.cmd[0] = "get".to_string();
@@ -79,13 +74,10 @@ fn main() {
 				client.exec_cmd(&mut input_cmd);
 				input_cmd.databuff = write_entry().as_bytes().to_vec();
 				input_cmd.cmd[0] = "set".to_string();
-				//println!("IC_COMMAND: {:?}",input_cmd.to_ic_command().cmd);
 			}
 		},
 		_ => {}
 		};
-		//println!("INPUT COMMAND: {:?}\n{:?}",input_cmd.cmd,input_cmd.databuff);
-		//println!("IC COMMAND: {:?}\n{:?}",input_cmd.to_ic_command().cmd,input_cmd.to_ic_command().data);
 		client.exec_cmd(&mut input_cmd);
 	}
 }

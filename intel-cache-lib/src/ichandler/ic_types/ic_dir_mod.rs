@@ -33,11 +33,9 @@ impl IcExecute for IcDir {
 
 		
 		if create {
-			//CREATE ((NAME))
 			if self.cmd.len() == 2 {
 				create_dir(con.as_ref().unwrap(),&self.cmd[1],None);
 			} else if self.cmd.len() == 4 {
-				//CREATE ((NAME)) UNDER <DIR ID>
 				if self.cmd[2] == "UNDER" {
 					create_dir(con.as_ref().unwrap(),&self.cmd[1],Some(self.cmd[3].parse::<i32>().unwrap()));
 				} 
@@ -56,10 +54,9 @@ impl IcExecute for IcDir {
 			}
 		}
 		if set {
-			//SET <ID> <DIR ID> <NEW NAME>
 			if self.cmd.len() == 3 {
 				update_dir(con.as_ref().unwrap(),self.cmd[1].parse::<i32>().unwrap(),self.cmd[2].parse::<i32>().unwrap(),None);
-			} //ELSE update name as well 
+			}
 		}
 		if validate {
 			let n = validate_dir(con.as_ref().unwrap(),self.cmd[1].parse::<i32>().unwrap());

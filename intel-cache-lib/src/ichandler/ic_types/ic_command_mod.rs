@@ -30,8 +30,6 @@ impl IcCommand {
 	}
 
 	fn finalize_command(&self,cmd: Vec<&str>) -> Vec<String> {
-		//check for ((tokens That are included between these))
-		//If found, concat to one str
 		let mut con = false;
 		let mut finalizedstr = String::new();
 		let mut retve: Vec<String> = Vec::new();
@@ -124,7 +122,6 @@ impl IcExecute for IcCommand {
 impl Display for IcCommand {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		let mut s = String::new();
-		//println!("ic_command#to_string: cmd is ({:?})",self.cmd);
 		for c in &self.cmd {
 			s.push_str(&c);
 			s.push(' ');
