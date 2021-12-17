@@ -63,9 +63,12 @@ impl IcInput {
 	
 	
 }
-
+/// The Client interface struct for IntelCache
 pub struct IcClient { con: IcConnection,mode: IcClientMode }
 impl IcClient {
+	/// Connect to `ip` address
+	///
+	/// Note: the address is in ipv4 format. No ports.
 	pub fn connect(ip: &str) -> Result<IcClient,Error> {
 		let con = TcpStream::connect(ip.to_owned()+":64209");
 		if let Ok(c) = con {
@@ -74,7 +77,11 @@ impl IcClient {
 			return Err(Error::new(ErrorKind::Other,"Failed to connect."));
 		}
 	}
-	
+
+	///`exec_cmd` will take a client side command for `c`,
+	///translate it to a server side command and send it (if need be).
+	///
+	///Alternatively it can change internal values on `c`'s referring Input.
 	pub fn exec_cmd(&mut self,c: &mut IcInputCommand) {
 		self.update_mode(c);
 		//Check connection
