@@ -4,7 +4,7 @@ use std::net::{TcpListener,SocketAddrV4,Ipv4Addr};
 
 use crate::ic_types::IcConnection;
 use crate::ic_types::IcCommand;
-use crate::ic_types::IcExecute;
+//use crate::ic_types::IcExecute;
 use crate::ic_types::IcPacket;
 
 /// The Server interface struct for IntelCache. It will listen on port 64209 for new clients.
@@ -24,13 +24,13 @@ impl IcServer {
 			let mut icc: IcCommand;
 			if (&p).header.as_ref() != None {
 				icc = IcCommand::from_packet(p.clone()); 
-				icp = icc.exec(None);
+				icp = icc.exec();
 				if (&p).header.as_ref().unwrap() == "EXIT" /*&& icp.body == None*/ {
 					println!("{:?} disconnected.",c.addr());
 					c.send_packet(icp).unwrap();
 					return Ok(());
 				}
-			} else { icp = IcCommand::from_packet(p.clone()).exec(None) }
+			} else { icp = IcCommand::from_packet(p.clone()).exec() }
 			println!("[DEBUG#IcServer.handle_client] SENDING ICP_PACKET : {} ({:?})",(&icp).header.as_ref().unwrap_or(&"None".to_string()),(&icp).body.as_ref().unwrap_or(&Vec::new()).len());
 			c.send_packet(icp).unwrap();
 		}

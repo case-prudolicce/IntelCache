@@ -3,6 +3,7 @@
 * Links
 * ENTRY/DIR/TAG RENAME command
 * ENTRY DISPLAY command (Maybe)
+* Modular functions
 ## Future Hardening
 * IcCommand validation (Hardening)
 

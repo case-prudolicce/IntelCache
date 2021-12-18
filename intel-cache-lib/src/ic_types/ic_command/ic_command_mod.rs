@@ -2,7 +2,8 @@ use diesel::MysqlConnection;
 use crate::lib_backend::establish_connection;
 use std::fmt::Display;
 use std::fmt;
-use crate::ic_types::IcExecute;
+//use crate::ic_types::IcExecute;
+use crate::ic_types::ic_execute_mod::IcExecute;
 use crate::ic_types::IcPacket;
 use std::str;
 
@@ -127,11 +128,7 @@ impl IcCommand {
 		cmd_parsed.exec(Some(&mut connection))
 	}
 
-}
-impl IcExecute for IcCommand {
-	type Connection = MysqlConnection;
-	
-	fn exec(&mut self,_con: Option<&mut Self::Connection>) -> IcPacket {
+	pub fn exec(&mut self) -> IcPacket {
 		IcCommand::handle(self.clone())
 	}
 }
