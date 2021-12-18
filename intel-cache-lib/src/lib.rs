@@ -1,3 +1,14 @@
+//! # IntelCache Library
+//! 
+//! The IntelCache Library is meant primarily for rust made clients of IntelCache. 
+//! It functions primarily by sending and recieving [`self::ic_types::IcCommand`]s and [`self::ic_types::IcPacket`]s  to and from [`IcServer`] with [`IcClient`].
+//! # IntelCache Commands
+//!
+//! Here is the list of valid IntelCache commands:
+//! - ENTRY {CREATE \<NEW ENTRY NAME\> [UNDER \<DIR ID\>]|SHOW [\<DIR ID\>]|DELETE \<ENTRY ID\>|SET}
+//! - DIR {CREATE|SHOW|DELETE|SET|VALIDATE \<DIR ID\>}
+//! - SHOW [\<DIR ID\>]
+//! - TAG {DIR|UNDIR|ENTRY|UNENTRY|CREATE|DELETE|SHOW}
 #[macro_use]
 extern crate diesel;
 extern crate dotenv;

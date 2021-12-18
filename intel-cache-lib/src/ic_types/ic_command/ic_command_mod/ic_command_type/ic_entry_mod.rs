@@ -130,14 +130,26 @@ impl IcExecute for IcEntry {
 			} else {return IcPacket::new(Some("Err.".to_string()),None)}
 		}
 		if set {
-			if self.cmd.len() == 3 {
-				block_on(update_entry(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap(),self.d.clone(),None,None,None));
-			} else if self.cmd.len() == 4 {
+			//ENTRY SET <ENTRY ID> [<NEW NAME> <NEW LOC>]
+			if self.cmd.len() == 4 {
+				//Harden entry id
+				let its: i32;
+				match self.cmd[2].parse::<i32>() {
+				Ok(v) => {block_on(update_entry(con.as_ref().unwrap(),v,self.d.clone(),None,None,None));return IcPacket::new(Some("OK!".to_string()),None);}
+				Err(_err) => { return IcPacket::new(Some("Err.".to_string()),None)},
+				}
+			} else if self.cmd.len() == 5 {
+				//Harden this arg (New name or new loc)
+				let its: i32;
+				match self.cmd[2].parse::<i32>() {
+				Ok(v) => its = v,
+				Err(_err) => { return IcPacket::new(Some("Err.".to_string()),None)},
+				}
 				let pnl = self.cmd[3].parse::<i32>().unwrap_or(-1);
 				if pnl == -1 {
-					block_on(update_entry(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap(),self.d.clone(),Some(&self.cmd[3]),None,None));
+					block_on(update_entry(con.as_ref().unwrap(),its,self.d.clone(),Some(&self.cmd[3]),None,None));
 				} else {
-					block_on(update_entry(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap(),self.d.clone(),None,Some(self.cmd[3].parse::<i32>().unwrap()),None));
+					block_on(update_entry(con.as_ref().unwrap(),its,self.d.clone(),None,Some(self.cmd[3].parse::<i32>().unwrap()),None));
 				}
 			} else if self.cmd.len() == 5 {
 				block_on(update_entry(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap(),self.d.clone(),Some(&self.cmd[3]),Some(self.cmd[4].parse::<i32>().unwrap()),None));

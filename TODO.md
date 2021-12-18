@@ -11,6 +11,12 @@
 ## Bugs to fix
 * new with third arg (dir loc) does not work
 * crash on get\_packet
+* no return msg on mkdir and mv
+
+# Server
+## Bugs to fix
+* DELETE with no args returns None.
+* ENTRY SET not working
 
 # Before 1.0
 * README.md

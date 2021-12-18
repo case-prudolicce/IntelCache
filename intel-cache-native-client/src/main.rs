@@ -165,6 +165,32 @@ fn main() {
 				continue;
 			}
 		},
+		"mv" => {
+			if input_cmd.cmd.len() >= 3 {
+				if input_cmd.cmd[1].len() == 1 {
+					if input_cmd.cmd[1].parse::<i32>().unwrap_or(-1) == -1 {
+						println!("{} is an invalid id.",input_cmd.cmd[1]);
+						continue;
+					} 
+				} else {
+					//Check last character for a / at the end
+					if input_cmd.cmd[1][..input_cmd.cmd[1].len() - 1].parse::<i32>().unwrap_or(-1) == -1 || (input_cmd.cmd[1].parse::<i32>().unwrap_or(-1) == -1 && &input_cmd.cmd[1][input_cmd.cmd[1].len() - 1..] != "/"){ 
+						println!("{} is an invalid id.",input_cmd.cmd[1]);
+						continue;
+					} 
+				}
+
+				if input_cmd.cmd[2].parse::<i32>().unwrap_or(-1) == -1
+				{
+					println!("{} is an invalid directory id.",input_cmd.cmd[2]);
+					continue;
+				}
+
+			} else {
+				println!("{} requires a directory/entry id and a directory id.",input_cmd.cmd[0]);
+				continue;
+			}
+		}
 		_ => {},
 		};
 		//Do something with response 
