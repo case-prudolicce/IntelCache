@@ -6,9 +6,8 @@ use std::process;
 use std::io::{stdin};
 use std::process::Command;
 use std::fmt;
-use std::net::TcpStream;
 use std::fmt::Display;
-use std::io::{stdout,ErrorKind,Error,Write};
+use std::io::{stdout,Write};
 use std::env;
 pub fn write_entry() -> String {
 	let editor = env::var("EDITOR").expect("No Editor env found.");

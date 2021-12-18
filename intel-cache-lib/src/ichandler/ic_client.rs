@@ -1,5 +1,5 @@
 use std::net::TcpStream;
-use std::io::{stdout,stdin,ErrorKind,Error,Write};
+use std::io::{ErrorKind,Error};
 use crate::ichandler::ic_types::{IcConnection,IcPacket,IcCommand};
 
 /// The Client interface struct for IntelCache
