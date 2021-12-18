@@ -183,21 +183,24 @@ pub fn delete_tag(conn: &MysqlConnection,tagid: i32) {
 	diesel::delete(tag.filter(id.eq(tagid))).execute(conn).unwrap();
 }
 
-pub fn tag_dir(conn: &MysqlConnection, dir_id: i32,tag_id: i32) -> DirTag {
+pub fn tag_dir(conn: &MysqlConnection, dir_id: i32,tag_id: i32) -> Result<DirTag ,IcError>{
 	use schema::dir_tags;
 	
 	let new_dir_tag = NewDirTag { dirid: dir_id,tagid: tag_id };
 	
-	diesel::insert_into(dir_tags::table)
-		.values(&new_dir_tag).execute(conn).expect("Error saving draft");
-	
-	dir_tags::table.filter(dir_tags::tagid.eq(tag_id)).filter(dir_tags::dirid.eq(dir_id)).limit(1).get_result::<DirTag>(conn).unwrap()
+	let res = diesel::insert_into(dir_tags::table).values(&new_dir_tag).execute(conn);
+	match res {
+	Ok(_e) => (),
+	Err(_e) => {return Err(IcError("Invalid dir id or tag id.".to_string()))},
+	}
+
+	Ok(dir_tags::table.filter(dir_tags::tagid.eq(tag_id)).filter(dir_tags::dirid.eq(dir_id)).limit(1).get_result::<DirTag>(conn).unwrap())
 }
 
 pub fn untag_dir(conn: &MysqlConnection,dir_id: i32, tag_id: i32) {
 	use schema::dir_tags;
 	
-	diesel::delete(dir_tags::table.filter(dir_tags::dirid.eq(dir_id)).filter(dir_tags::tagid.eq(tag_id))).execute(conn).expect("Error saving draft");
+	diesel::delete(dir_tags::table.filter(dir_tags::dirid.eq(dir_id)).filter(dir_tags::tagid.eq(tag_id))).execute(conn).expect("Error untaging directory.");
 }
 
 pub fn get_dir_tags(conn: &MysqlConnection, dir_id: i32) -> String {

@@ -12,7 +12,7 @@
 ## Features
 * TBD
 ## Hardening
-* Tagging with invalid ids
+* Invalid packets
 ## Bugs to fix
 * TBD
 
@@ -27,7 +27,6 @@
 # Before 1.0
 * README.md
 ## Hardening
-* Client
 * Server
 ## Post Hardening Cleanup
 * Client (TBD)
