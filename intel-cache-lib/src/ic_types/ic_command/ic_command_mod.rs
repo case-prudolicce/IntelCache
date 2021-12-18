@@ -2,8 +2,8 @@ use diesel::MysqlConnection;
 use crate::lib_backend::establish_connection;
 use std::fmt::Display;
 use std::fmt;
-use crate::ichandler::ic_types::IcExecute;
-use crate::ichandler::ic_types::IcPacket;
+use crate::ic_types::IcExecute;
+use crate::ic_types::IcPacket;
 use std::str;
 
 mod ic_command_type;
