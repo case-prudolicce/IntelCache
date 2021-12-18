@@ -7,9 +7,15 @@ use crate::ichandler::ic_types::IcCommand;
 use crate::ichandler::ic_types::IcExecute;
 use crate::ichandler::ic_types::IcPacket;
 
+/// The Server interface struct for IntelCache. It will listen on port 64209 for new clients.
+/// Then for each client, it will create a new thread for the client,
+/// process [`IcCommand`]s and return
+/// [`IcPacket`]s to the handled client.
+/// 
+/// Note: to initialize the server the struct must be defined as a global.
 pub struct IcServer {}
 impl IcServer {
-	pub fn handle_client(&self,mut c: IcConnection) -> Result<(),Error> {
+	fn handle_client(&self,mut c: IcConnection) -> Result<(),Error> {
 		println!("Connection received! {:?} is sending data.", c.addr());
 		loop {
 			let p = c.get_packet().unwrap();
@@ -30,6 +36,7 @@ impl IcServer {
 		}
 	}
 
+	/// `listen` will start the server. 
 	pub fn listen(&'static self) {
 		let loopback:Ipv4Addr = Ipv4Addr::new(0, 0, 0, 0);
 		let socket:SocketAddrV4 = SocketAddrV4::new(loopback, 64209);
