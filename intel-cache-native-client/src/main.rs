@@ -58,8 +58,10 @@ fn main() {
 				input_cmd.databuff = fs::read(&input_cmd.cmd[1]).unwrap();
 			}
 		},
-		"get" => {
+		"get" => { 
 			if input_cmd.cmd.len() == 2 {
+				if input_cmd.cmd[1].parse::<i32>().unwrap_or(-1) == -1 { println!("{} is an invalid entry id.",input_cmd.cmd[1]);continue; }
+				
 				input_cmd.cmd.push(String::new());
 				println!("Name?");
 				let mut n = String::new();
@@ -70,11 +72,13 @@ fn main() {
 		"edit" => {
 			if input_cmd.cmd.len() == 2 {
 				
-				input_cmd.cmd[0] = "get".to_string();
-				input_cmd.cmd.push("/tmp/tmpentry".to_string());
-				client.exec_cmd(&mut input_cmd);
-				input_cmd.databuff = write_entry().as_bytes().to_vec();
-				input_cmd.cmd[0] = "set".to_string();
+				if input_cmd.cmd[1].parse::<i32>().unwrap_or(-1) != -1 {
+					input_cmd.cmd[0] = "get".to_string();
+					input_cmd.cmd.push("/tmp/tmpentry".to_string());
+					client.exec_cmd(&mut input_cmd);
+					input_cmd.databuff = write_entry().as_bytes().to_vec();
+					input_cmd.cmd[0] = "set".to_string();
+				} else { println!("{} is an invalid entry id.",input_cmd.cmd[1]);continue; } 
 			}
 		},
 		"rm" => { //Verify removed id (To be implemented somewhere else)

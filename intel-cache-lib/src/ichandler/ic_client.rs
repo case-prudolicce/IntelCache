@@ -93,10 +93,10 @@ impl IcClient {
 		if self.con.check_connection() {
 			let mut sr: IcPacket = IcPacket::new_empty();
 			if self.mode != IcClientMode::NONE {
-				//println!("[DEBUG#IcClient.exec_cmd] SENDING IC_PACKET : {} ({:?})",c.to_ic_command().to_ic_packet().header.unwrap_or("None".to_string()),c.to_ic_command().to_ic_packet().body.unwrap().len());
+				println!("[DEBUG#IcClient.exec_cmd] SENDING IC_PACKET : {} ({:?})",c.to_ic_command().to_ic_packet().header.unwrap_or("None".to_string()),c.to_ic_command().to_ic_packet().body.unwrap().len());
 				self.con.send_packet(c.to_ic_command().to_ic_packet()).unwrap(); 
 				sr = self.con.get_packet().unwrap();
-				//println!("[DEBUG#IcClient.exec_cmd] RECIEVING IC_PACKET : {} ({:?})",(&sr).header.as_ref().unwrap_or(&"None".to_string()),(&sr).body.as_ref().unwrap_or(&Vec::new()).len());
+				println!("[DEBUG#IcClient.exec_cmd] RECIEVING IC_PACKET : {} ({:?})",(&sr).header.as_ref().unwrap_or(&"None".to_string()),(&sr).body.as_ref().unwrap_or(&Vec::new()).len());
 			}
 			match self.mode {
 			IcClientMode::CAT => {
