@@ -1,5 +1,4 @@
 mod ic_all_mod;
-mod ic_response_mod;
 mod ic_execute_mod;
 mod ic_command_mod;
 mod ic_entry_mod;
@@ -10,7 +9,6 @@ mod ic_packet_mod;
 mod ic_connection_mod;
 
 pub use self::ic_all_mod::IcAll as IcAll;
-pub use self::ic_response_mod::IcResponse as IcResponse;
 pub use self::ic_execute_mod::IcExecute as IcExecute;
 pub use self::ic_command_mod::IcCommand as IcCommand;
 pub use self::ic_entry_mod::IcEntry as IcEntry;

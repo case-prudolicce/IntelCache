@@ -54,7 +54,11 @@ impl IcExecute for IcTag {
 
 		if tagdir == 1{
 			if self.cmd.len() == 3 {
-				tag_dir(&con.as_ref().unwrap(), (&self.cmd[1]).parse::<i32>().unwrap(),(&self.cmd[2]).parse::<i32>().unwrap());
+				let res = tag_dir(&con.as_ref().unwrap(), (&self.cmd[1]).parse::<i32>().unwrap(),(&self.cmd[2]).parse::<i32>().unwrap());
+				match res {
+				Ok(_e) => (),
+				Err(_err) => {return IcPacket::new(Some("Err.".to_string()),None) }
+				};
 			}
 		} else if tagdir == -1 {
 			if self.cmd.len() == 3 {
@@ -64,7 +68,11 @@ impl IcExecute for IcTag {
 
 		if tagentry == 1{
 			if self.cmd.len() == 3 {
-				tag_entry(&con.as_ref().unwrap(), (&self.cmd[1]).parse::<i32>().unwrap(),(&self.cmd[2]).parse::<i32>().unwrap());
+				let res = tag_entry(&con.as_ref().unwrap(), (&self.cmd[1]).parse::<i32>().unwrap(),(&self.cmd[2]).parse::<i32>().unwrap());
+				match res {
+				Ok(_e) => (),
+				Err(_err) => {return IcPacket::new(Some("Err.".to_string()),None) }
+				};
 			}
 		} else if tagentry == -1 {
 			if self.cmd.len() == 3 {

@@ -279,15 +279,17 @@ pub fn delete_entry(conn: &MysqlConnection,entryid: i32) -> Result<(),IcError>{
 		return Ok(());
 	} else { return Err(IcError("Entry id not found".to_string())) } }
 
-pub fn tag_entry(conn: &MysqlConnection, entry_id: i32,tag_id: i32) -> EntryTag {
+pub fn tag_entry(conn: &MysqlConnection, entry_id: i32,tag_id: i32) -> Result<EntryTag,IcError>{
 	use schema::entry_tags;
 	
 	let new_entry_tag = NewEntryTag { entryid: entry_id,tagid: tag_id };
 	
-	diesel::insert_into(entry_tags::table)
-		.values(&new_entry_tag).execute(conn).expect("Error saving draft");
-	
-	entry_tags::table.filter(entry_tags::tagid.eq(tag_id)).filter(entry_tags::entryid.eq(entry_id)).limit(1).get_result::<EntryTag>(conn).unwrap()
+	let res = diesel::insert_into(entry_tags::table).values(&new_entry_tag).execute(conn);
+	match res {
+	Ok(_e) => (),
+	Err(_err) => {return Err(IcError("Error tagging entry.".to_string()))}
+	};
+	Ok(entry_tags::table.filter(entry_tags::tagid.eq(tag_id)).filter(entry_tags::entryid.eq(entry_id)).limit(1).get_result::<EntryTag>(conn).unwrap())
 }
 
 pub fn untag_entry(conn: &MysqlConnection,entry_id: i32, tag_id: i32) {
