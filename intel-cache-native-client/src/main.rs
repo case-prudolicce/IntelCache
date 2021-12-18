@@ -152,7 +152,20 @@ fn main() {
 				continue;
 			}
 		},
-		_ => {}
+		"cd" => {
+			if input_cmd.cmd.len() >= 2 {
+				match input_cmd.cmd[1].parse::<i32>() {
+				Ok(v) => {input.set_pwd(v,&mut client);println!("Moved.")},
+				Err(_err) => {println!("{} is not a valid directory id.",input_cmd.cmd[1]);continue;},
+				};
+				continue;
+			} else { 
+				input.set_pwd(0,&mut client);
+				println!("Moved.");
+				continue;
+			}
+		},
+		_ => {},
 		};
 		//Do something with response 
 		let r = client.send_cmd(&mut input_cmd.to_ic_command());
