@@ -92,7 +92,9 @@ fn main() {
 				if input_cmd.cmd[1].parse::<i32>().unwrap_or(-1) != -1 {
 					input_cmd.cmd[0] = "get".to_string();
 					input_cmd.cmd.push("/tmp/tmpentry".to_string());
-					client.send_cmd(&mut input_cmd.to_ic_command());
+					let r = client.send_cmd(&mut input_cmd.to_ic_command());
+					let filename = input_cmd.cmd[2].clone();
+					IcInput::write_to_file(r,filename);
 					input_cmd.databuff = write_entry().as_bytes().to_vec();
 					input_cmd.cmd[0] = "set".to_string();
 				} else { println!("{} is an invalid entry id.",input_cmd.cmd[1]);continue; } 
@@ -155,7 +157,8 @@ fn main() {
 		match input_cmd.cmd[0].as_ref() {
 		"ls" | "showtags" => {input.display(r);},
 		"mktag" | "rmtag" | "rm" | "rmdir" | "new" | "edit" => {input.resp(r)},
-		"get" => {let filename = input_cmd.cmd[2].clone();input.write_to_file(r,filename)},
+		"get" => {let filename = input_cmd.cmd[2].clone();IcInput::write_to_file(r,filename)},
+		
 		"exit" | "quit" => {process::exit(1);},
 		_ => (),
 		};
@@ -436,7 +439,7 @@ impl IcInput {
 			println!("Success!");
 		} else {println!("Failed.")}
 	}
-	pub fn write_to_file(&self,p: IcPacket,name: String) {
+	pub fn write_to_file(p: IcPacket,name: String) {
 		if p.header.as_ref().unwrap_or(&"None".to_string()) == "OK!" {
 			if p.body.as_ref().unwrap_or(&Vec::new()).len() > 0 {
 				let data = p.body.unwrap();
