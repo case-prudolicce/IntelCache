@@ -6,9 +6,9 @@
 //!
 //! Here is the list of valid IntelCache commands:
 //! - ENTRY {CREATE \<NEW ENTRY NAME\> [UNDER \<DIR ID\>]|SHOW [\<DIR ID\>]|DELETE \<ENTRY ID\>|SET \<ENTRY ID\> \<DIR ID\>}
-//! - DIR {CREATE|SHOW|DELETE|SET|VALIDATE \<DIR ID\>}
+//! - DIR {CREATE \<NEW DIR NAME\> [UNDER \<DIR ID\>]|SHOW [\<DIR ID\>]|DELETE \<DIR ID\>|SET \<DIR ID\> \<NEW DIR LOC ID\>|VALIDATE \<DIR ID\>}
 //! - SHOW [\<DIR ID\>]
-//! - TAG {DIR|UNDIR|ENTRY|UNENTRY|CREATE|DELETE|SHOW}
+//! - TAG {DIR \<DIR ID\> \<TAG ID\>|UNDIR \<DIR ID\> \<TAG ID\>|ENTRY \<ENTRY ID\> \<TAG ID\>|UNENTRY \<ENTRY ID\> \<TAG ID\>|CREATE <NEW TAG NAME>|DELETE <TAG ID>|SHOW}
 #[macro_use]
 extern crate diesel;
 extern crate dotenv;

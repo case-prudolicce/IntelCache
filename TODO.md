@@ -16,9 +16,10 @@
 
 # Server
 ## Hardening
-* ic\_tag (view TODOs)
+* General hardening
 ## Bugs to fix
 * DIR CREATE/DELETE doesn't return right response.
+* DIR SET <DIR ID> 0 doesn't work.
 
 # Before 1.0
 * README.md

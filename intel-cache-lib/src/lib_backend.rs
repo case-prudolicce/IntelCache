@@ -46,11 +46,15 @@ pub fn delete_dir(conn: &MysqlConnection,dirid: i32) -> Result<(),IcError>{
 	diesel::delete(dir.filter(id.eq(rv))).execute(conn).unwrap();
 	Ok(())
 }
-pub fn update_dir(conn: &MysqlConnection,dirid: i32,iddest: i32,new_name: Option<&str>) {
+pub fn update_dir(conn: &MysqlConnection,dirid: i32,iddest: i32,new_name: Option<&str>) -> Result<(),IcError>{
 	use schema::dir;
 	if new_name == None {
-		diesel::update(dir::table.filter(dir::id.eq(dirid))).set(dir::loc.eq(&iddest)).execute(conn).expect("Error updating entry.");
-	}
+		let rv = diesel::update(dir::table.filter(dir::id.eq(dirid))).set(dir::loc.eq(&iddest)).execute(conn);
+		match rv {
+		Ok(_v) => return Ok(()),
+		Err(_err) => return Err(IcError("Failed to update directory.".to_string())),
+		};
+	} else { return Err(IcError("Failed to update directory.".to_string())) }
 }
 
 pub fn show_dirs(conn: &MysqlConnection,by_id: Option<i32>) -> String{

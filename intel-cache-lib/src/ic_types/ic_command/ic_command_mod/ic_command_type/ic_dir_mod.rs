@@ -74,13 +74,33 @@ impl IcExecute for IcDir {
 		}
 		if set {
 			if self.cmd.len() == 4 {
-				//Harden loc1 and loc2
-				//Harden updatedir
-				update_dir(con.as_ref().unwrap(),self.cmd[1].parse::<i32>().unwrap(),self.cmd[2].parse::<i32>().unwrap(),None);
+				let dts: i32;
+				let nli: i32;
+				match self.cmd[2].parse::<i32>() {
+				Ok(v) => match self.cmd[3].parse::<i32>() {
+					Ok(iv) => match validate_dir(con.as_ref().unwrap(),v) {
+						Some(_dip) => match validate_dir(con.as_ref().unwrap(),iv) {
+							Some(_drip) => {
+								dts = v;
+								nli = iv;
+							},
+							None => return IcPacket::new(Some("Err.".to_string()),None),
+						},
+						None => return IcPacket::new(Some("Err.".to_string()),None),
+					},
+					Err(_e2) => return IcPacket::new(Some("Err.".to_string()),None), 
+				},
+				Err(_e1) => return IcPacket::new(Some("Err.".to_string()),None), 
+				};
+				
+				match update_dir(con.as_ref().unwrap(),dts,nli,None) {
+				Ok(_) => return IcPacket::new(Some("OK!".to_string()),None),
+				Err(_err) => return IcPacket::new(Some("Err.".to_string()),None), 
+				}
 			}
 		}
 		if validate {
-			let n = validate_dir(con.as_ref().unwrap(),self.cmd[1].parse::<i32>().unwrap());
+			let n = validate_dir(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap());
 			if n != None {
 				return IcPacket::new(Some("true".to_string()),Some(n.unwrap().as_bytes().to_vec()));
 			} else {
