@@ -4,8 +4,6 @@ use crate::ichandler::lib_backend::show_entries;
 use crate::ichandler::lib_backend::delete_entry;
 use crate::ichandler::ic_types::IcExecute;
 use crate::ichandler::lib_backend::make_file_entry;
-use crate::ichandler::lib_backend::make_text_entry;
-use crate::ichandler::lib_backend::establish_connection;
 use crate::ichandler::ic_types::IcCommand;
 use crate::ichandler::lib_backend::get_entry_by_id;
 use crate::ichandler::lib_backend::update_entry;
@@ -82,7 +80,7 @@ impl IcExecute for IcEntry {
 				Ok(e) => etd = e,
 				Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
 				}
-				let res = delete_entry(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap());
+				let res = delete_entry(con.as_ref().unwrap(),etd);
 				match res {
 				Ok(_e) => return IcPacket::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec())),
 				Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),

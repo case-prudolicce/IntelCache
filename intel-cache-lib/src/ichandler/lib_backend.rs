@@ -38,7 +38,7 @@ pub fn create_dir(conn: &MysqlConnection, name: &str, loc: Option<i32>) -> Dir {
 
 pub fn delete_dir(conn: &MysqlConnection,dirid: i32) -> Result<(),IcError>{
 	use self::schema::dir::dsl::*;
-	diesel::delete(dir.filter(id.eq(dirid))).execute(conn);
+	diesel::delete(dir.filter(id.eq(dirid))).execute(conn).unwrap();
 	match validate_dir(conn,dirid) {
 		Some(_v) => {return Ok(())},
 		None => {return Err(IcError("Error deleting directory.".to_string()))}
@@ -344,7 +344,7 @@ pub fn make_file_entry(conn: &MysqlConnection,name: &str,dt: Vec<u8>,location: O
 		Err(_err) => return Err(IcError("Error making new entry.".to_string())),
 		}
 	} else {
-		let mut hash = "NONE".to_string();
+		let hash: String;
 		match block_on(ipfsclient.add(Cursor::new(dt))) {
 			Ok(res) => hash = res.hash,
 			Err(_e) => return Err(IcError("Error making new entry.".to_string())),

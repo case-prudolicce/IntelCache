@@ -23,7 +23,6 @@ impl IcExecute for IcTag {
 		let mut create = false;
 		let mut tagdir = 0;
 		let mut tagentry = 0;
-		let mut rstr = "".to_string();
 
 		match self.cmd[0].as_str() {
 		"DELETE" => delete = true,
@@ -51,8 +50,8 @@ impl IcExecute for IcTag {
 		}
 
 		if show {
-			rstr = show_tags(&con.as_ref().unwrap(),Some(true));
-			return IcPacket::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec()));
+			let rstr = show_tags(&con.as_ref().unwrap(),Some(true));
+			return IcPacket::new(Some("OK!".to_string()),if rstr != "" {Some(rstr.as_bytes().to_vec())} else {None});
 		}
 
 		if create {

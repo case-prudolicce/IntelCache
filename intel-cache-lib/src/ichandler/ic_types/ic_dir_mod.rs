@@ -21,7 +21,6 @@ impl IcExecute for IcDir {
 		let mut delete = false;
 		let mut show = false;
 		let mut validate = false;
-		let mut retstr: String = "".to_string();
 		match self.cmd[0].as_str() {
 		"DELETE" => delete = true,
 		"SHOW" => show = true,
@@ -42,18 +41,20 @@ impl IcExecute for IcDir {
 			}
 		}
 		if show {
+			let retstr: String;
 			if self.cmd.len() == 2 {
 				retstr = show_dirs(con.as_ref().unwrap(),Some(self.cmd[1].parse::<i32>().unwrap()))
 			} else {
 				retstr = show_dirs(con.as_ref().unwrap(),None)
 			}
+			return IcPacket::new(Some("OK!".to_string()),if retstr != "" {Some(retstr.as_bytes().to_vec())} else {None})
 		}
 		if delete {
 			if self.cmd.len() == 2 {
 				let r = delete_dir(con.as_ref().unwrap(),self.cmd[1].parse::<i32>().unwrap());
 				match r {
 				Ok(_v) => {return IcPacket::new(Some("OK!".to_string()),None)},
-				Err(e) => {return IcPacket::new(Some("Err.".to_string()),None)},
+				Err(_e) => {return IcPacket::new(Some("Err.".to_string()),None)},
 				}
 			} else {
 				return IcPacket::new(Some("Err.".to_string()),None)
