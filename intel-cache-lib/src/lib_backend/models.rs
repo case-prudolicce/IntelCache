@@ -1,8 +1,8 @@
-use crate::ichandler::lib_backend::schema::dir;
-use crate::ichandler::lib_backend::schema::entry;
-use crate::ichandler::lib_backend::schema::tag;
-use crate::ichandler::lib_backend::schema::dir_tags;
-use crate::ichandler::lib_backend::schema::entry_tags;
+use crate::lib_backend::schema::dir;
+use crate::lib_backend::schema::entry;
+use crate::lib_backend::schema::tag;
+use crate::lib_backend::schema::dir_tags;
+use crate::lib_backend::schema::entry_tags;
 use chrono::{NaiveDateTime};
 
 #[derive(Queryable)]

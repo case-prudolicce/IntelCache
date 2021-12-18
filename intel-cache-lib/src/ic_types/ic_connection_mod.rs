@@ -1,4 +1,4 @@
-use crate::ichandler::ic_types::{IcPacket,IcError};
+use crate::ic_types::{IcPacket,IcError};
 use std::net::TcpStream;
 use std::io::{Read,Write};
 

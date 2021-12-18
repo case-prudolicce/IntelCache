@@ -1,6 +1,6 @@
 use std::str;
-use intel_cache_lib::ichandler::ic_client::*;
-use intel_cache_lib::ichandler::ic_types::{IcCommand,IcPacket};
+use intel_cache_lib::IcClient;
+use intel_cache_lib::ic_types::{IcCommand,IcPacket};
 use std::process;
 use std::io::{stdin};
 use std::process::Command;

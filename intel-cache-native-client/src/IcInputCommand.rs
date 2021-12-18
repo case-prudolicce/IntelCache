@@ -1,4 +1,4 @@
-use intel_cache_lib::ichandler::ic_types::{IcCommand,IcPacket};
+use intel_cache_lib::ic_types::{IcCommand,IcPacket};
 use crate::IcInput::IcInput;
 use std::fmt::Display;
 use std::fmt;

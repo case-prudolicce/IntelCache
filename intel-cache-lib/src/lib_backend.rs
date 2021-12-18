@@ -7,11 +7,11 @@ use ipfs_api_backend_hyper::{IpfsApi, IpfsClient};
 use std::io::Cursor;
 use futures::executor::block_on;
 
-pub mod models;
-pub mod schema;
+mod models;
+mod schema;
 
 use self::models::{EntryTag,NewEntryTag,NewEntry, Entry, NewDirTag, DirTag, Tag, NewTag, Dir, NewDir};
-use crate::ichandler::ic_types::IcError;
+use crate::ic_types::IcError;
 
 pub fn establish_connection() -> MysqlConnection {
 	dotenv().ok();

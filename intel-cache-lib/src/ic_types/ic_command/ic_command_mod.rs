@@ -1,5 +1,5 @@
 use diesel::MysqlConnection;
-use crate::ichandler::lib_backend::establish_connection;
+use crate::lib_backend::establish_connection;
 use std::fmt::Display;
 use std::fmt;
 use crate::ichandler::ic_types::IcExecute;

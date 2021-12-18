@@ -1,13 +1,13 @@
 use diesel::MysqlConnection;
-use crate::ichandler::lib_backend::untag_entry;
-use crate::ichandler::lib_backend::tag_entry;
-use crate::ichandler::lib_backend::untag_dir;
-use crate::ichandler::lib_backend::tag_dir;
-use crate::ichandler::lib_backend::create_tag;
-use crate::ichandler::ic_types::IcPacket;
-use crate::ichandler::lib_backend::show_tags;
-use crate::ichandler::lib_backend::delete_tag;
-use crate::ichandler::ic_types::IcExecute;
+use crate::lib_backend::untag_entry;
+use crate::lib_backend::tag_entry;
+use crate::lib_backend::untag_dir;
+use crate::lib_backend::tag_dir;
+use crate::lib_backend::create_tag;
+use crate::ic_types::IcPacket;
+use crate::lib_backend::show_tags;
+use crate::lib_backend::delete_tag;
+use crate::ic_types::IcExecute;
 
 pub struct IcTag {cmd: Vec<String>,}
 impl IcTag {

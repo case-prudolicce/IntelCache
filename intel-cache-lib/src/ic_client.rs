@@ -1,6 +1,6 @@
 use std::net::TcpStream;
 use std::io::{ErrorKind,Error};
-use crate::ichandler::ic_types::{IcConnection,IcPacket,IcCommand};
+use crate::ic_types::{IcConnection,IcPacket,IcCommand};
 
 /// The Client interface struct for IntelCache. Used to interact with the server.
 pub struct IcClient { con: IcConnection }

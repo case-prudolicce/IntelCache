@@ -1,8 +1,8 @@
 use diesel::MysqlConnection;
-use crate::ichandler::ic_types::IcPacket;
-use crate::ichandler::lib_backend::show_entries;
-use crate::ichandler::lib_backend::show_dirs;
-use crate::ichandler::ic_types::IcExecute;
+use crate::ic_types::IcPacket;
+use crate::lib_backend::show_entries;
+use crate::lib_backend::show_dirs;
+use crate::ic_types::IcExecute;
 
 pub struct IcAll { cmd: Vec<String>, }
 impl IcAll {

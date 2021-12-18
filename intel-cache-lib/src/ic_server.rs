@@ -2,10 +2,10 @@ use std::io::{Error};
 use std::thread;
 use std::net::{TcpListener,SocketAddrV4,Ipv4Addr};
 
-use crate::ichandler::ic_types::IcConnection;
-use crate::ichandler::ic_types::IcCommand;
-use crate::ichandler::ic_types::IcExecute;
-use crate::ichandler::ic_types::IcPacket;
+use crate::ic_types::IcConnection;
+use crate::ic_types::IcCommand;
+use crate::ic_types::IcExecute;
+use crate::ic_types::IcPacket;
 
 /// The Server interface struct for IntelCache. It will listen on port 64209 for new clients.
 /// Then for each client, it will create a new thread for the client,

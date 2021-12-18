@@ -1,7 +1,7 @@
 use diesel::MysqlConnection;
 
-use crate::ichandler::ic_types::IcPacket;
-use crate::ichandler::ic_types::IcExecute;
+use crate::ic_types::IcPacket;
+use crate::ic_types::IcExecute;
 
 pub struct IcNull {}
 impl IcNull {

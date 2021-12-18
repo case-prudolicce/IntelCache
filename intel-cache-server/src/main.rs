@@ -1,4 +1,4 @@
-use intel_cache_lib::ichandler::ic_server::*;
+use intel_cache_lib::IcServer;
 
 static S:IcServer = IcServer{};
 

@@ -1,4 +1,4 @@
-use crate::ichandler::ic_types::IcPacket;
+use crate::ic_types::IcPacket;
 
 pub trait IcExecute {
 	type Connection;

@@ -1,12 +1,12 @@
 use diesel::MysqlConnection;
-use crate::ichandler::ic_types::IcPacket;
-use crate::ichandler::lib_backend::show_entries;
-use crate::ichandler::lib_backend::delete_entry;
-use crate::ichandler::ic_types::IcExecute;
-use crate::ichandler::lib_backend::make_file_entry;
-use crate::ichandler::ic_types::IcCommand;
-use crate::ichandler::lib_backend::get_entry_by_id;
-use crate::ichandler::lib_backend::update_entry;
+use crate::ic_types::IcPacket;
+use crate::lib_backend::show_entries;
+use crate::lib_backend::delete_entry;
+use crate::ic_types::IcExecute;
+use crate::lib_backend::make_file_entry;
+use crate::ic_types::IcCommand;
+use crate::lib_backend::get_entry_by_id;
+use crate::lib_backend::update_entry;
 
 use futures::executor::block_on;
 use std::str;

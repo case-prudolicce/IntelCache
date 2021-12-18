@@ -1,11 +1,11 @@
 use diesel::MysqlConnection;
-use crate::ichandler::ic_types::IcPacket;
-use crate::ichandler::ic_types::IcExecute;
-use crate::ichandler::lib_backend::delete_dir;
-use crate::ichandler::lib_backend::show_dirs;
-use crate::ichandler::lib_backend::create_dir;
-use crate::ichandler::lib_backend::update_dir;
-use crate::ichandler::lib_backend::validate_dir;
+use crate::ic_types::IcPacket;
+use crate::ic_types::IcExecute;
+use crate::lib_backend::delete_dir;
+use crate::lib_backend::show_dirs;
+use crate::lib_backend::create_dir;
+use crate::lib_backend::update_dir;
+use crate::lib_backend::validate_dir;
 
 pub struct IcDir { cmd: Vec<String>, }
 impl IcDir {
