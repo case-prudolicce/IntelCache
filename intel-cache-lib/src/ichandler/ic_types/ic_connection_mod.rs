@@ -16,7 +16,7 @@ impl IcConnection {
 	}
 	
 	pub fn get_packet(&mut self) -> Result<IcPacket,IcError> {
-		let mut headersize: usize;
+		let headersize: usize;
 		let bodysize: usize;
 		let header: String;
 		self.local_buffer = vec![0;512];

@@ -20,6 +20,7 @@ fn main() {
 	loop {
 		input.flush();
 		let mut input_cmd = input.prompt();
+		if input_cmd.cmd.len() <= 0 {continue};
 		match input_cmd.cmd[0].as_ref() {
 		"new" => {
 			if input_cmd.cmd.len() > 1 {

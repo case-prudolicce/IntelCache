@@ -14,19 +14,19 @@ impl IcServer {
 		loop {
 			let p = c.get_packet().unwrap();
 			//println!("[DEBUG#IcServer.handle_client] RECIEVING IC_PACKET : {} ({:?})",(&p).header.as_ref().unwrap_or(&"None".to_string()),(&p).body.as_ref().unwrap().len());
-			let mut icp: IcPacket;
+			let icp: IcPacket;
 			let mut icc: IcCommand;
 			if (&p).header.as_ref() != None {
 				icc = IcCommand::from_packet(p.clone()); 
 				icp = icc.exec(None);
 				if (&p).header.as_ref().unwrap() == "EXIT" /*&& icp.body == None*/ {
 					println!("{:?} disconnected.",c.con.peer_addr());
-					c.send_packet(icp);
+					c.send_packet(icp).unwrap();
 					return Ok(());
 				}
 			} else { icp = IcCommand::from_packet(p.clone()).exec(None) }
 			//println!("[DEBUG#IcServer.handle_client] SENDING ICP_PACKET : {} ({:?})",(&icp).header.as_ref().unwrap_or(&"None".to_string()),(&icp).body.as_ref().unwrap_or(&Vec::new()).len());
-			c.send_packet(icp);
+			c.send_packet(icp).unwrap();
 		}
 	}
 

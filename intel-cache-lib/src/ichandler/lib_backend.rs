@@ -370,7 +370,7 @@ pub fn get_entry_by_id(conn: &MysqlConnection,entryid: i32) -> Option<Entry> {
 	let r = entry::table.filter(entry::id.eq(entryid)).get_result::<Entry>(conn);
 	return match r {
 		Ok(entry) => Some(entry),
-		Err(e) => None,
+		Err(_e) => None,
 	} 
 }
 
