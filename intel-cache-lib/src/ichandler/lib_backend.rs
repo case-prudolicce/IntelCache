@@ -36,9 +36,13 @@ pub fn create_dir(conn: &MysqlConnection, name: &str, loc: Option<i32>) -> Dir {
 	dir::table.order(dir::id.desc()).first(conn).unwrap()
 }
 
-pub fn delete_dir(conn: &MysqlConnection,dirid: i32) {
+pub fn delete_dir(conn: &MysqlConnection,dirid: i32) -> Result<(),IcError>{
 	use self::schema::dir::dsl::*;
-	diesel::delete(dir.filter(id.eq(dirid))).execute(conn).unwrap();
+	diesel::delete(dir.filter(id.eq(dirid))).execute(conn);
+	match validate_dir(conn,dirid) {
+		Some(_v) => {return Ok(())},
+		None => {return Err(IcError("Error deleting directory.".to_string()))}
+	};
 }
 pub fn update_dir(conn: &MysqlConnection,dirid: i32,iddest: i32,new_name: Option<&str>) {
 	use schema::dir;
@@ -178,9 +182,13 @@ pub fn prompt_tag_entry_target(conn: &MysqlConnection,prompt_string: Option<Stri
 	tag::table.filter(id.eq(idtoremove)).first(conn).unwrap()
 }
 
-pub fn delete_tag(conn: &MysqlConnection,tagid: i32) {
+pub fn delete_tag(conn: &MysqlConnection,tagid: i32) -> Result<(),IcError>{
 	use self::schema::tag::dsl::*;
 	diesel::delete(tag.filter(id.eq(tagid))).execute(conn).unwrap();
+	match validate_tag(conn,tagid) {
+		Some(_v) => {return Ok(())},
+		None => {return Err(IcError("Error deleting tag.".to_string()))}
+	};
 }
 
 pub fn tag_dir(conn: &MysqlConnection, dir_id: i32,tag_id: i32) -> Result<DirTag ,IcError>{
@@ -322,31 +330,35 @@ pub fn get_entry_tags(conn: &MysqlConnection, entry_id: i32) -> String {
 	retstr
 }
 
-pub fn make_file_entry(conn: &MysqlConnection,name: &str,dt: Vec<u8>,location: Option<i32>,lbl: Option<&str>) -> Entry {
+pub fn make_file_entry(conn: &MysqlConnection,name: &str,dt: Vec<u8>,location: Option<i32>,lbl: Option<&str>) -> Result<Entry,IcError> {
 	use schema::entry;
 
 	let ipfsclient = IpfsClient::default();
 	
-	println!("size: {}",dt.len());
 	if dt.len() < 65535 {
 		let new_entry = NewEntry { name: name,data: &dt,type_: "text",loc: location.unwrap_or(1),label: lbl };
 		
-		diesel::insert_into(entry::table)
-			.values(&new_entry).execute(conn).expect("Error saving draft");
+		let res = diesel::insert_into(entry::table).values(&new_entry).execute(conn);
+		match res {
+		Ok(_e) => (),
+		Err(_err) => return Err(IcError("Error making new entry.".to_string())),
+		}
 	} else {
 		let mut hash = "NONE".to_string();
 		match block_on(ipfsclient.add(Cursor::new(dt))) {
 			Ok(res) => hash = res.hash,
-			Err(_e) => eprintln!("error adding file to ipfs.")
+			Err(_e) => return Err(IcError("Error making new entry.".to_string())),
 		}
-		println!("hash: {}",hash);
 		let new_entry = NewEntry { name: name,data: hash.as_bytes(),type_: "ipfs_file",loc: location.unwrap_or(1),label: lbl };
 		
-		diesel::insert_into(entry::table)
-			.values(&new_entry).execute(conn).expect("Error saving draft");
+		let res = diesel::insert_into(entry::table).values(&new_entry).execute(conn);
+		match res {
+		Ok(_e) => (),
+		Err(_err) => return Err(IcError("Error making new entry.".to_string())),
+		}
 		
 	}
-	entry::table.order(entry::id.desc()).first(conn).unwrap()
+	Ok(entry::table.order(entry::id.desc()).first(conn).unwrap())
 }
 
 pub async fn update_entry(conn: &MysqlConnection,uid: i32,dt: Vec<u8>,n: Option<&str>,l: Option<i32>,_lbl: Option<&str>) {
@@ -383,7 +395,15 @@ pub fn validate_dir(conn: &MysqlConnection,dirid: i32) -> Option<String> {
 	use schema::dir;
 	let d = dir::table.filter(dir::id.eq(dirid)).select(dir::name).load::<String>(conn);
 	match d {
-	Ok(n) => return Some(n[0].clone()),
+	Ok(n) => return if n.len() > 0 {Some(n[0].clone())} else {None},
+	Err(_e) => return None,
+	}
+}
+pub fn validate_tag(conn: &MysqlConnection,tagid: i32) -> Option<String> {
+	use schema::tag;
+	let d = tag::table.filter(tag::id.eq(tagid)).select(tag::name).load::<String>(conn);
+	match d {
+	Ok(n) => return if n.len() > 0 {Some(n[0].clone())} else {None},
 	Err(_e) => return None,
 	}
 }

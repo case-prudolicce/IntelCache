@@ -33,15 +33,6 @@ impl IcEntry{
 	pub fn new_empty() -> IcEntry {
 		IcEntry { cmd: Vec::new(),n:"".to_string(),t:"".to_string(),loc:0,d: Vec::new() }
 	}
-	pub fn bake(&self,data: &[u8]) {
-		println!("Baking {} ({} {}) with data.",self.n,self.t,self.loc);
-		let con = establish_connection();
-		match self.t.as_ref() {
-		"text" => Some(make_text_entry(&con,&self.n,str::from_utf8(data).unwrap(),Some(self.loc),None)),
-		"ipfs_file" => Some(make_file_entry(&con,&self.n,data.to_vec(),Some(self.loc),None)),
-		_ => None,
-		};
-	}
 }
 impl IcExecute for IcEntry {
 	type Connection = MysqlConnection;
@@ -63,15 +54,34 @@ impl IcExecute for IcEntry {
 		}
 		
 		if create {
-			if (self.cmd.len() as i32) >= 7 {
-				make_file_entry(con.as_ref().unwrap(),&self.cmd[3],self.d.clone(),Some(str::parse::<i32>(&self.cmd[6]).unwrap()),None);
-			} else {
-				make_file_entry(con.as_ref().unwrap(),&self.cmd[3],self.d.clone(),None,None);
-			}
+			//ENTRY CREATE ((NAME)) [UNDER <LOC>]
+			if (self.cmd.len() as i32) >= 5 {
+				let loc: i32;
+				match str::parse::<i32>(&self.cmd[4]){
+				Ok(l) => loc = l,
+				Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
+				}
+				let r = make_file_entry(con.as_ref().unwrap(),&self.cmd[2],self.d.clone(),Some(loc),None);
+				match r {
+				Ok(_e) => (),
+				Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
+				}
+			} else if (self.cmd.len() as i32) >= 3 {
+				let r = make_file_entry(con.as_ref().unwrap(),&self.cmd[2],self.d.clone(),None,None);
+				match r {
+				Ok(_e) => (),
+				Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
+				}
+			} else { return IcPacket::new(Some("Err.".to_string()),None) }
 			return IcPacket::new(Some("OK!".to_string()),None)
 		}
 		if delete {
 			if self.cmd.len() == 3 {
+				let etd: i32;
+				match self.cmd[2].parse::<i32>() {
+				Ok(e) => etd = e,
+				Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
+				}
 				let res = delete_entry(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap());
 				match res {
 				Ok(_e) => return IcPacket::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec())),
@@ -80,18 +90,20 @@ impl IcExecute for IcEntry {
 			}
 		}
 		if show {
+			//ENTRY SHOW [<DIR ID>]
 			if self.cmd.len() >= 3 {
 				rstr = show_entries(con.as_ref().unwrap(),Some(false),Some(true),Some(self.cmd[2].parse::<i32>().unwrap()));
 			} else {
 				rstr = show_entries(con.as_ref().unwrap(),Some(false),Some(true),None);
 			}
-			return IcPacket::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec()));
+			return if rstr != "" {IcPacket::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec()))} else {IcPacket::new(Some("Err.".to_string()),None)};
 		}
 		if get {
-			if get_entry_by_id(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap()) != None {
-				let e = get_entry_by_id(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap()).unwrap();
-				
-				if self.cmd.len() == 4 {
+			//ENTRY GET <ENTRY ID>
+			if self.cmd.len() == 3 {
+				if get_entry_by_id(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap()) != None {
+					let e = get_entry_by_id(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap()).unwrap();
+					
 					if e.type_ == "ipfs_file" {
 						let client = IpfsClient::default();
 						match block_on(client
@@ -115,8 +127,8 @@ impl IcExecute for IcEntry {
 					}else if e.type_ == "text" {
 						return IcPacket::new(Some("OK!".to_string()),Some(e.data));
 					}
-				}
-			}
+				} else {return IcPacket::new(Some("Err.".to_string()),None)}
+			} else {return IcPacket::new(Some("Err.".to_string()),None)}
 		}
 		if set {
 			if self.cmd.len() == 3 {
@@ -132,6 +144,6 @@ impl IcExecute for IcEntry {
 				block_on(update_entry(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap(),self.d.clone(),Some(&self.cmd[3]),Some(self.cmd[4].parse::<i32>().unwrap()),None));
 			}
 		}
-		IcPacket::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec()))
+		IcPacket::new(Some("Err.".to_string()),None)
 	}
 }

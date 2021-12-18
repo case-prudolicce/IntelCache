@@ -50,7 +50,13 @@ impl IcExecute for IcDir {
 		}
 		if delete {
 			if self.cmd.len() == 2 {
-				delete_dir(con.as_ref().unwrap(),self.cmd[1].parse::<i32>().unwrap());
+				let r = delete_dir(con.as_ref().unwrap(),self.cmd[1].parse::<i32>().unwrap());
+				match r {
+				Ok(_v) => {return IcPacket::new(Some("OK!".to_string()),None)},
+				Err(e) => {return IcPacket::new(Some("Err.".to_string()),None)},
+				}
+			} else {
+				return IcPacket::new(Some("Err.".to_string()),None)
 			}
 		}
 		if set {
@@ -67,6 +73,6 @@ impl IcExecute for IcDir {
 			}
 			
 		}
-		IcPacket::new(Some("OK!".to_string()),Some(retstr.as_bytes().to_vec()))
+		IcPacket::new(Some("Err.".to_string()),None)
 	}
 }

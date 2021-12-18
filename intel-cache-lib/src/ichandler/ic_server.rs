@@ -13,7 +13,7 @@ impl IcServer {
 		println!("Connection received! {:?} is sending data.", c.addr());
 		loop {
 			let p = c.get_packet().unwrap();
-			println!("[DEBUG#IcServer.handle_client] RECIEVING IC_PACKET : {} ({:?})",(&p).header.as_ref().unwrap_or(&"None".to_string()),(&p).body.as_ref().unwrap().len());
+			println!("[DEBUG#IcServer.handle_client] RECIEVING IC_PACKET : {} ({:?})",(&p).header.as_ref().unwrap_or(&"None".to_string()),(&p).body.as_ref().unwrap_or(&Vec::new()).len());
 			let icp: IcPacket;
 			let mut icc: IcCommand;
 			if (&p).header.as_ref() != None {

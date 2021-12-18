@@ -9,8 +9,8 @@
 * IcCommand validation Hardening
 
 # IC Server
-## Hardening
-* Invalid packets being sent in response
+## Maintenance
+* Post hardening cleanup
 
 # Native IC Client
 ## Bugs to fix

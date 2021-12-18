@@ -82,18 +82,14 @@ impl IcInputCommand<'_> {
 		"new" | "import" => {
 			fmt_vec.push("ENTRY".to_string());
 			fmt_vec.push("CREATE".to_string());
-			fmt_vec.push(if self.databuff.len() > 65535 {"ipfs_file".to_string()} else {"text".to_string()});
 			if self.cmd[0] == "new" {
 				if self.cmd.len() >= 2 {
 					fmt_vec.push(self.cmd[1].clone());
-					fmt_vec.push(self.databuff.len().to_string());
-					fmt_vec.push(if self.cmd.len() > 3 {self.cmd[3].clone()} else {"".to_string()});
 					fmt_vec.push("UNDER".to_string());
-					fmt_vec.push(if self.cmd.len() == 5 {self.cmd[4].clone()} else {if self.ref_in.pwd != 0 {self.ref_in.pwd.to_string()} else {1.to_string()}});
+					fmt_vec.push(if self.cmd.len() == 3 {self.cmd[2].clone()} else {if self.ref_in.pwd != 0 {self.ref_in.pwd.to_string()} else {1.to_string()}});
 				}
 			}else if self.cmd[0] == "import" {
 					fmt_vec.push(self.cmd[2].clone());
-					fmt_vec.push(self.databuff.len().to_string());
 			}
 			return IcCommand::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
 		},
@@ -101,7 +97,6 @@ impl IcInputCommand<'_> {
 			fmt_vec.push("ENTRY".to_string());
 			fmt_vec.push("GET".to_string());
 			fmt_vec.push(self.string_wrap(self.cmd[1].clone()));
-			fmt_vec.push(self.cmd[2].clone());
 			return IcCommand::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
 		},
 		"ls" => {

@@ -37,7 +37,16 @@ impl IcExecute for IcTag {
 		}
 		if delete {
 			if self.cmd.len() == 2 {
-				delete_tag(&con.as_ref().unwrap(), (&self.cmd[1]).parse::<i32>().unwrap());
+				let ttd: i32;
+				match (&self.cmd[1]).parse::<i32>() {
+				Ok(e) => {ttd = e}
+				Err(_err) => {return IcPacket::new(Some("Err.".to_string()),None)}
+				}
+				let r = delete_tag(&con.as_ref().unwrap(), ttd);
+				match r {
+				Ok(_v) => {return IcPacket::new(Some("OK!".to_string()),None)},
+				Err(_e) => {return IcPacket::new(Some("Err.".to_string()),None)},
+				}
 			}
 		}
 
@@ -79,6 +88,6 @@ impl IcExecute for IcTag {
 				untag_entry(&con.as_ref().unwrap(), (&self.cmd[1]).parse::<i32>().unwrap(),(&self.cmd[2]).parse::<i32>().unwrap());
 			}
 		}
-		IcPacket::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec()))
+		IcPacket::new(Some("Err.".to_string()),None)
 	}
 }

@@ -24,10 +24,11 @@ impl IcClient {
 	pub fn send_cmd(&mut self,c: &mut IcCommand) -> IcPacket {
 		//Check connection
 		if self.con.check_connection() {
-			//println!("[DEBUG#IcClient.exec_cmd] SENDING IC_PACKET : {} ({:?})",c.to_ic_command().to_ic_packet().header.unwrap_or("None".to_string()),c.to_ic_command().to_ic_packet().body.unwrap().len());
+			//println!("[DEBUG#IcClient.exec_cmd] SENDING IC_PACKET : {} ({:?})",c.to_ic_packet().header.unwrap_or("None".to_string()),c.to_ic_packet().body.unwrap().len());
 			self.con.send_packet(c.to_ic_packet()).unwrap(); 
-			return self.con.get_packet().unwrap_or(IcPacket::new_empty());
-			//println!("[DEBUG#IcClient.exec_cmd] RECIEVING IC_PACKET : {} ({:?})",(&sr).header.as_ref().unwrap_or(&"None".to_string()),(&sr).body.as_ref().unwrap_or(&Vec::new()).len());
+			let retp = self.con.get_packet().unwrap_or(IcPacket::new_empty());
+			//println!("[DEBUG#IcClient.exec_cmd] RECIEVING IC_PACKET : {} ({:?})",retp.header.as_ref().unwrap_or(&"None".to_string()),retp.body.as_ref().unwrap_or(&Vec::new()).len());
+			return retp;
 		} else {
 			return IcPacket::new_empty();
 		}
