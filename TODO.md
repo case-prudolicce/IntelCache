@@ -8,10 +8,11 @@
 * IcCommand validation (Hardening)
 
 # Native IC Client
+## Features
+* raw data input (for ENTRY CREATE and others)
 ## Bugs to fix
 * new with third arg (dir loc) does not work
-* crash on get\_packet
-
+* crash on get\_packet (if server restarts)
 
 # Server
 ## Hardening

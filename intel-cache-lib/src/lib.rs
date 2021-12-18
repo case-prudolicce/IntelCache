@@ -5,7 +5,7 @@
 //! # IntelCache Commands
 //!
 //! Here is the list of valid IntelCache commands:
-//! - ENTRY {CREATE \<NEW ENTRY NAME\> [UNDER \<DIR ID\>]|SHOW [\<DIR ID\>]|DELETE \<ENTRY ID\>|SET}
+//! - ENTRY {CREATE \<NEW ENTRY NAME\> [UNDER \<DIR ID\>]|SHOW [\<DIR ID\>]|DELETE \<ENTRY ID\>|SET \<ENTRY ID\> \<DIR ID\>}
 //! - DIR {CREATE|SHOW|DELETE|SET|VALIDATE \<DIR ID\>}
 //! - SHOW [\<DIR ID\>]
 //! - TAG {DIR|UNDIR|ENTRY|UNENTRY|CREATE|DELETE|SHOW}

@@ -36,9 +36,9 @@ impl IcExecute for IcTag {
 		_ => panic!("{} is not a valid subcommand of TAG.",self.cmd[0]),
 		}
 		if delete {
-			if self.cmd.len() == 3 {
+			if self.cmd.len() >= 3 {
 				let ttd: i32;
-				match (&self.cmd[3]).parse::<i32>() {
+				match (&self.cmd[2]).parse::<i32>() {
 				Ok(e) => {ttd = e}
 				Err(_err) => {return IcPacket::new(Some("Err.".to_string()),None)}
 				}

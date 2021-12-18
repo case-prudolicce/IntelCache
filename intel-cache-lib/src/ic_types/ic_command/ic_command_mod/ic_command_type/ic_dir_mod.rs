@@ -73,7 +73,9 @@ impl IcExecute for IcDir {
 			}
 		}
 		if set {
-			if self.cmd.len() == 3 {
+			if self.cmd.len() == 4 {
+				//Harden loc1 and loc2
+				//Harden updatedir
 				update_dir(con.as_ref().unwrap(),self.cmd[1].parse::<i32>().unwrap(),self.cmd[2].parse::<i32>().unwrap(),None);
 			}
 		}

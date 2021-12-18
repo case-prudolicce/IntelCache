@@ -186,11 +186,12 @@ pub fn prompt_tag_entry_target(conn: &MysqlConnection,prompt_string: Option<Stri
 
 pub fn delete_tag(conn: &MysqlConnection,tagid: i32) -> Result<(),IcError>{
 	use self::schema::tag::dsl::*;
-	diesel::delete(tag.filter(id.eq(tagid))).execute(conn).unwrap();
-	match validate_tag(conn,tagid) {
-		Some(_v) => {return Ok(())},
+	let rv = match validate_tag(conn,tagid) {
+		Some(_v) => tagid,
 		None => {return Err(IcError("Error deleting tag.".to_string()))}
 	};
+	diesel::delete(tag.filter(id.eq(rv))).execute(conn).unwrap();
+	Ok(())
 }
 
 pub fn tag_dir(conn: &MysqlConnection, dir_id: i32,tag_id: i32) -> Result<DirTag ,IcError>{
