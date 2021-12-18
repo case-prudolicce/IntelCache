@@ -21,6 +21,7 @@ fn main() {
 		input.flush();
 		let mut input_cmd = input.prompt();
 		if input_cmd.cmd.len() <= 0 {continue};
+		//Sanity checking/Getting input
 		match input_cmd.cmd[0].as_ref() {
 		"new" => {
 			if input_cmd.cmd.len() > 1 {
@@ -36,14 +37,22 @@ fn main() {
 		},
 		"import" => {
 			if input_cmd.cmd.len() > 2 {
-				input_cmd.databuff = fs::read(&input_cmd.cmd[1]).unwrap();
+				let dtb = fs::read(&input_cmd.cmd[1]);
+				match dtb {
+				Ok(data) => input_cmd.databuff = data,
+				Err(_e) => {println!("{} is an invalid filename.",&input_cmd.cmd[1]);continue},
+				}
 			} else if input_cmd.cmd.len() == 2 {
 				input_cmd.cmd.push(String::new());
 				println!("Name?");
 				let mut n = String::new();
 				stdin().read_line(&mut n).unwrap();
 				input_cmd.cmd[2] = n.trim_end().to_string();
-				input_cmd.databuff = fs::read(&input_cmd.cmd[1]).unwrap();
+				let dtb = fs::read(&input_cmd.cmd[1]);
+				match dtb {
+				Ok(data) => input_cmd.databuff = data,
+				Err(_e) => {println!("{} is an invalid filename.",&input_cmd.cmd[1]);continue},
+				}
 			} else {
 				input_cmd.cmd.push(String::new());
 				input_cmd.cmd.push(String::new());
@@ -55,7 +64,11 @@ fn main() {
 				stdin().read_line(&mut n).unwrap();
 				input_cmd.cmd[1] = p.trim_end().to_string();
 				input_cmd.cmd[2] = n.trim_end().to_string();
-				input_cmd.databuff = fs::read(&input_cmd.cmd[1]).unwrap();
+				let dtb = fs::read(&input_cmd.cmd[1]);
+				match dtb {
+				Ok(data) => input_cmd.databuff = data,
+				Err(_e) => {println!("{} is an invalid filename.",&input_cmd.cmd[1]);continue},
+				}
 			}
 		},
 		"get" => { 
@@ -81,15 +94,53 @@ fn main() {
 				} else { println!("{} is an invalid entry id.",input_cmd.cmd[1]);continue; } 
 			}
 		},
-		"rm" => { //Verify removed id (To be implemented somewhere else)
+		"rm" | "rmdir" | "rmtag" => { 
 			if input_cmd.cmd.len() >= 2 {
 				if input_cmd.cmd[1].parse::<i32>().unwrap_or(-1) == -1
 				{
-					println!("{} is an invalid entry id.",input_cmd.cmd[1]);
+					let idtype = match input_cmd.cmd[0].as_ref() {
+						"rm" => "entry",
+						"rmdir" => "directory",
+						"rmtag" => "tag",
+						_ => "",
+					};
+					println!("{} is an invalid {} id.",input_cmd.cmd[1],idtype);
 					continue;
 				}
 			} else {
-				println!("rm requires an entry id.");
+				let idtype = match input_cmd.cmd[0].as_ref() {
+					"rm" => "n entry",
+					"rmdir" => " directory",
+					"rmtag" => " tag",
+					_ => "",
+				};
+				println!("{} requires a{} id.",input_cmd.cmd[0],idtype);
+				continue;
+			}
+		},
+		"tag" | "untag" => {
+			if input_cmd.cmd.len() >= 3 {
+				if input_cmd.cmd[1].len() == 1 {
+					if input_cmd.cmd[1].parse::<i32>().unwrap_or(-1) == -1 {
+						println!("{} is an invalid id.",input_cmd.cmd[1]);
+						continue;
+					} 
+				} else {
+					//Check last character for a / at the end
+					if input_cmd.cmd[1][..input_cmd.cmd[1].len() - 1].parse::<i32>().unwrap_or(-1) == -1 || (input_cmd.cmd[1].parse::<i32>().unwrap_or(-1) == -1 && &input_cmd.cmd[1][input_cmd.cmd[1].len() - 1..] != "/"){ 
+						println!("{} is an invalid id.",input_cmd.cmd[1]);
+						continue;
+					} 
+				}
+
+				if input_cmd.cmd[2].parse::<i32>().unwrap_or(-1) == -1
+				{
+					println!("{} is an invalid tag id.",input_cmd.cmd[2]);
+					continue;
+				}
+
+			} else {
+				println!("{} requires a directory/entry id and a tag id.",input_cmd.cmd[0]);
 				continue;
 			}
 		},

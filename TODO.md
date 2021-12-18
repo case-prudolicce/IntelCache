@@ -1,20 +1,36 @@
-# Features to add
+# General
+## Features
 * Links
-* ENTRY DISPLAY command
-## Native Client features
+* ENTRY/DIR/TAG RENAME command
+* ENTRY DISPLAY command (Maybe)
+## Hardening
+* IcCommand validation Hardening
+## Bugs to fix
+* TBD
+
+# IC Server
+## Features
+* TBD
+## Hardening
+* Tagging with invalid ids
+## Bugs to fix
+* TBD
+
+# Native IC Client
+## Features
 * Native client: raw cmd (Sending raw IcCommands for debugging)
-# Maintenance
-* IcPacket verification
-* Better return values (instead of pure emptyness)
-* Fix empty 512 buffers (rm,ls)
-# Bugs to fix
+## Hardening
+* TBD
+## Bugs to fix
 * TBD
 
 # Before 1.0
 * README.md
 ## Hardening
-* get <garbage> causes crashes
+* Client
+* Server
 ## Post Hardening Cleanup
-* TBD
+* Client (TBD)
+* Server (TBD)
 ## Crates.io publication
 * Documentation/Minor tweaks
