@@ -155,7 +155,8 @@ fn main() {
 		let r = client.send_cmd(&mut input_cmd.to_ic_command());
 		match input_cmd.cmd[0].as_ref() {
 		"ls" | "showtags" => {input.display(r);},
-		"mktag" | "rmtag" | "rm" | "rmdir" => {input.resp(r)},
+		"mktag" | "rmtag" | "rm" | "rmdir" | "new" | "edit" => {input.resp(r)},
+		"get" => {let filename = input_cmd.cmd[2].clone();input.write_to_file(r,filename)},
 		"exit" | "quit" => {process::exit(1);},
 		_ => (),
 		};
@@ -402,10 +403,8 @@ impl Display for IcInputCommand<'_> {
 	}
 }
 
-///The input struct for IntelCache
 pub struct IcInput {input_str: String,fmt_str: Vec<String>, pwd: i32, pwdstr: String}
 impl IcInput {
-	///Create a new empty IcInput
 	pub fn new() -> IcInput {
 		let mut proto_ici = IcInput { input_str: "".to_string(), fmt_str: Vec::new(),pwd: 0,pwdstr: "ROOT".to_string() };
 		proto_ici.fmt_str.push(String::new());
@@ -437,6 +436,22 @@ impl IcInput {
 		if p.header.as_ref().unwrap_or(&"None".to_string()) == "OK!" {
 			println!("Success!");
 		} else {println!("Failed.")}
+	}
+	pub fn write_to_file(&self,p: IcPacket,name: String) {
+		if p.header.as_ref().unwrap_or(&"None".to_string()) == "OK!" {
+			if p.body.as_ref().unwrap_or(&Vec::new()).len() > 0 {
+				let data = p.body.unwrap();
+				let r = fs::write(name,data);
+				match r {
+				Ok(_e) => println!("Success!"),
+				Err(err) => panic!("{}",err),
+				}
+			} else {
+				println!("Response is empty.");
+			}
+		} else {
+			println!("Failed.");
+		}
 	}
 	pub fn set_pwd(&mut self, pwdid: i32,client: &mut IcClient) -> bool {
 		if pwdid < 0 {return false}

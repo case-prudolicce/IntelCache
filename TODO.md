@@ -17,8 +17,8 @@
 # Native IC Client
 ## Features
 * Native client: raw cmd (Sending raw IcCommands for debugging)
-## Hardening
-* TBD
+## Bugs to fix
+* new with third arg (dir loc) does not work
 
 # Before 1.0
 * README.md
