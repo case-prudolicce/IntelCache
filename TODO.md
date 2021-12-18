@@ -9,14 +9,10 @@
 * IcCommand validation Hardening
 
 # IC Server
-## Features
-* TBD
 ## Hardening
 * Invalid packets being sent in response
 
 # Native IC Client
-## Features
-* Native client: raw cmd (Sending raw IcCommands for debugging)
 ## Bugs to fix
 * new with third arg (dir loc) does not work
 
