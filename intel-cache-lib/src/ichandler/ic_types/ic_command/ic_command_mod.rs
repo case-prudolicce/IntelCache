@@ -3,13 +3,15 @@ use crate::ichandler::lib_backend::establish_connection;
 use std::fmt::Display;
 use std::fmt;
 use crate::ichandler::ic_types::IcExecute;
-use crate::ichandler::ic_types::IcNull;
-use crate::ichandler::ic_types::IcAll;
-use crate::ichandler::ic_types::IcDir;
-use crate::ichandler::ic_types::IcTag;
-use crate::ichandler::ic_types::IcEntry;
 use crate::ichandler::ic_types::IcPacket;
 use std::str;
+
+mod ic_command_type;
+use self::ic_command_type::ic_null_mod::IcNull as IcNull;
+use self::ic_command_type::ic_dir_mod::IcDir as IcDir;
+use self::ic_command_type::ic_all_mod::IcAll as IcAll;
+use self::ic_command_type::ic_entry_mod::IcEntry as IcEntry;
+use self::ic_command_type::ic_tag_mod::IcTag as IcTag;
 
 #[derive(Clone)]
 pub struct IcCommand { pub cmd: Vec<String>,pub data: Vec<u8> }
