@@ -12,7 +12,7 @@
 ## Features
 * TBD
 ## Hardening
-* Invalid packets
+* Invalid packets being sent in response
 
 # Native IC Client
 ## Features
