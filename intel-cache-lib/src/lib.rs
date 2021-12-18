@@ -9,6 +9,7 @@
 //! - DIR {CREATE \<NEW DIR NAME\> [UNDER \<DIR ID\>]|SHOW [\<DIR ID\>]|DELETE \<DIR ID\>|SET \<DIR ID\> \<NEW DIR LOC ID\>|VALIDATE \<DIR ID\>}
 //! - SHOW [\<DIR ID\>]
 //! - TAG {DIR \<DIR ID\> \<TAG ID\>|UNDIR \<DIR ID\> \<TAG ID\>|ENTRY \<ENTRY ID\> \<TAG ID\>|UNENTRY \<ENTRY ID\> \<TAG ID\>|CREATE <NEW TAG NAME>|DELETE <TAG ID>|SHOW}
+//! - EXIT
 #[macro_use]
 extern crate diesel;
 extern crate dotenv;
