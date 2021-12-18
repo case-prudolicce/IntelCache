@@ -15,6 +15,8 @@
 * crash on get\_packet (if server restarts)
 
 # Server
+## Features
+* Server exporting/backups
 ## Hardening
 * General hardening
 ## Bugs to fix
