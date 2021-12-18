@@ -11,12 +11,13 @@
 ## Bugs to fix
 * new with third arg (dir loc) does not work
 * crash on get\_packet
-* no return msg on mkdir and mv
+
 
 # Server
+## Hardening
+* ic\_tag (view TODOs)
 ## Bugs to fix
-* DELETE with no args returns None.
-* ENTRY SET not working
+* DIR CREATE/DELETE doesn't return right response.
 
 # Before 1.0
 * README.md

@@ -22,7 +22,7 @@ impl IcExecute for IcDir {
 		let mut delete = false;
 		let mut show = false;
 		let mut validate = false;
-		match self.cmd[0].as_str() {
+		match self.cmd[1].as_str() {
 		"DELETE" => delete = true,
 		"SHOW" => show = true,
 		"CREATE" => create = true,
@@ -33,26 +33,37 @@ impl IcExecute for IcDir {
 
 		
 		if create {
-			if self.cmd.len() == 2 {
-				create_dir(con.as_ref().unwrap(),&self.cmd[1],None);
-			} else if self.cmd.len() == 4 {
-				if self.cmd[2] == "UNDER" {
-					create_dir(con.as_ref().unwrap(),&self.cmd[1],Some(self.cmd[3].parse::<i32>().unwrap()));
-				} 
+			if self.cmd.len() == 3 {
+				match create_dir(con.as_ref().unwrap(),&self.cmd[2],None){
+					Ok(_iv) => return IcPacket::new(Some("OK!".to_string()),None),
+					Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
+				};
+			} else if self.cmd.len() >= 5 {
+				if self.cmd[3] == "UNDER" {
+					//Harden dir loc
+					match self.cmd[4].parse::<i32>() {
+					Ok(v) => match create_dir(con.as_ref().unwrap(),&self.cmd[2],Some(v)) {
+						Ok(_iv) => return IcPacket::new(Some("OK!".to_string()),None),
+						Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
+					},
+					Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
+					}
+				} else { return IcPacket::new(Some("Err.".to_string()),None) }
 			}
 		}
 		if show {
 			let retstr: String;
-			if self.cmd.len() == 2 {
-				retstr = show_dirs(con.as_ref().unwrap(),Some(self.cmd[1].parse::<i32>().unwrap()))
+			if self.cmd.len() == 3 {
+				retstr = show_dirs(con.as_ref().unwrap(),Some(self.cmd[2].parse::<i32>().unwrap()))
 			} else {
 				retstr = show_dirs(con.as_ref().unwrap(),None)
 			}
 			return IcPacket::new(Some("OK!".to_string()),if retstr != "" {Some(retstr.as_bytes().to_vec())} else {None})
 		}
 		if delete {
-			if self.cmd.len() == 2 {
-				let r = delete_dir(con.as_ref().unwrap(),self.cmd[1].parse::<i32>().unwrap());
+			if self.cmd.len() >= 3 {
+				let r = delete_dir(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap());
+				println!("DIR DELETE > 3");
 				match r {
 				Ok(_v) => {return IcPacket::new(Some("OK!".to_string()),None)},
 				Err(_e) => {return IcPacket::new(Some("Err.".to_string()),None)},

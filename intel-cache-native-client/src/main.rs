@@ -197,7 +197,7 @@ fn main() {
 		let r = client.send_cmd(&mut input_cmd.to_ic_command());
 		match input_cmd.cmd[0].as_ref() {
 		"ls" | "showtags" => {input.display(r);},
-		"mktag" | "rmtag" | "rm" | "rmdir" | "new" | "edit" => {input.resp(r)},
+		"mktag" | "rmtag" | "rm" | "rmdir" | "new" | "edit" | "mv" | "mkdir" | "tag" | "untag" => {input.resp(r)},
 		"get" => {let filename = input_cmd.cmd[2].clone();IcInput::IcInput::write_to_file(r,filename)},
 		
 		"raw" => {input.debug(r);},

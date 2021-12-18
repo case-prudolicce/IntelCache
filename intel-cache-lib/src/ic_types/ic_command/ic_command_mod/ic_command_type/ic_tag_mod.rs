@@ -25,7 +25,7 @@ impl IcExecute for IcTag {
 		let mut tagdir = 0;
 		let mut tagentry = 0;
 
-		match self.cmd[0].as_str() {
+		match self.cmd[1].as_str() {
 		"DELETE" => delete = true,
 		"SHOW" => show = true,
 		"CREATE" => create = true,
@@ -36,9 +36,9 @@ impl IcExecute for IcTag {
 		_ => panic!("{} is not a valid subcommand of TAG.",self.cmd[0]),
 		}
 		if delete {
-			if self.cmd.len() == 2 {
+			if self.cmd.len() == 3 {
 				let ttd: i32;
-				match (&self.cmd[1]).parse::<i32>() {
+				match (&self.cmd[3]).parse::<i32>() {
 				Ok(e) => {ttd = e}
 				Err(_err) => {return IcPacket::new(Some("Err.".to_string()),None)}
 				}
@@ -51,41 +51,48 @@ impl IcExecute for IcTag {
 		}
 
 		if show {
+			//TODO: show_tags hardening
 			let rstr = show_tags(&con.as_ref().unwrap(),Some(true));
 			return IcPacket::new(Some("OK!".to_string()),if rstr != "" {Some(rstr.as_bytes().to_vec())} else {None});
 		}
 
 		if create {
-			if self.cmd.len() == 2 {
-				create_tag(&con.as_ref().unwrap(), &self.cmd[1]);
+			if self.cmd.len() == 3 {
+				//TODO: create_tag hardening
+				create_tag(&con.as_ref().unwrap(), &self.cmd[2]);
+				return IcPacket::new(Some("OK!".to_string()),None);
 			}
 		}
 
 		if tagdir == 1{
-			if self.cmd.len() == 3 {
-				let res = tag_dir(&con.as_ref().unwrap(), (&self.cmd[1]).parse::<i32>().unwrap(),(&self.cmd[2]).parse::<i32>().unwrap());
+			if self.cmd.len() == 4 {
+				let res = tag_dir(&con.as_ref().unwrap(), (&self.cmd[2]).parse::<i32>().unwrap(),(&self.cmd[3]).parse::<i32>().unwrap());
 				match res {
-				Ok(_e) => (),
+				Ok(_e) => {return IcPacket::new(Some("OK!".to_string()),None)},
 				Err(_err) => {return IcPacket::new(Some("Err.".to_string()),None) }
 				};
 			}
 		} else if tagdir == -1 {
-			if self.cmd.len() == 3 {
-				untag_dir(&con.as_ref().unwrap(), (&self.cmd[1]).parse::<i32>().unwrap(),(&self.cmd[2]).parse::<i32>().unwrap());
+			if self.cmd.len() == 4 {
+				//TODO: untag_dir hardening
+				untag_dir(&con.as_ref().unwrap(), (&self.cmd[2]).parse::<i32>().unwrap(),(&self.cmd[3]).parse::<i32>().unwrap());
+				return IcPacket::new(Some("OK!".to_string()),None)
 			}
 		}
 
 		if tagentry == 1{
-			if self.cmd.len() == 3 {
-				let res = tag_entry(&con.as_ref().unwrap(), (&self.cmd[1]).parse::<i32>().unwrap(),(&self.cmd[2]).parse::<i32>().unwrap());
+			if self.cmd.len() == 4 {
+				let res = tag_entry(&con.as_ref().unwrap(), (&self.cmd[2]).parse::<i32>().unwrap(),(&self.cmd[3]).parse::<i32>().unwrap());
 				match res {
-				Ok(_e) => (),
+				Ok(_e) => {return IcPacket::new(Some("OK!".to_string()),None)},
 				Err(_err) => {return IcPacket::new(Some("Err.".to_string()),None) }
 				};
 			}
 		} else if tagentry == -1 {
-			if self.cmd.len() == 3 {
-				untag_entry(&con.as_ref().unwrap(), (&self.cmd[1]).parse::<i32>().unwrap(),(&self.cmd[2]).parse::<i32>().unwrap());
+			if self.cmd.len() == 4 {
+				//TODO: untag_entry hardening
+				untag_entry(&con.as_ref().unwrap(), (&self.cmd[2]).parse::<i32>().unwrap(),(&self.cmd[3]).parse::<i32>().unwrap());
+				return IcPacket::new(Some("OK!".to_string()),None)
 			}
 		}
 		IcPacket::new(Some("Err.".to_string()),None)

@@ -33,7 +33,7 @@ impl IcInput {
 			println!("{}",str::from_utf8(&p.body.unwrap()).unwrap());
 		} else if p.header.as_ref().unwrap_or(&"None".to_string()) == "OK!" {
 			println!("Nothing.");
-		} else {println!("{}",p.header.as_ref().unwrap_or(&"None".to_string()));}
+		} else {println!("Failed.");}
 	}
 	pub fn resp(&self,p: IcPacket) {
 		if p.header.as_ref().unwrap_or(&"None".to_string()) == "OK!" {

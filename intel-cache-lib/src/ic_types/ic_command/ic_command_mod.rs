@@ -97,13 +97,13 @@ impl IcCommand {
 		} else if return_type == -1 {
 			return Box::new(IcNull::new());
 		} else if return_type == 1 {
-			return Box::new(IcDir::new(self.cmd[1..].to_vec()));
+			return Box::new(IcDir::new(self.cmd.to_vec()));
 		} else if return_type == 2 {
 			return Box::new(IcEntry::from_ic_command(self.clone()));
 		} else if return_type == 3 {
-			return Box::new(IcTag::new(self.cmd[1..].to_vec()));
+			return Box::new(IcTag::new(self.cmd.to_vec()));
 		} else if return_type == 4 {
-			return Box::new(IcAll::new(self.cmd[1..].to_vec()));
+			return Box::new(IcAll::new(self.cmd.to_vec()));
 		} else {
 			return Box::new(IcNull::new());
 		}

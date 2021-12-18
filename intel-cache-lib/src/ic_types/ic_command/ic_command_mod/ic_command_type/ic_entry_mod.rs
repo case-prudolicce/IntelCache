@@ -131,28 +131,55 @@ impl IcExecute for IcEntry {
 		}
 		if set {
 			//ENTRY SET <ENTRY ID> [<NEW NAME> <NEW LOC>]
-			if self.cmd.len() == 4 {
+			if self.cmd.len() == 3 {
 				//Harden entry id
 				let its: i32;
 				match self.cmd[2].parse::<i32>() {
-				Ok(v) => {block_on(update_entry(con.as_ref().unwrap(),v,self.d.clone(),None,None,None));return IcPacket::new(Some("OK!".to_string()),None);}
+				Ok(v) => {
+					match block_on(update_entry(con.as_ref().unwrap(),v,self.d.clone(),None,None,None)) {
+					Ok(_v) => return IcPacket::new(Some("OK!".to_string()),None),
+					Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
+					};
+				},
 				Err(_err) => { return IcPacket::new(Some("Err.".to_string()),None)},
 				}
-			} else if self.cmd.len() == 5 {
-				//Harden this arg (New name or new loc)
+			} else if self.cmd.len() == 4 {
+				//Harden entry id
 				let its: i32;
 				match self.cmd[2].parse::<i32>() {
 				Ok(v) => its = v,
 				Err(_err) => { return IcPacket::new(Some("Err.".to_string()),None)},
 				}
+				//Harden third arg (New name or new loc)
 				let pnl = self.cmd[3].parse::<i32>().unwrap_or(-1);
 				if pnl == -1 {
-					block_on(update_entry(con.as_ref().unwrap(),its,self.d.clone(),Some(&self.cmd[3]),None,None));
+					match block_on(update_entry(con.as_ref().unwrap(),its,self.d.clone(),Some(&self.cmd[3]),None,None)) {
+					Ok(_v) => return IcPacket::new(Some("OK!".to_string()),None),
+					Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
+					};
 				} else {
-					block_on(update_entry(con.as_ref().unwrap(),its,self.d.clone(),None,Some(self.cmd[3].parse::<i32>().unwrap()),None));
+					match block_on(update_entry(con.as_ref().unwrap(),its,self.d.clone(),None,Some(self.cmd[3].parse::<i32>().unwrap()),None)) {
+					Ok(_v) => return IcPacket::new(Some("OK!".to_string()),None),
+					Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
+					};
 				}
-			} else if self.cmd.len() == 5 {
-				block_on(update_entry(con.as_ref().unwrap(),self.cmd[2].parse::<i32>().unwrap(),self.d.clone(),Some(&self.cmd[3]),Some(self.cmd[4].parse::<i32>().unwrap()),None));
+			} else if self.cmd.len() >= 5 {
+				//Harden entry id
+				let its: i32;
+				match self.cmd[2].parse::<i32>() {
+				Ok(v) => its = v,
+				Err(_err) => { return IcPacket::new(Some("Err.".to_string()),None)},
+				}
+				//Harden new loc id
+				let nli: i32;
+				match self.cmd[4].parse::<i32>() {
+				Ok(v) => nli = v,
+				Err(_err) => { return IcPacket::new(Some("Err.".to_string()),None)},
+				}
+				match block_on(update_entry(con.as_ref().unwrap(),its,self.d.clone(),Some(&self.cmd[3]),Some(nli),None)) {
+				Ok(_v) => return IcPacket::new(Some("OK!".to_string()),None),
+				Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
+				};
 			}
 		}
 		IcPacket::new(Some("Err.".to_string()),None)

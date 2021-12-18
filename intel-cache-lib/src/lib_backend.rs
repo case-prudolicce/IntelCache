@@ -21,7 +21,7 @@ pub fn establish_connection() -> MysqlConnection {
 		.unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
 
-pub fn create_dir(conn: &MysqlConnection, name: &str, loc: Option<i32>) -> Dir {
+pub fn create_dir(conn: &MysqlConnection, name: &str, loc: Option<i32>) -> Result<Dir,IcError> {
 	use schema::dir;
 	
 	let l: Option<i32>;
@@ -30,19 +30,21 @@ pub fn create_dir(conn: &MysqlConnection, name: &str, loc: Option<i32>) -> Dir {
 	} else {l = None}
 	let new_dir = NewDir { name,loc: l };
 	
-	diesel::insert_into(dir::table)
-		.values(&new_dir).execute(conn).expect("Error saving draft");
+	match diesel::insert_into(dir::table).values(&new_dir).execute(conn) {
+	Ok(_v) => (),
+	Err(_err) => return Err(IcError("Error creating new directory.".to_string())),}
 	
-	dir::table.order(dir::id.desc()).first(conn).unwrap()
+	Ok(dir::table.order(dir::id.desc()).first(conn).unwrap())
 }
 
 pub fn delete_dir(conn: &MysqlConnection,dirid: i32) -> Result<(),IcError>{
 	use self::schema::dir::dsl::*;
-	diesel::delete(dir.filter(id.eq(dirid))).execute(conn).unwrap();
-	match validate_dir(conn,dirid) {
-		Some(_v) => {return Ok(())},
+	let rv = match validate_dir(conn,dirid) {
+		Some(v) => dirid,
 		None => {return Err(IcError("Error deleting directory.".to_string()))}
 	};
+	diesel::delete(dir.filter(id.eq(rv))).execute(conn).unwrap();
+	Ok(())
 }
 pub fn update_dir(conn: &MysqlConnection,dirid: i32,iddest: i32,new_name: Option<&str>) {
 	use schema::dir;
@@ -361,24 +363,40 @@ pub fn make_file_entry(conn: &MysqlConnection,name: &str,dt: Vec<u8>,location: O
 	Ok(entry::table.order(entry::id.desc()).first(conn).unwrap())
 }
 
-pub async fn update_entry(conn: &MysqlConnection,uid: i32,dt: Vec<u8>,n: Option<&str>,l: Option<i32>,_lbl: Option<&str>) {
+pub async fn update_entry(conn: &MysqlConnection,uid: i32,dt: Vec<u8>,n: Option<&str>,l: Option<i32>,_lbl: Option<&str>) -> Result<(),IcError>{
 	use schema::entry;
 
 	let ipfsclient = IpfsClient::default();
 	if get_entry_by_id(conn,uid) != None {
+		//Harden l
 		let e = get_entry_by_id(conn,uid).unwrap();
+		let nl: i32;
+		//Check if we got a new loc
+		match l {
+		//If we do, validate it.
+		Some(v) => match validate_dir(conn,v) {
+			//if validated, set nl to validated new loc
+			Some(_iv) => nl = v,
+			//Otherwise return error
+			None => return Err(IcError("Error validating directory.".to_string())),
+			},
+		//Otherwise, set nl to original loc.
+		None => nl = e.loc,
+		}
 		
 		if dt.len() < 65535 {
 			diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::data.eq(&dt),entry::type_.eq("text"),entry::name.eq(n.unwrap_or(&e.name)),entry::loc.eq(l.unwrap_or(e.loc)))).execute(conn).expect("Error updating entry.");
+			Ok(())
 		} else {
 			let mut hash = "NONE".to_string();
 			match block_on(ipfsclient.add(Cursor::new(dt))) {
 				Ok(res) => hash = res.hash,
-				Err(_e) => eprintln!("error adding file to ipfs.")
-			}
+				Err(_e) => return Err(IcError("Error adding updated entry data.".to_string())),
+			};
 			diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::data.eq(hash.as_bytes()),entry::type_.eq("text"),entry::name.eq(n.unwrap_or(&e.name)),entry::loc.eq(l.unwrap_or(e.loc)))).execute(conn).expect("Error updating entry.");
+			Ok(())
 		}
-	}
+	} else {return Err(IcError("Error getting entry for update".to_string()))}
 }
 
 pub fn get_entry_by_id(conn: &MysqlConnection,entryid: i32) -> Option<Entry> {
