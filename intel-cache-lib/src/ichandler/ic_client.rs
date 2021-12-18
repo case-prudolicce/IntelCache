@@ -17,22 +17,26 @@ pub enum IcClientMode {
 	NONE,
 }
 
-pub struct IcInput { pub input_str: String,pub fmt_str: Vec<String>, pub pwd: i32, pwdstr: String}
+///The input struct for IntelCache
+pub struct IcInput { input_str: String,fmt_str: Vec<String>, pwd: i32, pwdstr: String}
 impl IcInput {
+	///Create a new empty IcInput
 	pub fn new() -> IcInput {
 		let mut proto_ici = IcInput { input_str: "".to_string(), fmt_str: Vec::new(),pwd: 0,pwdstr: "ROOT".to_string() };
 		proto_ici.fmt_str.push(String::new());
 		proto_ici
 	}
 	
+	///Verify whether the internal input state is an exit state
 	pub fn check_exit(&self) -> bool {
 		return if self.fmt_str.len() > 0 && self.fmt_str[0] == "exit" {true} else {false};
 	}
+	///Flushes the IcInput
 	pub fn flush(&mut self) {
 		self.input_str = String::new();
 		self.fmt_str = Vec::new();
 	}
-	
+	///Prompts user for command. Will return an [`IcInputCommand`] (client side command).
 	pub fn prompt(&mut self) -> IcInputCommand {
 		print!("{} > ",self.pwdstr);
 		stdout().flush().unwrap();
@@ -41,6 +45,9 @@ impl IcInput {
 		IcInputCommand::from_input(self)
 	}
 	
+	///Sets the pwd (path working directory) for the IcInput.
+	///This will get used by [`IcClient`] to append location info to
+	///certain commands
 	pub fn set_pwd(&mut self, pwdid: i32,client: &mut IcClient) -> bool {
 		if pwdid < 0 {return false}
 		else if pwdid == 0 {self.pwd = pwdid;self.pwdstr = "ROOT".to_string();return true;}
@@ -60,8 +67,6 @@ impl IcInput {
 			return true;
 		} else { return false; }
 	}
-	
-	
 }
 /// The Client interface struct for IntelCache
 pub struct IcClient { con: IcConnection,mode: IcClientMode }
@@ -78,7 +83,7 @@ impl IcClient {
 		}
 	}
 
-	///`exec_cmd` will take a client side command for `c`,
+	///`exec_cmd` will take a client side command for `c` ([`IcInputCommand`]),
 	///translate it to a server side command and send it (if need be).
 	///
 	///Alternatively it can change internal values on `c`'s referring Input.
@@ -131,8 +136,18 @@ impl IcClient {
 	}
 }
 
-pub struct IcInputCommand<'a> { pub cmd: Vec<String>, pub databuff: Vec<u8>,pub ref_in: &'a mut IcInput }
+///A client side command. Used by [`IcClient`] to send [`IcCommand`]s to the [`crate::ichandler::ic_server::IcServer`]
+///
+///Each `IcInputCommand` has a reference to the [`IcInput`] that has generated it.
+pub struct IcInputCommand<'a> { 
+	///cmd is the internal parsed command.
+	pub cmd: Vec<String>, 
+	///databuff is the internal data associated with the command. This is usually file data.
+	pub databuff: Vec<u8>,
+	ref_in: &'a mut IcInput 
+}
 impl IcInputCommand<'_> {
+
 	pub fn from_input(input: &mut IcInput) -> IcInputCommand {
 		
 		
