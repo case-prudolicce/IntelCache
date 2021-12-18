@@ -26,7 +26,7 @@ impl IcServer {
 				icc = IcCommand::from_packet(p.clone()); 
 				icp = icc.exec(None);
 				if (&p).header.as_ref().unwrap() == "EXIT" /*&& icp.body == None*/ {
-					println!("{:?} disconnected.",c.con.peer_addr());
+					println!("{:?} disconnected.",c.addr());
 					c.send_packet(icp).unwrap();
 					return Ok(());
 				}

@@ -1,13 +1,21 @@
+/// Parsed `IcCommand` ready to be sent to the connection.
 #[derive(Clone)]
-pub struct IcPacket { pub header: Option<String>,pub body: Option<Vec<u8>> }
+pub struct IcPacket { 
+	/// Header of the packet. Used for the Command or as a response.
+	pub header: Option<String>,
+	/// Body of the packet. Used for the Command data or as response data.
+	pub body: Option<Vec<u8>> 
+}
 impl IcPacket {
+	/// Construct new packet from `h` for the header and `d` for the body
 	pub fn new(h: Option<String>, d: Option<Vec<u8>>) -> IcPacket {
 		IcPacket { header: h, body: d }
 	}
+	/// Construct new empty packet 
 	pub fn new_empty() -> IcPacket {
 		IcPacket { header: None, body: None }
 	}
-	
+	/// Return a vector representing the packet's header and body.
 	pub fn pack(&self) -> Vec<u8> {
 		let mut hasheader = false;
 		let mut header: String = "".to_string();

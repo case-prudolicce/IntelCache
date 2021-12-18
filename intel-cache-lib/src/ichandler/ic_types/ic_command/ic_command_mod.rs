@@ -13,21 +13,24 @@ use self::ic_command_type::ic_all_mod::IcAll as IcAll;
 use self::ic_command_type::ic_entry_mod::IcEntry as IcEntry;
 use self::ic_command_type::ic_tag_mod::IcTag as IcTag;
 
+/// The struct defining a single message to and from the server and client.
 #[derive(Clone)]
-pub struct IcCommand { pub cmd: Vec<String>,pub data: Vec<u8> }
+pub struct IcCommand { cmd: Vec<String>,data: Vec<u8> }
 impl IcCommand {
+	/// Will translate an [`IcPacket`] to an [`IcCommand`]
 	pub fn from_packet(p: IcPacket) -> IcCommand {
 		let mut proto_iccmd = IcCommand { cmd:Vec::new(),data: p.body.unwrap_or(Vec::new()) };
 		proto_iccmd.from_string(p.header.unwrap_or("".to_string()));
 		proto_iccmd
 	}
+	/// Will create a new [`IcCommand`] from `raw_cmd` with an empty data buffer.
 	pub fn new(raw_cmd: String) -> IcCommand {
 		let mut proto_iccmd = IcCommand { cmd: Vec::new(), data: Vec::new() };
 		proto_iccmd.from_string(raw_cmd);
 		proto_iccmd
 	}
 
-	pub fn from_string(&mut self, s: String) {
+	fn from_string(&mut self, s: String) {
 		self.cmd = self.finalize_command(s.split_whitespace().collect::<Vec<&str>>());
 	}
 
@@ -63,11 +66,13 @@ impl IcCommand {
 		retve
 	}
 	
+	/// Will create a new [`IcCommand`] from a formatted `input` with data buffer `d` 
+	/// (or an empty buffer if `d` is `None`)
 	pub fn from_formated_vec(input: Vec<String>,d: Option<Vec<u8>>) -> IcCommand {
 		IcCommand { cmd:input,data: d.unwrap_or(Vec::new()) }
 	}
 
-	pub fn parse(&self) -> Box<dyn IcExecute<Connection = MysqlConnection>> {
+	fn parse(&self) -> Box<dyn IcExecute<Connection = MysqlConnection>> {
 		//Returns an ic_execute by parsing cmd
 		//0: null
 		//1: dir
@@ -103,6 +108,7 @@ impl IcCommand {
 		}
 	}
 	
+	/// Parse [`IcCommand`] to [`IcPacket`]
 	pub fn to_ic_packet(&self) -> IcPacket {
 		let mut s = String::new();
 		for t in &self.cmd {
@@ -113,12 +119,20 @@ impl IcCommand {
 		s = s.trim_end().to_string();
 		IcPacket::new(Some(s),Some(self.clone().data))
 	}
+
+	#[tokio::main]
+	async fn handle(cmd_opts: IcCommand) -> IcPacket {
+		let mut connection = establish_connection();
+		let mut cmd_parsed = cmd_opts.parse();
+		cmd_parsed.exec(Some(&mut connection))
+	}
+
 }
 impl IcExecute for IcCommand {
 	type Connection = MysqlConnection;
 	
 	fn exec(&mut self,_con: Option<&mut Self::Connection>) -> IcPacket {
-		handle(self.clone())
+		IcCommand::handle(self.clone())
 	}
 }
 impl Display for IcCommand {
@@ -130,12 +144,5 @@ impl Display for IcCommand {
 		}
 		write!(f,"{}", s)
 	}
-}
-
-#[tokio::main]
-pub async fn handle(cmd_opts: IcCommand) -> IcPacket {
-	let mut connection = establish_connection();
-	let mut cmd_parsed = cmd_opts.parse();
-	cmd_parsed.exec(Some(&mut connection))
 }
 

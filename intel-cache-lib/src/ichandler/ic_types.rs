@@ -8,8 +8,12 @@ pub use self::ic_command::IcCommand as IcCommand;
 pub use self::ic_packet_mod::IcPacket as IcPacket;
 pub use self::ic_connection_mod::IcConnection as IcConnection;
 
+/// Basic error for IntelCache
 #[derive(Debug)]
-pub struct IcError (pub String);
+pub struct IcError (
+	/// Error message
+	pub String
+);
 
 impl std::fmt::Display for IcError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {

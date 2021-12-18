@@ -2,12 +2,17 @@ use crate::ichandler::ic_types::{IcPacket,IcError};
 use std::net::TcpStream;
 use std::io::{Read,Write};
 
-pub struct IcConnection { pub con: TcpStream,local_buffer: Vec<u8>,final_buffer: Vec<u8>}
+/// Interface implementation struct for sending and receiving `IcPackets`
+pub struct IcConnection { con: TcpStream,local_buffer: Vec<u8>,final_buffer: Vec<u8>}
 impl IcConnection {
+	/// Create a new [`IcConnection`] with Stream `c`
 	pub fn new(c: TcpStream) -> IcConnection {
 		IcConnection { con: c,local_buffer: vec![0;512],final_buffer: Vec::new() }
 	}
 	
+	/// Sends a single IcPacket `ic_p`
+	///
+	/// Returns nothing or an error (if packet failed to send)
 	pub fn send_packet(&mut self,ic_p: IcPacket) -> Result<(),IcError> {
 		return match self.con.write(&ic_p.pack()) {
 		Ok(_e) => Ok(()),
@@ -15,6 +20,9 @@ impl IcConnection {
 		}
 	}
 	
+	/// Sends a single IcPacket `ic_p`
+	///
+	/// Returns the packet or an error (if failed to get packet)
 	pub fn get_packet(&mut self) -> Result<IcPacket,IcError> {
 		let headersize: usize;
 		let bodysize: usize;
@@ -114,10 +122,12 @@ impl IcConnection {
 		}
 	}
 
+	/// Gets the connection address.
 	pub fn addr(&self) -> String {
 		self.con.peer_addr().unwrap().to_string()
 	}
 	
+	/// Checks the connection
 	pub fn check_connection(&mut self) -> bool {
 		return match self.send_packet(IcPacket::new_empty()) {
 		Ok(_) => {
