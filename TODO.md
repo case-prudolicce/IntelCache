@@ -1,9 +1,13 @@
 # General
 ## Features
 * Links
+* Entry labels
+* calendar
 * ENTRY/DIR/TAG RENAME command
-* ENTRY DISPLAY command (Maybe)
-* Modular functions
+* Modular future function
+* Users and data visibility (public/private)
+* e2e encryption
+* Decentralization
 ## Future Hardening
 * IcCommand validation (Hardening)
 
@@ -14,12 +18,12 @@
 ## Bugs to fix
 * new with third arg (dir loc) does not work
 * crash on get\_packet (if server restarts)
+* mkdir <name> <dir id> doesn't work
 
 # Server
 ## Features
 * Server exporting/backups
-## Hardening
-* General hardening
+* logging 
 ## Bugs to fix
 * DIR CREATE/DELETE doesn't return right response.
 * DIR SET <DIR ID> 0 doesn't work.
