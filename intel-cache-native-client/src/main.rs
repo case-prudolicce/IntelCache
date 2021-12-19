@@ -2,6 +2,7 @@ use std::str;
 use intel_cache_lib::IcClient;
 use std::process;
 use std::io::stdin;
+use std::fmt::Error;
 use std::process::Command;
 use std::{fs,env};
 
@@ -10,12 +11,17 @@ pub mod ic_input_command;
 pub use crate::ic_input::IcInput as IcInput;
 pub use crate::ic_input_command::IcInputCommand as IcInputCommand;
 
-pub fn write_entry() -> String {
+pub fn write_entry() -> Result<String,Error>{
 	let editor = env::var("EDITOR").expect("No Editor env found.");
 	Command::new(editor).arg("/tmp/tmpentry").status().expect("Failed to open editor");
-	let ret = str::from_utf8(&fs::read("/tmp/tmpentry").unwrap()).unwrap().to_string();
+	//let ret = str::from_utf8(&fs::read("/tmp/tmpentry").unwrap()).unwrap().to_string();
+	let ret: String;
+	match fs::read("/tmp/tmpentry") {
+	Ok(d) => ret = str::from_utf8(&d).unwrap().to_string(),
+	Err(_e) => return Err(Error),
+	}
 	fs::remove_file("/tmp/tmpentry").unwrap();
-	ret
+	Ok(ret)
 }
 
 fn main() {
@@ -30,14 +36,21 @@ fn main() {
 		match input_cmd.cmd[0].as_ref() {
 		"new" => {
 			if input_cmd.cmd.len() > 1 {
-				input_cmd.databuff = write_entry().as_bytes().to_vec();
+				input_cmd.databuff = match write_entry() {//.as_bytes().to_vec();
+				Ok(v) => v.as_bytes().to_vec(),
+				Err(_e) => {println!("The entry was empty. Aborting.");continue},
+				}
 			} else {
 				input_cmd.cmd.push(String::new());
 				println!("Name?");
 				let mut n = String::new();
 				stdin().read_line(&mut n).unwrap();
 				input_cmd.cmd[1] = n;
-				input_cmd.databuff = write_entry().as_bytes().to_vec();
+				//input_cmd.databuff = write_entry().as_bytes().to_vec();
+				input_cmd.databuff = match write_entry() {//.as_bytes().to_vec();
+				Ok(v) => v.as_bytes().to_vec(),
+				Err(_e) => {println!("The entry was empty. Aborting.");continue},
+				}
 			}
 		},
 		"import" => {
@@ -96,7 +109,11 @@ fn main() {
 					let r = client.send_cmd(&mut input_cmd.to_ic_command());
 					let filename = input_cmd.cmd[2].clone();
 					IcInput::write_to_file(r,filename);
-					input_cmd.databuff = write_entry().as_bytes().to_vec();
+					//input_cmd.databuff = write_entry().as_bytes().to_vec();
+					input_cmd.databuff = match write_entry() {//.as_bytes().to_vec();
+					Ok(v) => v.as_bytes().to_vec(),
+					Err(_e) => {println!("The entry was empty. Aborting.");continue},
+					};
 					input_cmd.cmd[0] = "set".to_string();
 				} else { println!("{} is an invalid entry id.",input_cmd.cmd[1]);continue; } 
 			}

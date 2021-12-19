@@ -23,10 +23,11 @@ impl IcClient {
 	///
 	/// Returns an [`IcPacket`] from the server
 	pub fn send_cmd(&mut self,c: &mut IcCommand) -> IcPacket {
-		//Check connection
 		if self.con.check_connection() {
+			//println!("[DEBUG#IcServer.handle_client] SENDING ICP_PACKET : {} ({:?})",(&c).to_ic_packet().header.as_ref().unwrap_or(&"None".to_string()),(&c).to_ic_packet().body.as_ref().unwrap_or(&Vec::new()).len());
 			self.con.send_packet(c.to_ic_packet()).unwrap(); 
 			let retp = self.con.get_packet().unwrap_or(IcPacket::new_empty());
+			//println!("[DEBUG#IcServer.handle_client] RECIEVING IC_PACKET : {} ({:?})",(&retp).header.as_ref().unwrap_or(&"None".to_string()),(&retp).body.as_ref().unwrap_or(&Vec::new()).len());
 			return retp;
 		} else {
 			return IcPacket::new_empty();

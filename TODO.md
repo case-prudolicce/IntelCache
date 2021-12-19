@@ -22,6 +22,7 @@
 * crash on get\_packet (if server restarts)
 * mkdir <name> <dir id> doesn't work
 * ls on ROOT dir acts like ls a (when it shouldn't).
+* ls f/d acts like ls f/da (when it should do ls f/d on pwd)
 
 # Server
 ## Features
@@ -30,3 +31,4 @@
 ## Bugs to fix
 * DIR CREATE/DELETE doesn't return right response.
 * DIR SET <DIR ID> 0 doesn't work.
+* Server crashes if client disconnects (sometimes)

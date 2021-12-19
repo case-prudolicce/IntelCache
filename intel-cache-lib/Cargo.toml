@@ -1,6 +1,6 @@
 [package]
 name = "intel-cache-lib"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["case-prudolicce"]
 edition = "2021"
 description = "Library for interacting with IntelCache"
