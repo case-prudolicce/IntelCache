@@ -4,7 +4,7 @@ version = "1.0.0"
 authors = ["case-prudolicce"]
 edition = "2021"
 description = "Library for interacting with IntelCache"
-license = "AGPLv3"
+license = "GPL-3.0"
 
 [dependencies]
 diesel = { version = "1.4.4", features = ["mysql","chrono"] }
