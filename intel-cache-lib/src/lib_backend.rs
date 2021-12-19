@@ -40,7 +40,7 @@ pub fn create_dir(conn: &MysqlConnection, name: &str, loc: Option<i32>) -> Resul
 pub fn delete_dir(conn: &MysqlConnection,dirid: i32) -> Result<(),IcError>{
 	use self::schema::dir::dsl::*;
 	let rv = match validate_dir(conn,dirid) {
-		Some(v) => dirid,
+		Some(_v) => dirid,
 		None => {return Err(IcError("Error deleting directory.".to_string()))}
 	};
 	diesel::delete(dir.filter(id.eq(rv))).execute(conn).unwrap();
@@ -101,93 +101,6 @@ pub fn create_tag(conn: &MysqlConnection, name: &str) -> Tag {
 	tag::table.order(tag::id.desc()).first(conn).unwrap()
 }
 
-pub fn prompt_tag_target(conn: &MysqlConnection,prompt_string: Option<String>) -> Tag {
-	use schema::tag;
-	use std::io::{stdin};
-	use self::schema::tag::dsl::*;
-	let mut n = String::new();
-
-	show_tags(conn,None);
-	let prompt = prompt_string.unwrap_or("Tag?:".to_string());
-	println!("{}",prompt);
-	stdin().read_line(&mut n).unwrap();
-	let n = n.trim_end(); 
-	let matches = tag.filter(name.eq_any(vec![n])).load::<Tag>(conn).expect("Error loading matched dirs");
-	let idtoremove: i32;
-	if matches.len() != 1 {
-		for m in matches {
-			println!("{} {}", m.id, m.name);
-		}
-		println!("Which {}?: ",n);
-		let mut n= String::new();
-		stdin().read_line(&mut n).unwrap();
-		let n= n.trim_end(); 
-		idtoremove = n.parse::<i32>().unwrap_or_else(|_| panic!("Invalid ID."));
-	}else {
-		idtoremove = matches[0].id
-	}
-	println!("Matched id \"{}\"",idtoremove);
-	tag::table.filter(id.eq(idtoremove)).first(conn).unwrap()
-}
-
-pub fn prompt_tag_dir_target(conn: &MysqlConnection,prompt_string: Option<String>,dirid: i32) -> Tag {
-	use schema::tag;
-	use std::io::{stdin};
-	use self::schema::tag::dsl::*;
-	let mut n = String::new();
-
-	println!("{}",get_dir_tags(conn,dirid));
-	let prompt = prompt_string.unwrap_or("Tag?:".to_string());
-	println!("{}",prompt);
-	stdin().read_line(&mut n).unwrap();
-	let n = n.trim_end(); 
-	let matches = tag.filter(name.eq_any(vec![n])).load::<Tag>(conn).expect("Error loading matched dirs");
-	let idtoremove: i32;
-	if matches.len() != 1 {
-		for m in matches {
-			println!("{} {}", m.id, m.name);
-		}
-		println!("Which {}?: ",n);
-		let mut n= String::new();
-		stdin().read_line(&mut n).unwrap();
-		let n= n.trim_end(); 
-		idtoremove = n.parse::<i32>().unwrap_or_else(|_| panic!("Invalid ID."));
-	}else {
-		idtoremove = matches[0].id
-	}
-	println!("Matched id \"{}\"",idtoremove);
-	tag::table.filter(id.eq(idtoremove)).first(conn).unwrap()
-}
-
-pub fn prompt_tag_entry_target(conn: &MysqlConnection,prompt_string: Option<String>,entryid: i32) -> Tag {
-	use schema::tag;
-	use std::io::{stdin};
-	use self::schema::tag::dsl::*;
-	let mut n = String::new();
-
-	println!("{}",get_entry_tags(conn,entryid));
-	let prompt = prompt_string.unwrap_or("Tag?:".to_string());
-	println!("{}",prompt);
-	stdin().read_line(&mut n).unwrap();
-	let n = n.trim_end(); 
-	let matches = tag.filter(name.eq_any(vec![n])).load::<Tag>(conn).expect("Error loading matched entries");
-	let idtoremove: i32;
-	if  matches.len() != 1  {
-		for m in matches {
-			println!("{} {}", m.id, m.name);
-		}
-		println!("Which {}?: ",n);
-		let mut n= String::new();
-		stdin().read_line(&mut n).unwrap();
-		let n= n.trim_end(); 
-		idtoremove = n.parse::<i32>().unwrap_or_else(|_| panic!("Invalid ID."));
-	}else {
-		idtoremove = matches[0].id
-	}
-	println!("Matched id \"{}\"",idtoremove);
-	tag::table.filter(id.eq(idtoremove)).first(conn).unwrap()
-}
-
 pub fn delete_tag(conn: &MysqlConnection,tagid: i32) -> Result<(),IcError>{
 	use self::schema::tag::dsl::*;
 	let rv = match validate_tag(conn,tagid) {
@@ -240,17 +153,6 @@ pub fn get_dir_tags(conn: &MysqlConnection, dir_id: i32) -> String {
 	}
 	retstr.push_str(if rl <= 1 && rlv == "NONE".to_string() {""} else {"]"});
 	retstr
-}
-
-pub fn make_text_entry(conn: &MysqlConnection,name: &str,data: &str,location: Option<i32>,lbl: Option<&str>) -> Entry {
-	use schema::entry;
-	
-	let new_entry = NewEntry { name: name,data: data.as_bytes(),type_: "text",loc: location.unwrap_or(1), label: lbl};
-	
-	diesel::insert_into(entry::table)
-		.values(&new_entry).execute(conn).expect("Error saving draft");
-	
-	entry::table.order(entry::id.desc()).first(conn).unwrap()
 }
 
 pub fn show_entries(conn: &MysqlConnection, _display: Option<bool>, shortened: Option<bool>, under_id: Option<i32>) -> String {
@@ -390,15 +292,15 @@ pub async fn update_entry(conn: &MysqlConnection,uid: i32,dt: Vec<u8>,n: Option<
 		}
 		
 		if dt.len() < 65535 {
-			diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::data.eq(&dt),entry::type_.eq("text"),entry::name.eq(n.unwrap_or(&e.name)),entry::loc.eq(l.unwrap_or(e.loc)))).execute(conn).expect("Error updating entry.");
+			diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::data.eq(&dt),entry::type_.eq("text"),entry::name.eq(n.unwrap_or(&e.name)),entry::loc.eq(nl))).execute(conn).expect("Error updating entry.");
 			Ok(())
 		} else {
-			let mut hash = "NONE".to_string();
+			let hash;
 			match block_on(ipfsclient.add(Cursor::new(dt))) {
 				Ok(res) => hash = res.hash,
 				Err(_e) => return Err(IcError("Error adding updated entry data.".to_string())),
 			};
-			diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::data.eq(hash.as_bytes()),entry::type_.eq("text"),entry::name.eq(n.unwrap_or(&e.name)),entry::loc.eq(l.unwrap_or(e.loc)))).execute(conn).expect("Error updating entry.");
+			diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::data.eq(hash.as_bytes()),entry::type_.eq("text"),entry::name.eq(n.unwrap_or(&e.name)),entry::loc.eq(nl))).execute(conn).expect("Error updating entry.");
 			Ok(())
 		}
 	} else {return Err(IcError("Error getting entry for update".to_string()))}

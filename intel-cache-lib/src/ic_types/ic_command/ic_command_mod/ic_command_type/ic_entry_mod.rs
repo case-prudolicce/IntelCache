@@ -23,14 +23,8 @@ use tar::Archive;
 #[derive(Clone)]
 pub struct IcEntry { pub cmd: Vec<String>,pub n: String, pub t: String,pub loc: i32,pub d: Vec<u8> }
 impl IcEntry{
-	pub fn new(args: Vec<String>) -> IcEntry {
-		IcEntry { cmd: args,n:"".to_string(),t:"".to_string(),loc:0,d: Vec::new()}
-	}
 	pub fn from_ic_command(icc: IcCommand) -> IcEntry {
 		IcEntry { cmd: icc.cmd.clone(),n:icc.cmd[0].to_owned(),t:icc.cmd[1].to_owned(),loc:if icc.cmd.len() == 7 {icc.cmd[6].parse::<i32>().unwrap()} else {1},d: icc.data }
-	}
-	pub fn new_empty() -> IcEntry {
-		IcEntry { cmd: Vec::new(),n:"".to_string(),t:"".to_string(),loc:0,d: Vec::new() }
 	}
 }
 impl IcExecute for IcEntry {
@@ -133,7 +127,6 @@ impl IcExecute for IcEntry {
 			//ENTRY SET <ENTRY ID> [<NEW NAME> <NEW LOC>]
 			if self.cmd.len() == 3 {
 				//Harden entry id
-				let its: i32;
 				match self.cmd[2].parse::<i32>() {
 				Ok(v) => {
 					match block_on(update_entry(con.as_ref().unwrap(),v,self.d.clone(),None,None,None)) {

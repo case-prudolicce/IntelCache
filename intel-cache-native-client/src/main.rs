@@ -1,15 +1,14 @@
 use std::str;
 use intel_cache_lib::IcClient;
-use intel_cache_lib::ic_types::{IcCommand,IcPacket};
 use std::process;
-use std::io::{stdin};
+use std::io::stdin;
 use std::process::Command;
-use std::io::{stdout,Write};
-use std::fs;
-use std::env;
+use std::{fs,env};
 
-pub mod IcInput;
-pub mod IcInputCommand;
+pub mod ic_input;
+pub mod ic_input_command;
+pub use crate::ic_input::IcInput as IcInput;
+pub use crate::ic_input_command::IcInputCommand as IcInputCommand;
 
 pub fn write_entry() -> String {
 	let editor = env::var("EDITOR").expect("No Editor env found.");
@@ -21,7 +20,7 @@ pub fn write_entry() -> String {
 
 fn main() {
 	let mut client = IcClient::connect("127.0.0.1").unwrap_or_else(|_| {println!("Failed to connect");process::exit(1)});
-	let mut input = IcInput::IcInput::new();
+	let mut input = IcInput::new();
 
 	loop {
 		input.flush();
@@ -96,7 +95,7 @@ fn main() {
 					input_cmd.cmd.push("/tmp/tmpentry".to_string());
 					let r = client.send_cmd(&mut input_cmd.to_ic_command());
 					let filename = input_cmd.cmd[2].clone();
-					IcInput::IcInput::write_to_file(r,filename);
+					IcInput::write_to_file(r,filename);
 					input_cmd.databuff = write_entry().as_bytes().to_vec();
 					input_cmd.cmd[0] = "set".to_string();
 				} else { println!("{} is an invalid entry id.",input_cmd.cmd[1]);continue; } 
@@ -198,7 +197,7 @@ fn main() {
 		match input_cmd.cmd[0].as_ref() {
 		"ls" | "showtags" => {input.display(r);},
 		"mktag" | "rmtag" | "rm" | "rmdir" | "new" | "edit" | "mv" | "mkdir" | "tag" | "untag" => {input.resp(r)},
-		"get" => {let filename = input_cmd.cmd[2].clone();IcInput::IcInput::write_to_file(r,filename)},
+		"get" => {let filename = input_cmd.cmd[2].clone();IcInput::write_to_file(r,filename)},
 		
 		"raw" => {input.debug(r);},
 		"exit" | "quit" => {process::exit(1);},

@@ -2,7 +2,7 @@ use std::fs;
 use std::str;
 use intel_cache_lib::IcClient;
 use intel_cache_lib::ic_types::IcPacket;
-use crate::IcInputCommand::IcInputCommand;
+use crate::ic_input_command::IcInputCommand;
 use std::io::stdin;
 use std::io::stdout;
 use std::io::Write;
