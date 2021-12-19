@@ -1,6 +1,7 @@
 [package]
 name = "intel-cache-lib"
 version = "1.0.0"
+authors = ["case-prudolicce"]
 edition = "2021"
 
 [dependencies]
