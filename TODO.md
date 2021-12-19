@@ -15,6 +15,7 @@
 ## Features
 * README
 * raw data input (for ENTRY CREATE and potential others)
+* ls a prints as tree
 ## Bugs to fix
 * new with third arg (dir loc) does not work
 * crash on get\_packet (if server restarts)
