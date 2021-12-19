@@ -22,7 +22,7 @@
 
 # Server
 ## Features
-* Server exporting/backups
+* Commands (start,stop (pid signals), export)
 * logging 
 ## Bugs to fix
 * DIR CREATE/DELETE doesn't return right response.
