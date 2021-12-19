@@ -3,6 +3,8 @@ name = "intel-cache-lib"
 version = "1.0.0"
 authors = ["case-prudolicce"]
 edition = "2021"
+description = "Library for interacting with IntelCache"
+license = "GPL"
 
 [dependencies]
 diesel = { version = "1.4.4", features = ["mysql","chrono"] }
