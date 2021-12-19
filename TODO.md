@@ -19,6 +19,7 @@
 * new with third arg (dir loc) does not work
 * crash on get\_packet (if server restarts)
 * mkdir <name> <dir id> doesn't work
+* ls on ROOT dir acts like ls a (when it shouldn't).
 
 # Server
 ## Features
