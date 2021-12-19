@@ -9,7 +9,8 @@
 
 # Native IC Client
 ## Features
-* raw data input (for ENTRY CREATE and others)
+* README
+* raw data input (for ENTRY CREATE and potential others)
 ## Bugs to fix
 * new with third arg (dir loc) does not work
 * crash on get\_packet (if server restarts)
@@ -22,8 +23,3 @@
 ## Bugs to fix
 * DIR CREATE/DELETE doesn't return right response.
 * DIR SET <DIR ID> 0 doesn't work.
-
-# Before 1.0
-* README.md
-## Crates.io publication
-* Documentation/Minor tweaks
