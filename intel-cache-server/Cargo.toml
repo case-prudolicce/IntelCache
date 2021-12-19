@@ -6,4 +6,4 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-intel_cache_lib = { version="1.0.0", path = "../intel-cache-lib" }
+intel-cache-lib = { version="1.0.0", path = "../intel-cache-lib" }
