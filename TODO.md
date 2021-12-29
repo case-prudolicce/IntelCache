@@ -26,7 +26,7 @@
 
 # Server
 ## Features
-* Commands (start,stop (pid signals), export)
+* --export,--import and --teardown handle ipfs
 * logging 
 ## Bugs to fix
 * DIR CREATE/DELETE doesn't return right response.
