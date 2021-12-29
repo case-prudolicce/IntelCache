@@ -9,5 +9,5 @@ license = "GPL-3.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-intel-cache-lib = { version="1.1.1",path = "../intel-cache-lib" }
+intel-cache-lib = { version="1.1.0",path = "../intel-cache-lib" }
 rpassword = "0.0.4"
