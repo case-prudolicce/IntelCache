@@ -86,11 +86,14 @@
 //!     This Command will disconnect the client from the IntelCache node
 #[macro_use]
 extern crate diesel;
+#[macro_use]
+extern crate diesel_migrations;
+
 extern crate dotenv;
 extern crate ipfs_api_backend_hyper;
 
 pub mod ic_types;
-mod lib_backend;
+pub mod lib_backend;
 mod ic_client;
 mod ic_server;
 

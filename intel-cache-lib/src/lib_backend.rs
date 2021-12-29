@@ -1,3 +1,7 @@
+use std::io::{BufRead,BufReader};
+use std::process::{Command,Stdio};
+use std::os::unix::io::FromRawFd;
+use std::os::unix::io::AsRawFd;
 
 use diesel::prelude::*;
 use dotenv::dotenv;
@@ -6,19 +10,44 @@ use std::str;
 use ipfs_api_backend_hyper::{IpfsApi, IpfsClient};
 use std::io::Cursor;
 use futures::executor::block_on;
+use std::error::Error;
 
 mod models;
 mod schema;
+use diesel_migrations::embed_migrations;
+embed_migrations!("migrations/");
 
 use self::models::{EntryTag,NewEntryTag,NewEntry, Entry, NewDirTag, DirTag, Tag, NewTag, Dir, NewDir};
 use crate::ic_types::IcError;
 
-pub fn establish_connection() -> MysqlConnection {
-	dotenv().ok();
+pub fn build_sql(username: &str,password: &str) -> Result<(),Box<dyn Error>>{
+	let url = format!("mysql://{}:{}@localhost/",username,password);
+	let p = format!("--password={}",password);
+	let mut echo =
+		Command::new("echo")
+		//Make intelcache user/pass
+		.arg("CREATE DATABASE IntelCache;CREATE USER IF NOT EXISTS 'intelcache'@'localhost' IDENTIFIED BY 'intelcache';GRANT ALL ON `IntelCache`.* TO 'intelcache'@'localhost' IDENTIFIED BY 'intelcache';")
+		.stdout(Stdio::piped())
+		.stderr(Stdio::piped())
+		.spawn()?;
+	
+	let mut mysqlcreate =
+		Command::new("mysql")
+		.args(["-u",username])
+		.arg(p)
+		.stdin(echo.stdout.unwrap())
+		.stdout(Stdio::piped())
+		.stderr(Stdio::piped())
+		.spawn()?.wait()?;
+	
+	let con = establish_connection()?;
+	embedded_migrations::run(&con)?;
+	Ok(())
+}
 
-	let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-	MysqlConnection::establish(&database_url)
-		.unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
+pub fn establish_connection() -> Result<MysqlConnection,Box<dyn Error>> {
+	let u = "mysql://intelcache:intelcache@localhost/IntelCache"; 
+	return Ok(MysqlConnection::establish(&u)?);
 }
 
 pub fn create_dir(conn: &MysqlConnection, name: &str, loc: Option<i32>) -> Result<Dir,IcError> {

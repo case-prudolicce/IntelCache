@@ -2,6 +2,7 @@ use std::io::{Error};
 use std::thread;
 use std::net::{TcpListener,SocketAddrV4,Ipv4Addr};
 
+use crate::lib_backend::establish_connection;
 use crate::ic_types::IcConnection;
 use crate::ic_types::IcCommand;
 //use crate::ic_types::IcExecute;
@@ -38,19 +39,24 @@ impl IcServer {
 
 	/// `listen` will start the server. 
 	pub fn listen(&'static self) {
-		let loopback:Ipv4Addr = Ipv4Addr::new(0, 0, 0, 0);
-		let socket:SocketAddrV4 = SocketAddrV4::new(loopback, 64209);
-		let listener = TcpListener::bind(socket).unwrap();
-		let port = listener.local_addr().unwrap();
-		println!("Listening on {}", port);
-		for stream in listener.incoming() { 
-			match stream {
-				Err(e) => { eprintln!("failed: {}",e) },
-				Ok(stream) => { thread::spawn(  move || {
-						self.handle_client(IcConnection::new(stream)).unwrap_or_else(|error| eprintln!("{:?}",error));
-					});
-				},
-			}
+		match establish_connection() {
+		Ok(_v) =>{
+				let loopback:Ipv4Addr = Ipv4Addr::new(0, 0, 0, 0);
+				let socket:SocketAddrV4 = SocketAddrV4::new(loopback, 64209);
+				let listener = TcpListener::bind(socket).unwrap();
+				let port = listener.local_addr().unwrap();
+				println!("Listening on {}", port);
+				for stream in listener.incoming() { 
+					match stream {
+						Err(e) => { eprintln!("failed: {}",e) },
+						Ok(stream) => { thread::spawn(  move || {
+								self.handle_client(IcConnection::new(stream)).unwrap_or_else(|error| eprintln!("{:?}",error));
+							});
+						},
+					}
+				}
+			},
+		Err(e) => println!("Error connecting to internal database: {}",e),
 		}
 	}
 }

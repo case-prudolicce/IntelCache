@@ -123,7 +123,11 @@ impl IcCommand {
 
 	#[tokio::main]
 	async fn handle(cmd_opts: IcCommand) -> IcPacket {
-		let mut connection = establish_connection();
+		let mut connection;
+		match establish_connection() {
+		Ok(v) => connection = v,
+		Err(e) => panic!("Cannot connect to internal database: {}",e)
+		}
 		let mut cmd_parsed = cmd_opts.parse();
 		cmd_parsed.exec(Some(&mut connection))
 	}

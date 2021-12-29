@@ -8,6 +8,7 @@ license = "GPL-3.0"
 
 [dependencies]
 diesel = { version = "1.4.4", features = ["mysql","chrono"] }
+diesel_migrations =  "1.4.0"
 chrono = "0.4"
 dotenv = "0.15.0"
 ipfs-api-backend-hyper = "0.2"
