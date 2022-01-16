@@ -6,10 +6,21 @@ use crate::lib_backend::schema::entry_tags;
 use chrono::{NaiveDateTime};
 
 #[derive(Queryable)]
+pub struct User {
+	pub id: i32,
+	pub global_id: String,
+	pub username: String,
+	pub password: String,
+	pub admin: bool,
+}
+
+#[derive(Queryable)]
 pub struct Dir {
 	pub id: i32,
 	pub name: String,
 	pub loc: Option<i32>,
+	pub visibility: bool,
+	pub owner: String,
 }
 
 #[derive(Insertable)]
@@ -17,6 +28,7 @@ pub struct Dir {
 pub struct NewDir<'a> {
 	pub name: &'a str,
 	pub loc: Option<i32>,
+	pub visibility: bool,
 }
 
 
@@ -24,12 +36,15 @@ pub struct NewDir<'a> {
 pub struct Tag {
 	pub id: i32,
 	pub name: String,
+	pub owner: String,
+	pub visibility: bool,
 }
 
 #[derive(Insertable)]
 #[table_name = "tag"]
 pub struct NewTag<'a> {
 	pub name: &'a str,
+	pub visibility: bool,
 }
 
 #[derive(Queryable)]
@@ -56,6 +71,8 @@ pub struct Entry {
 	pub date_last_modified: NaiveDateTime,
 	pub loc: i32,
 	pub label: Option<String>,
+	pub visibility: bool,
+	pub owner: String,
 }
 
 #[derive(Insertable)]
@@ -66,6 +83,7 @@ pub struct NewEntry<'a> {
 	pub type_: &'a str,
 	pub loc: i32,
 	pub label: Option<&'a str>,
+	pub visibility: bool,
 }
 
 #[derive(Queryable)]

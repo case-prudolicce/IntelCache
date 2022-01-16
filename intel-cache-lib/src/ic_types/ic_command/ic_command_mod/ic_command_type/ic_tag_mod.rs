@@ -57,9 +57,14 @@ impl IcExecute for IcTag {
 		}
 
 		if create {
-			if self.cmd.len() == 3 {
+			if self.cmd.len() == 4 {
 				//TODO: create_tag hardening
-				create_tag(&con.as_ref().unwrap(), &self.cmd[2]);
+				let mut public = false;
+				match self.cmd[3].as_ref() {
+					"PUBLIC" => public = true,
+					_ => public = false,
+				}
+				create_tag(&con.as_ref().unwrap(), &self.cmd[2],public);
 				return IcPacket::new(Some("OK!".to_string()),None);
 			}
 		}
@@ -96,5 +101,9 @@ impl IcExecute for IcTag {
 			}
 		}
 		IcPacket::new(Some("Err.".to_string()),None)
+	}
+	
+	fn login_required(&mut self) -> bool {
+		true
 	}
 }

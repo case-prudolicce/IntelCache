@@ -47,20 +47,29 @@ impl IcExecute for IcEntry {
 		}
 		
 		if create {
-			//ENTRY CREATE ((NAME)) [UNDER <LOC>]
+			//ENTRY CREATE ((NAME)) {PUBLIC|PRIVATE} [UNDER <LOC>]
+			let mut public = false;
 			if (self.cmd.len() as i32) >= 5 {
+				match self.cmd[3].as_ref() {
+					"PUBLIC" => public = true,
+					_ => public = false,
+				}
 				let loc: i32;
 				match str::parse::<i32>(&self.cmd[4]){
 				Ok(l) => loc = l,
 				Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
 				}
-				let r = make_file_entry(con.as_ref().unwrap(),&self.cmd[2],self.d.clone(),Some(loc),None);
+				let r = make_file_entry(con.as_ref().unwrap(),&self.cmd[2],self.d.clone(),Some(loc),None,public);
 				match r {
 				Ok(_e) => (),
 				Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
 				}
-			} else if (self.cmd.len() as i32) >= 3 {
-				let r = make_file_entry(con.as_ref().unwrap(),&self.cmd[2],self.d.clone(),None,None);
+			} else if (self.cmd.len() as i32) >= 4 {
+				match self.cmd[3].as_ref() {
+					"PUBLIC" => public = true,
+					_ => public = false,
+				}
+				let r = make_file_entry(con.as_ref().unwrap(),&self.cmd[2],self.d.clone(),None,None,public);
 				match r {
 				Ok(_e) => (),
 				Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
@@ -176,5 +185,9 @@ impl IcExecute for IcEntry {
 			}
 		}
 		IcPacket::new(Some("Err.".to_string()),None)
+	}
+	
+	fn login_required(&mut self) -> bool {
+		true
 	}
 }

@@ -15,4 +15,8 @@ impl IcExecute for IcNull {
 	fn exec(&mut self,_con: Option<&mut Self::Connection>) -> IcPacket {
 		IcPacket::new_empty()
 	}
+	
+	fn login_required(&mut self) -> bool {
+		false
+	}
 }

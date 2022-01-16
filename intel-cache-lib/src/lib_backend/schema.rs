@@ -3,6 +3,8 @@ table! {
         id -> Integer,
         name -> Varchar,
         loc -> Nullable<Integer>,
+        visibility -> Bool,
+        owner -> Varchar,
     }
 }
 
@@ -24,6 +26,8 @@ table! {
         date_last_modified -> Datetime,
         loc -> Integer,
         label -> Nullable<Text>,
+        visibility -> Bool,
+        owner -> Varchar,
     }
 }
 
@@ -45,6 +49,18 @@ table! {
     tag (id) {
         id -> Integer,
         name -> Varchar,
+        owner -> Varchar,
+        visibility -> Bool,
+    }
+}
+
+table! {
+    user (id) {
+        id -> Integer,
+        global_id -> Varchar,
+        username -> Varchar,
+        password -> Varchar,
+        admin -> Bool,
     }
 }
 
@@ -62,4 +78,5 @@ allow_tables_to_appear_in_same_query!(
     entry_tags,
     links,
     tag,
+    user,
 );

@@ -149,18 +149,19 @@ pub fn establish_connection() -> Result<MysqlConnection,Box<dyn Error>> {
 	return Ok(MysqlConnection::establish(&u)?);
 }
 
-pub fn create_dir(conn: &MysqlConnection, name: &str, loc: Option<i32>) -> Result<Dir,IcError> {
+pub fn create_dir(conn: &MysqlConnection, name: &str, loc: Option<i32>, public: bool) -> Result<Dir,IcError> {
 	use schema::dir;
 	
 	let l: Option<i32>;
 	if loc != None {
 		l = if loc.unwrap() == 0 {None} else {Some(loc.unwrap())};
 	} else {l = None}
-	let new_dir = NewDir { name,loc: l };
+	let new_dir = NewDir { name,loc: l,visibility: public };
 	
 	match diesel::insert_into(dir::table).values(&new_dir).execute(conn) {
 	Ok(_v) => (),
-	Err(_err) => return Err(IcError("Error creating new directory.".to_string())),}
+	//Err(_err) => return Err(IcError("Error creating new directory.".to_string())),}
+	Err(_err) => return panic!("{:?}",_err),}
 	
 	Ok(dir::table.order(dir::id.desc()).first(conn).unwrap())
 }
@@ -218,10 +219,10 @@ pub fn show_tags(conn: &MysqlConnection, _display: Option<bool>) -> String {
 	retstr
 }
 
-pub fn create_tag(conn: &MysqlConnection, name: &str) -> Tag {
+pub fn create_tag(conn: &MysqlConnection, name: &str,public: bool) -> Tag {
 	use schema::tag;
 	
-	let new_tag = NewTag { name };
+	let new_tag = NewTag { name,visibility: public };
 	
 	diesel::insert_into(tag::table)
 		.values(&new_tag).execute(conn).expect("Error saving draft");
@@ -367,13 +368,13 @@ pub fn get_entry_tags(conn: &MysqlConnection, entry_id: i32) -> String {
 	retstr
 }
 
-pub fn make_file_entry(conn: &MysqlConnection,name: &str,dt: Vec<u8>,location: Option<i32>,lbl: Option<&str>) -> Result<Entry,IcError> {
+pub fn make_file_entry(conn: &MysqlConnection,name: &str,dt: Vec<u8>,location: Option<i32>,lbl: Option<&str>,public: bool) -> Result<Entry,IcError> {
 	use schema::entry;
 
 	let ipfsclient = IpfsClient::default();
 	
 	if dt.len() < 65535 {
-		let new_entry = NewEntry { name: name,data: &dt,type_: "text",loc: location.unwrap_or(1),label: lbl };
+		let new_entry = NewEntry { name: name,data: &dt,type_: "text",loc: location.unwrap_or(1),label: lbl, visibility: public };
 		
 		let res = diesel::insert_into(entry::table).values(&new_entry).execute(conn);
 		match res {
@@ -386,7 +387,7 @@ pub fn make_file_entry(conn: &MysqlConnection,name: &str,dt: Vec<u8>,location: O
 			Ok(res) => hash = res.hash,
 			Err(_e) => return Err(IcError("Error making new entry.".to_string())),
 		}
-		let new_entry = NewEntry { name: name,data: hash.as_bytes(),type_: "ipfs_file",loc: location.unwrap_or(1),label: lbl };
+		let new_entry = NewEntry { name: name,data: hash.as_bytes(),type_: "ipfs_file",loc: location.unwrap_or(1),label: lbl, visibility: public};
 		
 		let res = diesel::insert_into(entry::table).values(&new_entry).execute(conn);
 		match res {

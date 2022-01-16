@@ -15,6 +15,10 @@ impl IcPacket {
 	pub fn new_empty() -> IcPacket {
 		IcPacket { header: None, body: None }
 	}
+
+	pub fn new_denied() -> IcPacket {
+		IcPacket { header: Some("DENIED".to_owned()), body: None }
+	}
 	/// Return a vector representing the packet's header and body.
 	pub fn pack(&self) -> Vec<u8> {
 		let mut hasheader = false;

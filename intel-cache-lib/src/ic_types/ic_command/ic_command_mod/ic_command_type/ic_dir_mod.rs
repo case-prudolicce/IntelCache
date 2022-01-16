@@ -33,16 +33,25 @@ impl IcExecute for IcDir {
 
 		
 		if create {
-			if self.cmd.len() == 3 {
-				match create_dir(con.as_ref().unwrap(),&self.cmd[2],None){
+			let mut public = false;
+			println!("DIR CREATE: {}",self.cmd.len());
+			if self.cmd.len() == 4 {
+				match self.cmd[3].as_ref() {
+					"PUBLIC" => public = true,
+					_ => public = false,
+				}
+				match create_dir(con.as_ref().unwrap(),&self.cmd[2],None,public){
 					Ok(_iv) => return IcPacket::new(Some("OK!".to_string()),None),
-					Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
+					Err(_err) => return IcPacket::new(Some("ERR.".to_string()),None),
 				};
-			} else if self.cmd.len() >= 5 {
-				if self.cmd[3] == "UNDER" {
-					//Harden dir loc
-					match self.cmd[4].parse::<i32>() {
-					Ok(v) => match create_dir(con.as_ref().unwrap(),&self.cmd[2],Some(v)) {
+			} else if self.cmd.len() >= 6 {
+				match self.cmd[3].as_ref() {
+					"PUBLIC" => public = true,
+					_ => public = false,
+				}
+				if self.cmd[4] == "UNDER" {
+					match self.cmd[5].parse::<i32>() {
+					Ok(v) => match create_dir(con.as_ref().unwrap(),&self.cmd[2],Some(v),public) {
 						Ok(_iv) => return IcPacket::new(Some("OK!".to_string()),None),
 						Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
 					},
@@ -109,5 +118,9 @@ impl IcExecute for IcDir {
 			
 		}
 		IcPacket::new(Some("Err.".to_string()),None)
+	}
+	
+	fn login_required(&mut self) -> bool {
+		true
 	}
 }

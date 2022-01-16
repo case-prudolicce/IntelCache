@@ -22,16 +22,17 @@ impl IcServer {
 			let p = c.get_packet().unwrap();
 			println!("[DEBUG#IcServer.handle_client] RECIEVING IC_PACKET : {} ({:?})",(&p).header.as_ref().unwrap_or(&"None".to_string()),(&p).body.as_ref().unwrap_or(&Vec::new()).len());
 			let icp: IcPacket;
-			let mut icc: IcCommand;
-			if (&p).header.as_ref() != None {
-				icc = IcCommand::from_packet(p.clone()); 
-				icp = icc.exec();
-				if (&p).header.as_ref().unwrap() == "EXIT" /*&& icp.body == None*/ {
-					println!("{:?} disconnected.",c.addr());
-					c.send_packet(icp).unwrap();
-					return Ok(());
-				}
-			} else { icp = IcCommand::from_packet(p.clone()).exec() }
+			let mut icc = IcCommand::from_packet(p.clone());
+			if (icc.login_required() && c.logged_in()) || ! icc.login_required() {
+				if (&p).header.as_ref() != None {
+					icp = icc.exec();
+					if (&p).header.as_ref().unwrap() == "EXIT" /*&& icp.body == None*/ {
+						println!("{:?} disconnected.",c.addr());
+						c.send_packet(icp).unwrap();
+						return Ok(());
+					}
+				} else { icp = IcCommand::from_packet(p.clone()).exec() }
+			} else { icp = IcPacket::new_denied() }
 			println!("[DEBUG#IcServer.handle_client] SENDING ICP_PACKET : {} ({:?})",(&icp).header.as_ref().unwrap_or(&"None".to_string()),(&icp).body.as_ref().unwrap_or(&Vec::new()).len());
 			c.send_packet(icp).unwrap();
 		}

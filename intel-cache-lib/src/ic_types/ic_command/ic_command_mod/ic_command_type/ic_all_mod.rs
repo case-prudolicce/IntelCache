@@ -1,6 +1,5 @@
 use diesel::MysqlConnection;
-use crate::ic_types::IcPacket;
-use crate::lib_backend::show_entries;
+use crate::ic_types::IcPacket; use crate::lib_backend::show_entries;
 use crate::lib_backend::show_dirs;
 use crate::lib_backend::validate_dir;
 //use crate::ic_types::IcExecute;
@@ -40,5 +39,9 @@ impl IcExecute for IcAll {
 			retstr += &show_entries(con.as_ref().unwrap(),Some(false),Some(true),None);
 			IcPacket::new(Some("OK!".to_string()),Some(retstr.as_bytes().to_vec()))
 		}
+	}
+	
+	fn login_required(&mut self) -> bool {
+		true
 	}
 }

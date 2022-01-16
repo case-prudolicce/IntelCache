@@ -79,7 +79,7 @@ impl IcCommand {
 		//1: dir
 		//2: unbaked_entry
 		//3: tag
-		//4: show
+		//4: show/ALL
 		//-1: exit
 		if self.cmd.len() <= 0 {return Box::new(IcNull::new())}
 		let mut return_type = 0;
@@ -134,6 +134,10 @@ impl IcCommand {
 
 	pub fn exec(&mut self) -> IcPacket {
 		IcCommand::handle(self.clone())
+	}
+
+	pub fn login_required(&mut self) -> bool {
+		self.parse().login_required()
 	}
 }
 impl Display for IcCommand {

@@ -2,12 +2,14 @@ use crate::ic_types::{IcPacket,IcError};
 use std::net::TcpStream;
 use std::io::{Read,Write};
 
+#[derive(PartialEq)]
+pub struct IcLogin { username: String, Cookie: String }
 /// Interface implementation struct for sending and receiving `IcPackets`
-pub struct IcConnection { con: TcpStream,local_buffer: Vec<u8>,final_buffer: Vec<u8>}
+pub struct IcConnection { con: TcpStream,local_buffer: Vec<u8>,final_buffer: Vec<u8>,login: Option<IcLogin> }
 impl IcConnection {
 	/// Create a new [`IcConnection`] with Stream `c`
 	pub fn new(c: TcpStream) -> IcConnection {
-		IcConnection { con: c,local_buffer: vec![0;512],final_buffer: Vec::new() }
+		IcConnection { con: c,local_buffer: vec![0;512],final_buffer: Vec::new(),login: None}
 	}
 	
 	/// Sends a single IcPacket `ic_p`
@@ -138,5 +140,11 @@ impl IcConnection {
 		},
 		Err(_) => {false},
 		}
+	}
+
+	pub fn logged_in(&mut self) -> bool {
+		if self.login != None {
+			return true
+		} else { return false }
 	}
 }
