@@ -18,8 +18,9 @@ mod schema;
 use diesel_migrations::embed_migrations;
 embed_migrations!("migrations/");
 
-use self::models::{EntryTag,NewEntryTag,NewEntry, Entry, NewDirTag, DirTag, Tag, NewTag, Dir, NewDir};
+use self::models::{EntryTag,NewEntryTag,NewEntry, Entry, NewDirTag, DirTag, Tag, NewTag, Dir, NewDir,NewUser,User};
 use crate::ic_types::IcError;
+use crate::ic_types::IcLoginDetails;
 
 pub fn delete_sql(username: &str,password: &str) {
 	let url = format!("mysql://{}:{}@localhost/",username,password);
@@ -460,4 +461,21 @@ pub fn validate_tag(conn: &MysqlConnection,tagid: i32) -> Option<String> {
 	Ok(n) => return if n.len() > 0 {Some(n[0].clone())} else {None},
 	Err(_e) => return None,
 	}
+}
+
+pub fn register(conn: &MysqlConnection,login: &mut Option<IcLoginDetails>,username: String,password: String,id: String) -> Result<(),IcError> {
+	use schema::user;
+	let user = NewUser{ global_id: id, username: username, password: password };
+		let res = diesel::insert_into(user::table).values(&user).execute(conn);
+
+		match res {
+		Ok(_e) => (),
+		Err(_err) => return Err(IcError("Error making new user.".to_string())),
+		}
+	
+	Ok(())
+}
+
+pub fn login(conn: &MysqlConnection,login: &mut IcLoginDetails,username: String,password: String,id: String) -> Option<String> {
+	None
 }

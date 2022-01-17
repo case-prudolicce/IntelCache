@@ -7,6 +7,7 @@ use crate::lib_backend::show_dirs;
 use crate::lib_backend::create_dir;
 use crate::lib_backend::update_dir;
 use crate::lib_backend::validate_dir;
+use crate::ic_types::ic_connection_mod::IcLoginDetails;
 
 pub struct IcDir { cmd: Vec<String>, }
 impl IcDir {
@@ -16,7 +17,9 @@ impl IcDir {
 }
 impl IcExecute for IcDir {
 	type Connection = MysqlConnection;
-	fn exec(&mut self,con: Option<&mut Self::Connection>) -> IcPacket {
+	type LoginDetails = Option<IcLoginDetails>;
+	
+	fn exec(&mut self,con: Option<&mut Self::Connection>,login: &mut Self::LoginDetails) -> IcPacket {
 		let mut create = false;
 		let mut set = false;
 		let mut delete = false;

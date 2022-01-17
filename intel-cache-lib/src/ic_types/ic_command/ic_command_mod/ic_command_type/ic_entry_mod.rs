@@ -17,8 +17,7 @@ use ipfs_api_backend_hyper::IpfsClient;
 use crate::ipfs_api_backend_hyper::IpfsApi;
 use futures::TryStreamExt;
 use tar::Archive;
-
-
+use crate::ic_types::ic_connection_mod::IcLoginDetails;
 
 #[derive(Clone)]
 pub struct IcEntry { pub cmd: Vec<String>,pub n: String, pub t: String,pub loc: i32,pub d: Vec<u8> }
@@ -29,7 +28,8 @@ impl IcEntry{
 }
 impl IcExecute for IcEntry {
 	type Connection = MysqlConnection;
-	fn exec(&mut self,con: Option<&mut Self::Connection>) -> IcPacket {
+	type LoginDetails = Option<IcLoginDetails>;
+	fn exec(&mut self,con: Option<&mut Self::Connection>,login: &mut Self::LoginDetails) -> IcPacket {
 		let mut get = false;
 		let mut set = false;
 		let mut create = false;

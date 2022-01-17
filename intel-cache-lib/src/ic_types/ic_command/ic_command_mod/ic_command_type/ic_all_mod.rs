@@ -4,6 +4,7 @@ use crate::lib_backend::show_dirs;
 use crate::lib_backend::validate_dir;
 //use crate::ic_types::IcExecute;
 use crate::ic_types::ic_execute_mod::IcExecute;
+use crate::ic_types::ic_connection_mod::IcLoginDetails;
 
 pub struct IcAll { cmd: Vec<String>, }
 impl IcAll {
@@ -13,7 +14,8 @@ impl IcAll {
 }
 impl IcExecute for IcAll {
 	type Connection = MysqlConnection;
-	fn exec(&mut self,con: Option<&mut Self::Connection>) -> IcPacket {
+	type LoginDetails = Option<IcLoginDetails>;
+	fn exec(&mut self,con: Option<&mut Self::Connection>,login: &mut Self::LoginDetails) -> IcPacket {
 		let mut retstr: String;
 		if self.cmd.len() > 1 {
 			let si = match self.cmd[1].parse::<i32>() {

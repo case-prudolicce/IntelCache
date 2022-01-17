@@ -7,6 +7,7 @@ mod ic_connection_mod;
 pub use self::ic_command::IcCommand as IcCommand;
 pub use self::ic_packet_mod::IcPacket as IcPacket;
 pub use self::ic_connection_mod::IcConnection as IcConnection;
+pub use self::ic_connection_mod::IcLoginDetails as IcLoginDetails;
 
 /// Basic error for IntelCache
 #[derive(Debug)]

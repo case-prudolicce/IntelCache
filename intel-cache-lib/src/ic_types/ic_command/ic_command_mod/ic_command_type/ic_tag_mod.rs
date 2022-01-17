@@ -9,6 +9,7 @@ use crate::lib_backend::show_tags;
 use crate::lib_backend::delete_tag;
 //use crate::ic_types::IcExecute;
 use crate::ic_types::ic_execute_mod::IcExecute;
+use crate::ic_types::ic_connection_mod::IcLoginDetails;
 
 pub struct IcTag {cmd: Vec<String>,}
 impl IcTag {
@@ -18,7 +19,8 @@ impl IcTag {
 }
 impl IcExecute for IcTag {
 	type Connection = MysqlConnection;
-	fn exec(&mut self,con: Option<&mut Self::Connection>) -> IcPacket {
+	type LoginDetails = Option<IcLoginDetails>;
+	fn exec(&mut self,con: Option<&mut Self::Connection>,login: &mut Self::LoginDetails) -> IcPacket {
 		let mut delete = false;
 		let mut show = false;
 		let mut create = false;

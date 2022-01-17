@@ -1,3 +1,4 @@
+use crate::lib_backend::schema::user;
 use crate::lib_backend::schema::dir;
 use crate::lib_backend::schema::entry;
 use crate::lib_backend::schema::tag;
@@ -12,6 +13,14 @@ pub struct User {
 	pub username: String,
 	pub password: String,
 	pub admin: bool,
+}
+
+#[derive(Insertable)]
+#[table_name = "user"]
+pub struct NewUser {
+	pub global_id: String,
+	pub username: String,
+	pub password: String,
 }
 
 #[derive(Queryable)]
