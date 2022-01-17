@@ -17,10 +17,15 @@ mod models;
 mod schema;
 use diesel_migrations::embed_migrations;
 embed_migrations!("migrations/");
+use sha2::{Sha256, Digest};
 
 use self::models::{EntryTag,NewEntryTag,NewEntry, Entry, NewDirTag, DirTag, Tag, NewTag, Dir, NewDir,NewUser,User};
 use crate::ic_types::IcError;
 use crate::ic_types::IcLoginDetails;
+use crate::ic_types::IcPacket;
+
+use std::time::SystemTime;
+use std::time::UNIX_EPOCH;
 
 pub fn delete_sql(username: &str,password: &str) {
 	let url = format!("mysql://{}:{}@localhost/",username,password);
@@ -476,6 +481,31 @@ pub fn register(conn: &MysqlConnection,login: &mut Option<IcLoginDetails>,userna
 	Ok(())
 }
 
-pub fn login(conn: &MysqlConnection,login: &mut IcLoginDetails,username: String,password: String,id: String) -> Option<String> {
-	None
+pub fn login(conn: &MysqlConnection,login: &mut Option<IcLoginDetails>,id: String,password: String) -> Result<String,IcError> {
+	use schema::user;
+	let d = user::table.filter(user::global_id.eq(&id)).load::<User>(conn);
+	match d {
+	Ok(n) => {
+		if n[0].password != password {
+			return Err(IcError("Error: wrong password.".to_string()));
+		} else {
+			//Make cookie and fill login
+			
+			let start = SystemTime::now();
+			let since_the_epoch = start
+				.duration_since(UNIX_EPOCH)
+				.expect("Time went backwards")
+				.as_secs().to_string();
+			let mut hasher = Sha256::new();
+			let gid = (&id).to_string()+&password+&since_the_epoch;
+			hasher.update(&gid);
+			let cookie = format!("{:x}",hasher.finalize());
+			if *login == None {
+				*login = Some(IcLoginDetails{username: n[0].username.clone(),id: id.clone(),cookie: cookie.clone()});
+				return Ok(cookie);
+			} else { return Ok(cookie); }
+		}
+	}
+	Err(_e) => return Err(IcError("Error getting user.".to_string())),
+	}
 }

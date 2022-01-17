@@ -3,7 +3,7 @@ use std::net::TcpStream;
 use std::io::{Read,Write};
 
 #[derive(PartialEq)]
-pub struct IcLoginDetails { pub username: String, pub Cookie: String }
+pub struct IcLoginDetails { pub username: String,pub id: String, pub cookie: String }
 /// Interface implementation struct for sending and receiving `IcPackets`
 pub struct IcConnection { con: TcpStream,local_buffer: Vec<u8>,final_buffer: Vec<u8>,pub login: Option<IcLoginDetails> }
 impl IcConnection {
