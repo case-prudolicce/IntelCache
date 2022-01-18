@@ -155,14 +155,14 @@ pub fn establish_connection() -> Result<MysqlConnection,Box<dyn Error>> {
 	return Ok(MysqlConnection::establish(&u)?);
 }
 
-pub fn create_dir(conn: &MysqlConnection, name: &str, loc: Option<i32>, public: bool) -> Result<Dir,IcError> {
+pub fn create_dir(conn: &MysqlConnection, name: &str, loc: Option<i32>, public: bool,id: &String) -> Result<Dir,IcError> {
 	use schema::dir;
 	
 	let l: Option<i32>;
 	if loc != None {
 		l = if loc.unwrap() == 0 {None} else {Some(loc.unwrap())};
 	} else {l = None}
-	let new_dir = NewDir { name,loc: l,visibility: public };
+	let new_dir = NewDir { name,loc: l,visibility: public,owner: id.to_string() };
 	
 	match diesel::insert_into(dir::table).values(&new_dir).execute(conn) {
 	Ok(_v) => (),
@@ -192,18 +192,19 @@ pub fn update_dir(conn: &MysqlConnection,dirid: i32,iddest: i32,new_name: Option
 	} else { return Err(IcError("Failed to update directory.".to_string())) }
 }
 
-pub fn show_dirs(conn: &MysqlConnection,by_id: Option<i32>) -> String{
+pub fn show_dirs(conn: &MysqlConnection,by_id: Option<i32>,o: &String,owned_only: bool) -> String{
 	use self::schema::dir::dsl::*;
 	use schema::dir;
-	let results: Vec<Dir>;
+	let mut results: Vec<Dir>;
+	println!("OWNER: {}",o);
 	if by_id != None {
 		if by_id.unwrap() != 0 {
-			results = dir.filter(dir::loc.eq(by_id.unwrap())).load::<Dir>(conn).expect("Error loading dirs");
+			results = dir.filter(dir::loc.eq(by_id.unwrap()).and(dir::owner.eq(o))).load::<Dir>(conn).expect("Error loading dirs");
 		} else {
-			results = dir.filter(dir::loc.is_null()).load::<Dir>(conn).expect("Error loading dirs");
+			results = dir.filter(dir::loc.is_null().and(dir::owner.eq(o))).load::<Dir>(conn).expect("Error loading dirs");
 		}
 	} else {
-		results = dir.load::<Dir>(conn).expect("Error loading dirs");
+		results = dir.filter(dir::owner.eq(o)).load::<Dir>(conn).expect("Error loading dirs");
 	}
 	let mut retstr = String::new();
 	
@@ -211,6 +212,14 @@ pub fn show_dirs(conn: &MysqlConnection,by_id: Option<i32>) -> String{
 		let location = if d.loc.unwrap_or(-1) == -1 {"ROOT".to_string()} else {dir::table.filter(dir::id.eq(d.loc.unwrap())).select(dir::name).get_result::<String>(conn).unwrap()};
 		let tags = get_dir_tags(conn,d.id);
 		retstr.push_str(format!("{} {} ({}) {}\n",d.id,d.name, location, tags).as_str())
+	}
+	if ! owned_only {
+		results = dir.filter(dir::visibility.eq(true)).load::<Dir>(conn).expect("Error loading dirs");
+		for d in results {
+			let location = if d.loc.unwrap_or(-1) == -1 {"ROOT".to_string()} else {dir::table.filter(dir::id.eq(d.loc.unwrap())).select(dir::name).get_result::<String>(conn).unwrap()};
+			let tags = get_dir_tags(conn,d.id);
+			retstr.push_str(format!("{} {} ({}) {} -> {} {}\n",d.id,d.name, location, tags,d.owner,if d.visibility {"PUBLIC"} else {"PRIVATE"}).as_str())
+		}
 	}
 	retstr
 }
@@ -502,6 +511,7 @@ pub fn login(conn: &MysqlConnection,login: &mut Option<IcLoginDetails>,id: Strin
 			let cookie = format!("{:x}",hasher.finalize());
 			if *login == None {
 				*login = Some(IcLoginDetails{username: n[0].username.clone(),id: id.clone(),cookie: cookie.clone()});
+				println!("[DEBUG#IcServer.handle_client.IcLogin.exec] User {} logged in!",(*login).as_ref().unwrap().username);
 				return Ok(cookie);
 			} else { return Ok(cookie); }
 		}

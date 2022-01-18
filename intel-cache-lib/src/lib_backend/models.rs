@@ -38,6 +38,7 @@ pub struct NewDir<'a> {
 	pub name: &'a str,
 	pub loc: Option<i32>,
 	pub visibility: bool,
+	pub owner: String,
 }
 
 

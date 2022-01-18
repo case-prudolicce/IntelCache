@@ -15,31 +15,44 @@ impl IcAll {
 impl IcExecute for IcAll {
 	type Connection = MysqlConnection;
 	type LoginDetails = Option<IcLoginDetails>;
+	
 	fn exec(&mut self,con: Option<&mut Self::Connection>,login: &mut Self::LoginDetails) -> IcPacket {
 		let mut retstr: String;
-		if self.cmd.len() > 1 {
-			let si = match self.cmd[1].parse::<i32>() {
-			Ok(v) => if v == 0 {None} else {
-				match validate_dir(con.as_ref().unwrap(),v) {
-				Some(_iv) => Some(v),
-				None => return IcPacket::new(Some("Err.".to_string()),None),
-				}
-			},
-			Err(_err) => return IcPacket::new(Some("Err.".to_string()),None)
-			};
+		println!("{}",(*login).as_ref().unwrap().cookie);
+		println!("{}:{}",(*login).as_ref().unwrap().id,(*login).as_ref().unwrap().username);
+		println!("{:?}",self.cmd);
+		if self.cmd.len() > 2 {
+			if self.cmd[2] == (*login).as_ref().unwrap().cookie {
+				println!("COOKIES MATCH!");
+				let si = match self.cmd[1].parse::<i32>() {
+				Ok(v) => if v == 0 {None} else {
+					match validate_dir(con.as_ref().unwrap(),v) {
+					Some(_iv) => Some(v),
+					None => return IcPacket::new(Some("Err.".to_string()),None),
+					}
+				},
+				Err(_err) => return IcPacket::new(Some("Err.".to_string()),None)
+				};
 
-			if self.cmd.len() == 2 && si != None {
-				retstr = show_dirs(con.as_ref().unwrap(),Some(si.unwrap()));
-				retstr += &show_entries(con.as_ref().unwrap(),Some(false),Some(true),Some(si.unwrap()));
-			} else if self.cmd.len() == 2 {
-				retstr = show_dirs(con.as_ref().unwrap(),None);
+				if self.cmd.len() == 3 && si != None {
+					retstr = show_dirs(con.as_ref().unwrap(),Some(si.unwrap()),&(*login).as_ref().unwrap().id,true);
+					retstr += &show_entries(con.as_ref().unwrap(),Some(false),Some(true),Some(si.unwrap()));
+				} else if self.cmd.len() == 3 {
+					retstr = show_dirs(con.as_ref().unwrap(),None,&(*login).as_ref().unwrap().id,true);
+					retstr += &show_entries(con.as_ref().unwrap(),Some(false),Some(true),None);
+				} else { return IcPacket::new(Some("Err.".to_string()),None) }
+				IcPacket::new(Some("OK!".to_string()),Some(retstr.as_bytes().to_vec()))
+			} else { IcPacket::new_denied() }
+		} else if self.cmd.len() == 2{
+			if self.cmd[1] == (*login).as_ref().unwrap().cookie {
+				println!("COOKIES MATCH!");
+				retstr = show_dirs(con.as_ref().unwrap(),None,&(*login).as_ref().unwrap().id,true);
 				retstr += &show_entries(con.as_ref().unwrap(),Some(false),Some(true),None);
-			} else { return IcPacket::new(Some("Err.".to_string()),None) }
-			IcPacket::new(Some("OK!".to_string()),Some(retstr.as_bytes().to_vec()))
+				IcPacket::new(Some("OK!".to_string()),Some(retstr.as_bytes().to_vec()))
+			} else { IcPacket::new_denied() }
 		} else {
-			retstr = show_dirs(con.as_ref().unwrap(),None);
-			retstr += &show_entries(con.as_ref().unwrap(),Some(false),Some(true),None);
-			IcPacket::new(Some("OK!".to_string()),Some(retstr.as_bytes().to_vec()))
+			println!("COOKIES NOT MATCHING!");
+			return IcPacket::new_denied();
 		}
 	}
 	

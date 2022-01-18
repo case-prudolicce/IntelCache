@@ -6,9 +6,16 @@
 * ENTRY/DIR/TAG RENAME command
 * Modular future function
 * Users and data visibility (public/private)
+		- ACCOUNT Command
+		- LOGOUT Command
+		- Command Visibility/ownership integration:
+				- ENTRY
+				- SHOW
+				- TAG
 * e2e encryption
 * Decentralization
 ## Future Hardening
+* Lib backend ownership hardening (Dir)
 * IcCommand validation (Hardening)
 
 # Native IC Client
