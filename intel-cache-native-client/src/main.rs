@@ -25,7 +25,10 @@ pub fn write_entry() -> Result<String,Error>{
 }
 
 fn main() {
-	let mut client = IcClient::connect("127.0.0.1").unwrap_or_else(|_| {println!("Failed to connect");process::exit(1)});
+	let args: Vec<String> = env::args().collect();
+	let mut testing = false;
+	if args.len() > 1 && args[1] == "--testing" {println!("TESTING ON");testing = true}
+	let mut client = IcClient::connect("127.0.0.1",testing).unwrap_or_else(|_| {println!("Failed to connect");process::exit(1)});
 	let mut input = IcInput::new();
 
 	loop {

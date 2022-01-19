@@ -10,12 +10,21 @@ impl IcClient {
 	/// Note: the address is in ipv4 format. No ports.
 	///
 	/// Returns a client or an error (if couldn't connect).
-	pub fn connect(ip: &str) -> Result<IcClient,Error> {
-		let con = TcpStream::connect(ip.to_owned()+":64209");
-		if let Ok(c) = con {
-			return Ok(IcClient { con: IcConnection::new(c) });
+	pub fn connect(ip: &str,testing: bool) -> Result<IcClient,Error> {
+		if ! testing {
+			let con = TcpStream::connect(ip.to_owned()+":64209");
+			if let Ok(c) = con {
+				return Ok(IcClient { con: IcConnection::new(c) });
+			} else {
+				return Err(Error::new(ErrorKind::Other,"Failed to connect."));
+			}
 		} else {
-			return Err(Error::new(ErrorKind::Other,"Failed to connect."));
+			let con = TcpStream::connect(ip.to_owned()+":46290");
+			if let Ok(c) = con {
+				return Ok(IcClient { con: IcConnection::new(c) });
+			} else {
+				return Err(Error::new(ErrorKind::Other,"Failed to connect."));
+			}
 		}
 	}
 

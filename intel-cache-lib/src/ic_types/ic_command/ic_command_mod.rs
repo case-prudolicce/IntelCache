@@ -1,5 +1,6 @@
 use diesel::MysqlConnection;
 use crate::lib_backend::establish_connection;
+use crate::lib_backend::establish_testing_connection;
 use std::fmt::Display;
 use std::fmt;
 //use crate::ic_types::IcExecute;
@@ -132,18 +133,29 @@ impl IcCommand {
 	}
 
 	#[tokio::main]
-	async fn handle(cmd_opts: IcCommand,ld: &mut Option<IcLoginDetails>) -> IcPacket {
-		let mut connection;
-		match establish_connection() {
-		Ok(v) => connection = v,
-		Err(e) => panic!("Cannot connect to internal database: {}",e)
+	async fn handle(cmd_opts: IcCommand,ld: &mut Option<IcLoginDetails>,testing: bool) -> IcPacket {
+		if ! testing {
+			let mut connection;
+			match establish_connection() {
+			Ok(v) => connection = v,
+			Err(e) => panic!("Cannot connect to internal database: {}",e)
+			}
+			let mut cmd_parsed = cmd_opts.parse();
+			cmd_parsed.exec(Some(&mut connection),ld)
+		} else {
+			println!("EXEC TESTING");
+			let mut connection;
+			match establish_testing_connection() {
+			Ok(v) => connection = v,
+			Err(e) => panic!("Cannot connect to internal database: {}",e)
+			}
+			let mut cmd_parsed = cmd_opts.parse();
+			cmd_parsed.exec(Some(&mut connection),ld)
 		}
-		let mut cmd_parsed = cmd_opts.parse();
-		cmd_parsed.exec(Some(&mut connection),ld)
 	}
 
-	pub fn exec(&mut self,ld: &mut Option<IcLoginDetails>) -> IcPacket {
-		IcCommand::handle(self.clone(),ld)
+	pub fn exec(&mut self,ld: &mut Option<IcLoginDetails>,testing: bool) -> IcPacket {
+		IcCommand::handle(self.clone(),ld,testing)
 	}
 
 	pub fn login_required(&mut self) -> bool {

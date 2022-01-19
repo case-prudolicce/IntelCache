@@ -2,7 +2,6 @@ use crate::ic_types::ic_command::ic_command_mod::IcExecute;
 use diesel::MysqlConnection;
 use crate::ic_types::IcLoginDetails;
 use crate::ic_types::IcPacket;
-use crate::lib_backend::establish_connection;
 use crate::lib_backend::login;
 pub struct IcLogin {cmd: Vec<String>,}
 impl IcLogin {
@@ -18,12 +17,12 @@ impl IcExecute for IcLogin {
 		let globalid = &self.cmd[1];
 		let pass = &self.cmd[2];
 		if pass.len() == 128 {
-			let con: MysqlConnection;
-			match establish_connection() {
-			Ok(v) => con = v,
-			Err(e) => panic!("{:?}",e),
+			let c: &mut MysqlConnection;
+			match con {
+			Some(connection) => c = connection,
+			None => panic!("CONNECTION REQUIRED"),
 			}
-			match login(&con,l,globalid.to_string(),pass.to_string()) {
+			match login(c,l,globalid.to_string(),pass.to_string()) {
 				Ok(c) => return IcPacket::new(Some(c),None),
 				Err(e) => return IcPacket::new_denied(),
 			}
