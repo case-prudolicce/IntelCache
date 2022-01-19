@@ -2,6 +2,8 @@
 
 members= [
 	"intel-cache-lib",
+	"intel-cache-lib/ic-core-module",
+	"intel-cache-lib/ic-storage-module",
 	"intel-cache-native-client", 
 	"intel-cache-server",
 ]

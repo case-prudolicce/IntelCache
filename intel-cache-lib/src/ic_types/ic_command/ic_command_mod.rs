@@ -89,13 +89,16 @@ impl IcCommand {
 		if self.cmd.len() <= 0 {return Box::new(IcNull::new())}
 		let mut return_type = 0;
 		match self.cmd[0].as_str() {
+		//STORAGE
 		"DIR" => return_type = 1,
 		"ENTRY" => return_type = 2,
 		"TAG" => return_type = 3,
 		"SHOW" => return_type = 4,
-		"EXIT" => return_type = -1,
+		//CORE
 		"LOGIN" => return_type = -2,
 		"REGISTER" => return_type = -3,
+		//To be fixed
+		"EXIT" => return_type = -1,
 		_ => (),
 		}
 

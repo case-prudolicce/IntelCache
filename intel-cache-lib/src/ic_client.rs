@@ -14,14 +14,14 @@ impl IcClient {
 		if ! testing {
 			let con = TcpStream::connect(ip.to_owned()+":64209");
 			if let Ok(c) = con {
-				return Ok(IcClient { con: IcConnection::new(c) });
+				return Ok(IcClient { con: IcConnection::new(c,testing) });
 			} else {
 				return Err(Error::new(ErrorKind::Other,"Failed to connect."));
 			}
 		} else {
 			let con = TcpStream::connect(ip.to_owned()+":46290");
 			if let Ok(c) = con {
-				return Ok(IcClient { con: IcConnection::new(c) });
+				return Ok(IcClient { con: IcConnection::new(c,testing) });
 			} else {
 				return Err(Error::new(ErrorKind::Other,"Failed to connect."));
 			}

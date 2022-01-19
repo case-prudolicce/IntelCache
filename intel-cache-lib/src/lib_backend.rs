@@ -23,6 +23,7 @@ use self::models::{EntryTag,NewEntryTag,NewEntry, Entry, NewDirTag, DirTag, Tag,
 use crate::ic_types::IcError;
 use crate::ic_types::IcLoginDetails;
 use crate::ic_types::IcPacket;
+use crate::ic_types::IcExecute;
 
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
@@ -198,12 +199,22 @@ pub fn import_testing_sql(username: &str,password: &str,filename: &str) -> Resul
 
 pub fn establish_connection() -> Result<MysqlConnection,Box<dyn Error>> {
 	let u = "mysql://intelcache:intelcache@localhost/IntelCache"; 
-	return Ok(MysqlConnection::establish(&u)?);
+	let ret: MysqlConnection;
+	match MysqlConnection::establish(&u) {
+		Ok(v) => ret = v,
+		Err(e) => panic!("{:?}",e),
+	}
+	Ok(ret)
 }
 
 pub fn establish_testing_connection() -> Result<MysqlConnection,Box<dyn Error>> {
 	let u = "mysql://intelcache_tester:intelcache@localhost/IntelCache_testing"; 
-	return Ok(MysqlConnection::establish(&u)?);
+	let ret: MysqlConnection;
+	match MysqlConnection::establish(&u) {
+		Ok(v) => ret = v,
+		Err(e) => panic!("{:?}",e),
+	}
+	Ok(ret)
 }
 
 pub fn create_dir(conn: &MysqlConnection, name: &str, loc: Option<i32>, public: bool,id: &String) -> Result<Dir,IcError> {
@@ -569,4 +580,8 @@ pub fn login(conn: &MysqlConnection,login: &mut Option<IcLoginDetails>,id: Strin
 	}
 	Err(_e) => return Err(IcError("Error getting user.".to_string())),
 	}
+}
+
+pub fn parse_ic_packet(packet: IcPacket) -> Result<Box<dyn IcExecute<Connection = MysqlConnection, LoginDetails = Option<IcLoginDetails>>>,IcError> {
+	Err(IcError("NOT IMPLEMENTED".to_string()))
 }

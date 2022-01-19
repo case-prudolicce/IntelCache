@@ -2,14 +2,32 @@ use crate::ic_types::{IcPacket,IcError};
 use std::net::TcpStream;
 use std::io::{Read,Write};
 
+use diesel::MysqlConnection;
+use crate::lib_backend::establish_connection;
+use crate::lib_backend::establish_testing_connection;
+
 #[derive(PartialEq)]
 pub struct IcLoginDetails { pub username: String,pub id: String, pub cookie: String }
 /// Interface implementation struct for sending and receiving `IcPackets`
-pub struct IcConnection { con: TcpStream,local_buffer: Vec<u8>,final_buffer: Vec<u8>,pub login: Option<IcLoginDetails> }
+pub struct IcConnection { pub backend_con: MysqlConnection, con: TcpStream,local_buffer: Vec<u8>,final_buffer: Vec<u8>,pub login: Option<IcLoginDetails> }
 impl IcConnection {
 	/// Create a new [`IcConnection`] with Stream `c`
-	pub fn new(c: TcpStream) -> IcConnection {
-		IcConnection { con: c,local_buffer: vec![0;512],final_buffer: Vec::new(),login: None}
+	pub fn new(c: TcpStream,testing: bool) -> IcConnection {
+		if ! testing {
+			let bc;
+			match establish_connection() {
+				Ok(v) => bc = v,
+				Err(e) => panic!("{:?}",e),
+			}
+			IcConnection { backend_con: bc, con: c,local_buffer: vec![0;512],final_buffer: Vec::new(),login: None}
+		} else {
+			let bc;
+			match establish_testing_connection() {
+				Ok(v) => bc = v,
+				Err(e) => panic!("{:?}",e),
+			}
+			IcConnection { backend_con: bc, con: c,local_buffer: vec![0;512],final_buffer: Vec::new(),login: None}
+		}
 	}
 	
 	/// Sends a single IcPacket `ic_p`
