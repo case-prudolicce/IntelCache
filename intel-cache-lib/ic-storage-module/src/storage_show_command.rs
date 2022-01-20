@@ -1,21 +1,27 @@
 use diesel::MysqlConnection;
-use crate::ic_types::IcPacket; use crate::lib_backend::show_entries;
-use crate::lib_backend::show_dirs;
-use crate::lib_backend::validate_dir;
-//use crate::ic_types::IcExecute;
-use crate::ic_types::ic_execute_mod::IcExecute;
-use crate::ic_types::ic_connection_mod::IcLoginDetails;
+use intel_cache_lib::ic_types::IcPacket; 
+use intel_cache_lib::lib_backend::show_entries;
+use intel_cache_lib::lib_backend::show_dirs;
+use intel_cache_lib::lib_backend::validate_dir;
+use intel_cache_lib::ic_types::ic_execute_mod::IcExecute;
+use intel_cache_lib::ic_types::ic_connection_mod::IcLoginDetails;
 
-pub struct IcAll { cmd: Vec<String>, }
-impl IcAll {
-	pub fn new(args: Vec<String>) -> IcAll {
-		IcAll { cmd: args }
+pub struct StorageShow { }
+impl StorageShow {
+	#[no_mangle]
+	pub fn ss_new() -> StorageShow {
+		StorageShow {}
+	}
+	
+	#[no_mangle]
+	pub fn ss_to_exe() -> Box<dyn IcExecute<Connection = IcConnection>> {
+		Box::new(StorageShow::ss_new())
 	}
 }
-impl IcExecute for IcAll {
+impl IcExecute for StorageShow {
 	type Connection = IcConnection;
 	
-	fn exec(&mut self,con: Option<&mut Self::Connection>) -> IcPacket {
+	fn exec(&mut self,con: &mut Self::Connection, cmd: Option<Vec<String>>) -> IcPacket {
 		let mut retstr: String;
 		println!("{}",(*login).as_ref().unwrap().cookie);
 		println!("{}:{}",(*login).as_ref().unwrap().id,(*login).as_ref().unwrap().username);

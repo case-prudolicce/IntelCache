@@ -70,22 +70,14 @@ impl IcServer {
 		println!("LOADING MODULES");
 		let mut ret = Vec::<Box<dyn IcModule>>::new();
 		let mut libs = Vec::<Library>::new();
-		const ic_core_module: &'static str = "libic_core_module.so";
-		const ic_storage_module: &'static str = "libic_storage_module.so";
-		//unsafe {
-		//	let awesome_function: Symbol<unsafe extern fn(f64) -> f64> =
-		//		lib.get(b"awesome_function\0").unwrap();
-		//	awesome_function(0.42);
-		//}
-		unsafe {
-			let iccml = Library::new(ic_core_module).unwrap_or_else(|error| panic!("{}", error));
-			libs.push(iccml);
-			//let icsml = Library::new(ic_storage_module).unwrap_or_else(|error| panic!("{}", error));
-			//libs.push(icsml);
-			let iccm = libs.last().unwrap().get::<unsafe fn() -> *mut dyn IcModule>(b"icm_new\0").unwrap_or_else(|error| panic!("{}", error));
-			//let icsm = icsml.get::<fn() -> Box<dyn IcModule>>(b"icm_new\0").unwrap_or_else(|error| panic!("{}", error));
-			ret.push(Box::from_raw(iccm()));
-			//ret.push(icsm());
+		let basic_module_paths = vec!["libic_core_module.so","libic_storage_module.so"];
+		for path in basic_module_paths {
+			unsafe {
+				let icml = Library::new(path).unwrap_or_else(|error| panic!("{}", error));
+				libs.push(icml);
+				let icmc = libs.last().unwrap().get::<unsafe fn() -> *mut dyn IcModule>(b"icm_new\0").unwrap_or_else(|error| panic!("{}", error));
+				ret.push(Box::from_raw(icmc()));
+			}
 		}
 		println!("LOADING FINISHED");
 		(libs,ret)
