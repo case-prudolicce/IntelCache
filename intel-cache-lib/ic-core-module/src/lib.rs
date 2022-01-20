@@ -1,41 +1,48 @@
 pub mod core_login_command;
 pub mod core_register_command;
+pub mod core_null_command;
 pub use self::core_register_command::CoreRegister;
 pub use self::core_login_command::CoreLogin;
+pub use self::core_null_command::CoreNull;
 use diesel::MysqlConnection;
 use std::collections::HashMap;
 use intel_cache_lib::ic_types::IcExecute;
 use intel_cache_lib::ic_types::IcLoginDetails;
 use intel_cache_lib::ic_types::IcModule;
 use intel_cache_lib::ic_types::IcError;
+use intel_cache_lib::ic_types::IcConnection;
 
-pub struct IcCoreModule {name: String,version: String,e: HashMap<String,fn()->Box<dyn IcExecute<Connection = MysqlConnection,LoginDetails = Option<IcLoginDetails>>>>}
-impl IcCoreModule {
-	pub fn new() -> IcCoreModule {
-		let mut ret = IcCoreModule { name: "CORE".to_string(), version: "1.0.0".to_string(), e: HashMap::new() };
-		ret.load();
-		ret
-	}
+pub struct IcCoreModule {name: String,version: String,e: HashMap<String,fn()->Box<dyn IcExecute<Connection = IcConnection>>>}
+impl IcModule for IcCoreModule {
 	
-	pub fn load(&mut self) {
+	#[no_mangle]
+	fn icm_load(&mut self) {
 		self.e.insert(
 			"LOGIN".to_string(),
-			CoreLogin::to_exe
+			CoreLogin::cl_to_exe
 		);
 		self.e.insert(
 			"REGISTER".to_string(),
-			CoreRegister::to_exe
+			CoreRegister::cr_to_exe
+		);
+		self.e.insert(
+			"NULL".to_string(),
+			CoreNull::cn_to_exe
 		);
 	}
-}
-impl IcModule for IcCoreModule {
-	fn get_name(&self) -> &str {
+	
+	#[no_mangle]
+	fn icm_get_name(&self) -> &str {
 		&self.name
 	}
-	fn get_version(&self) -> &str {
+	
+	#[no_mangle]
+	fn icm_get_version(&self) -> &str {
 		&self.version
 	}
-	fn get_command(&self,cmd: Vec<String>) -> Result<Box<dyn IcExecute<Connection = MysqlConnection,LoginDetails = Option<IcLoginDetails>>>,IcError> {
+	
+	#[no_mangle]
+	fn icm_get_command(&self,cmd: Vec<String>) -> Result<Box<dyn IcExecute<Connection = IcConnection>>,IcError> {
 		for (name,f) in &self.e {
 			if cmd[0] == *name {
 				return Ok(f())
@@ -43,4 +50,10 @@ impl IcModule for IcCoreModule {
 		}
 		return Err(IcError("COMMAND NOT FOUND".to_string()));
 	}
+}
+#[no_mangle]
+pub extern "C" fn icm_new() -> *mut dyn IcModule {
+	let mut ret = IcCoreModule { name: "CORE".to_string(), version: "1.0.0".to_string(), e: HashMap::new() };
+	ret.icm_load();
+	Box::into_raw(Box::new(ret))
 }

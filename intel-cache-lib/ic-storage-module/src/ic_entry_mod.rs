@@ -27,9 +27,8 @@ impl IcEntry{
 	}
 }
 impl IcExecute for IcEntry {
-	type Connection = MysqlConnection;
-	type LoginDetails = Option<IcLoginDetails>;
-	fn exec(&mut self,con: Option<&mut Self::Connection>,login: &mut Self::LoginDetails) -> IcPacket {
+	type Connection = IcConnection;
+	fn exec(&mut self,con: Option<&mut Self::Connection>) -> IcPacket {
 		let mut get = false;
 		let mut set = false;
 		let mut create = false;

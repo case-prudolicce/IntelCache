@@ -13,7 +13,7 @@ use intel_cache_lib::lib_backend::import_testing_sql;
 use intel_cache_lib::lib_backend::export_testing_sql;
 use intel_cache_lib::lib_backend::delete_testing_sql;
 
-static S:IcServer = IcServer{};
+static mut S:IcServer = IcServer{};
 
 fn init(testing: bool) {
 	if ! testing {
@@ -155,10 +155,10 @@ fn main() {
 				}
 			},
 		"--teardown_testing" => {teardown(true);()},
-		"--testing" => {S.listen(true)},
+		"--testing" => {unsafe {S.listen(true)}},
 		_ => println!("Invalid argument {}",args[1]),
 		}
 	} else {
-		S.listen(false);
+		unsafe {S.listen(false);}
 	}
 }

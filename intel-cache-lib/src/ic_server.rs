@@ -1,3 +1,6 @@
+extern crate libloading;
+use libloading::Library;
+
 use std::io::{Error};
 use std::thread;
 use std::net::{TcpListener,SocketAddrV4,Ipv4Addr};
@@ -6,7 +9,6 @@ use crate::lib_backend::establish_connection;
 use crate::lib_backend::establish_testing_connection;
 use crate::lib_backend::parse_ic_packet;
 use crate::ic_types::IcConnection;
-use crate::ic_types::IcCommand;
 //use crate::ic_types::IcExecute;
 use crate::ic_types::IcPacket;
 use crate::ic_types::IcModule;
@@ -23,47 +25,70 @@ pub struct IcServer { }
 impl IcServer {
 	fn handle_client(mut c: IcConnection,testing: bool) -> Result<(),Error> {
 		println!("Connection received! {:?} is sending data.", c.addr());
+		let modules = IcServer::load_basic_modules();
 		loop {
 			let p = c.get_packet().unwrap();
 			println!("[DEBUG#IcServer.handle_client] RECIEVING IC_PACKET : {} ({:?})",(&p).header.as_ref().unwrap_or(&"None".to_string()),(&p).body.as_ref().unwrap_or(&Vec::new()).len());
 			let icp: IcPacket;
-			let mut icc: Box<dyn IcExecute<Connection = diesel::MysqlConnection, LoginDetails = Option<IcLoginDetails>>>;
-			let modules = IcServer::load_basic_modules();
+			let mut icc: Box<dyn IcExecute<Connection = IcConnection>>;
+			let mut cmd: Vec::<String>;
 			match parse_ic_packet(p.clone(),&modules){
-				Ok(v) => icc = v,
+				Ok(v) => { 
+					cmd = v.0;
+					icc = v.1;
+				},
 				Err(e) => panic!("{:?}",e),
 			}
-			if (icc.login_required() && c.logged_in()) || ! icc.login_required() {
-				if ! testing {
-					if (&p).header.as_ref() != None {
-						icp = icc.exec(Some(&mut c.backend_con),&mut c.login);
-						if (&p).header.as_ref().unwrap() == "EXIT" /*&& icp.body == None*/ {
-							println!("{:?} disconnected.",c.addr());
-							c.send_packet(icp).unwrap();
-							return Ok(());
-						}
-					} else { icp = IcCommand::from_packet(p.clone()).exec(&mut c.login,testing) }
-				} else {
-					if (&p).header.as_ref() != None {
-						icp = icc.exec(Some(&mut c.backend_con),&mut c.login);
-						if (&p).header.as_ref().unwrap() == "EXIT" /*&& icp.body == None*/ {
-							println!("{:?} disconnected.",c.addr());
-							c.send_packet(icp).unwrap();
-							return Ok(());
-						}
-					} else { icp = IcCommand::from_packet(p.clone()).exec(&mut c.login,testing) }
-				}
-			} else { icp = IcPacket::new_denied() }
-			println!("[DEBUG#IcServer.handle_client] SENDING ICP_PACKET : {} ({:?})",(&icp).header.as_ref().unwrap_or(&"None".to_string()),(&icp).body.as_ref().unwrap_or(&Vec::new()).len());
-			c.send_packet(icp).unwrap();
+			//if (icc.login_required() && c.logged_in()) || ! icc.login_required() {
+			//	if ! testing {
+			//		if (&p).header.as_ref() != None {
+			//			icp = icc.exec(Some(&mut c.backend_con),&mut c.login);
+			//			if (&p).header.as_ref().unwrap() == "EXIT" /*&& icp.body == None*/ {
+			//				println!("{:?} disconnected.",c.addr());
+			//				c.send_packet(icp).unwrap();
+			//				return Ok(());
+			//			}
+			//		} else { icp = IcCommand::from_packet(p.clone()).exec(&mut c.login,testing) }
+			//	} else {
+			//		if (&p).header.as_ref() != None {
+			//			icp = icc.exec(Some(&mut c.backend_con),&mut c.login);
+			//			if (&p).header.as_ref().unwrap() == "EXIT" /*&& icp.body == None*/ {
+			//				println!("{:?} disconnected.",c.addr());
+			//				c.send_packet(icp).unwrap();
+			//				return Ok(());
+			//			}
+			//		} else { icp = IcCommand::from_packet(p.clone()).exec(&mut c.login,testing) }
+			//	}
+			//} else { icp = IcPacket::new_denied() }
+			//println!("[DEBUG#IcServer.handle_client] SENDING ICP_PACKET : {} ({:?})",(&icp).header.as_ref().unwrap_or(&"None".to_string()),(&icp).body.as_ref().unwrap_or(&Vec::new()).len());
+			let mut p = icc.exec(&mut c,Some(cmd));
+			c.send_packet(&mut p).unwrap();
 		}
 	}
 	
-	fn load_basic_modules() -> Vec<Box<dyn IcModule + Send + Sync>>{
-		let mut ret = Vec::<Box<dyn IcModule + Send + Sync>>::new();
-		//Add core module
-		//Add storage module
-		ret
+	fn load_basic_modules() -> (Vec<Library>,Vec<Box<dyn IcModule>>){
+		println!("LOADING MODULES");
+		let mut ret = Vec::<Box<dyn IcModule>>::new();
+		let mut libs = Vec::<Library>::new();
+		const ic_core_module: &'static str = "libic_core_module.so";
+		const ic_storage_module: &'static str = "libic_storage_module.so";
+		//unsafe {
+		//	let awesome_function: Symbol<unsafe extern fn(f64) -> f64> =
+		//		lib.get(b"awesome_function\0").unwrap();
+		//	awesome_function(0.42);
+		//}
+		unsafe {
+			let iccml = Library::new(ic_core_module).unwrap_or_else(|error| panic!("{}", error));
+			libs.push(iccml);
+			//let icsml = Library::new(ic_storage_module).unwrap_or_else(|error| panic!("{}", error));
+			//libs.push(icsml);
+			let iccm = libs.last().unwrap().get::<unsafe fn() -> *mut dyn IcModule>(b"icm_new\0").unwrap_or_else(|error| panic!("{}", error));
+			//let icsm = icsml.get::<fn() -> Box<dyn IcModule>>(b"icm_new\0").unwrap_or_else(|error| panic!("{}", error));
+			ret.push(Box::from_raw(iccm()));
+			//ret.push(icsm());
+		}
+		println!("LOADING FINISHED");
+		(libs,ret)
 	}
 	
 	/// `listen` will start the server. 

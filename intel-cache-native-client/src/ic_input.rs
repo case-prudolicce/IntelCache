@@ -68,7 +68,7 @@ impl IcInput {
 		p.push(pwdid.to_string());
 		let icp = IcInputCommand::from_vec(self,p);
 		
-		let resp = client.send_cmd(&mut icp.to_ic_command());
+		let resp = client.send_cmd(&mut icp.to_ic_packet());
 		if resp.header.as_ref().unwrap() == "true" {
 			self.pwdstr = str::from_utf8(&resp.body.unwrap()).unwrap().to_string();
 			self.pwd = pwdid;

@@ -33,7 +33,7 @@ impl IcConnection {
 	/// Sends a single IcPacket `ic_p`
 	///
 	/// Returns nothing or an error (if packet failed to send)
-	pub fn send_packet(&mut self,ic_p: IcPacket) -> Result<(),IcError> {
+	pub fn send_packet(&mut self,ic_p: &mut IcPacket) -> Result<(),IcError> {
 		return match self.con.write(&ic_p.pack()) {
 		Ok(_e) => Ok(()),
 		Err(_err) => Err(IcError("Error sending IcPacket.".to_string())),
@@ -149,7 +149,7 @@ impl IcConnection {
 	
 	/// Checks the connection
 	pub fn check_connection(&mut self) -> bool {
-		return match self.send_packet(IcPacket::new_empty()) {
+		return match self.send_packet(&mut IcPacket::new_empty()) {
 		Ok(_) => {
 			match self.get_packet() {
 			Ok(_) => true,

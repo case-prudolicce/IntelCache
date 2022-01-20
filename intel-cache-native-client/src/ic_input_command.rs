@@ -1,7 +1,7 @@
-use intel_cache_lib::ic_types::{IcCommand};
 use crate::ic_input::IcInput;
 use std::fmt::Display;
 use std::fmt;
+use intel_cache_lib::ic_types::IcPacket;
 pub struct IcInputCommand<'a> { 
 	pub cmd: Vec<String>, 
 	pub databuff: Vec<u8>,
@@ -76,7 +76,7 @@ impl IcInputCommand<'_> {
 		}
 		IcInputCommand { cmd:fcmd, databuff: vec![0;512],ref_in: input }
 	}
-	pub fn to_ic_command(&self) -> IcCommand {
+	pub fn to_ic_packet(&self) -> IcPacket {
 		let mut fmt_vec:Vec<String> = Vec::new();
 		match self.cmd[0].as_ref() {
 		"new" | "import" => {
@@ -91,13 +91,13 @@ impl IcInputCommand<'_> {
 			}else if self.cmd[0] == "import" {
 					fmt_vec.push(self.cmd[2].clone());
 			}
-			return IcCommand::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
+			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
 		},
 		"get" => {
 			fmt_vec.push("ENTRY".to_string());
 			fmt_vec.push("GET".to_string());
 			fmt_vec.push(self.string_wrap(self.cmd[1].clone()));
-			return IcCommand::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
+			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
 		},
 		"ls" => {
 			if self.cmd.len() >= 2 {
@@ -123,19 +123,19 @@ impl IcInputCommand<'_> {
 				fmt_vec.push("SHOW".to_string());
 				fmt_vec.push(self.ref_in.pwd.to_string());
 			}
-			return IcCommand::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
+			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
 		},
 		"rm" => {
 			fmt_vec.push("ENTRY".to_string());
 			fmt_vec.push("DELETE".to_string());
 			fmt_vec.push(self.cmd[1].clone());
-			return IcCommand::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
+			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
 		},
 		"set" => {
 			fmt_vec.push("ENTRY".to_string());
 			fmt_vec.push("SET".to_string());
 			fmt_vec.push(self.cmd[1].clone());
-			return IcCommand::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
+			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
 		},
 		"mv" => {
 			if self.cmd[1].chars().last().unwrap() == '/' {
@@ -150,7 +150,7 @@ impl IcInputCommand<'_> {
 				fmt_vec.push(self.cmd[2].clone());
 			}
 			
-			return IcCommand::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
+			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
 		},
 		"mkdir" => {
 			fmt_vec.push("DIR".to_string());
@@ -158,13 +158,13 @@ impl IcInputCommand<'_> {
 			fmt_vec.push(self.cmd[1].clone());
 			fmt_vec.push("UNDER".to_string());
 			fmt_vec.push(self.ref_in.pwd.to_string());
-			return IcCommand::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
+			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
 		},
 		"rmdir" => {
 			fmt_vec.push("DIR".to_string());
 			fmt_vec.push("DELETE".to_string());
 			fmt_vec.push(self.cmd[1].clone());
-			return IcCommand::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
+			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
 		},
 		"tag" => {
 			if self.cmd[1].chars().last().unwrap() == '/' {
@@ -178,7 +178,7 @@ impl IcInputCommand<'_> {
 				fmt_vec.push(self.cmd[1].clone());
 				fmt_vec.push(self.cmd[2].clone());
 			}
-			return IcCommand::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
+			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
 		},
 		"untag" => {
 			if self.cmd[1].chars().last().unwrap() == '/' {
@@ -192,33 +192,33 @@ impl IcInputCommand<'_> {
 				fmt_vec.push(self.cmd[1].clone());
 				fmt_vec.push(self.cmd[2].clone());
 			}
-			return IcCommand::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
+			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
 		},
 		"showtags" => {
 			fmt_vec.push("TAG".to_string());
 			fmt_vec.push("SHOW".to_string());
-			return IcCommand::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
+			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
 		},
 		"mktag" => {
 			fmt_vec.push("TAG".to_string());
 			fmt_vec.push("CREATE".to_string());
 			fmt_vec.push(self.cmd[1].clone());
-			return IcCommand::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
+			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
 		},
 		"rmtag" => {
 			fmt_vec.push("TAG".to_string());
 			fmt_vec.push("DELETE".to_string());
 			fmt_vec.push(self.cmd[1].clone());
-			return IcCommand::from_formated_vec(fmt_vec,Some(self.databuff.clone()));
+			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
 		},
 		"exit" => {
 			fmt_vec.push("EXIT".to_string());
-			return IcCommand::from_formated_vec(fmt_vec,None);
+			return IcPacket::from_parsed_header(fmt_vec,None);
 		}
 		"raw" => {
-			return IcCommand::from_formated_vec(self.cmd[1..].to_vec().clone(),None);
+			return IcPacket::from_parsed_header(self.cmd[1..].to_vec().clone(),None);
 		}
-		_ => return IcCommand::from_formated_vec(self.cmd.clone(),None),
+		_ => return IcPacket::from_parsed_header(self.cmd.clone(),None),
 		}
 	}
 

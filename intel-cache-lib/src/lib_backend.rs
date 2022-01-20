@@ -3,6 +3,8 @@ use std::process::{Command,Stdio};
 use std::os::unix::io::FromRawFd;
 use std::os::unix::io::AsRawFd;
 
+use libloading::Library;
+
 use diesel::prelude::*;
 use dotenv::dotenv;
 use std::env;
@@ -25,6 +27,7 @@ use crate::ic_types::IcLoginDetails;
 use crate::ic_types::IcPacket;
 use crate::ic_types::IcExecute;
 use crate::ic_types::IcModule;
+use crate::ic_types::IcConnection;
 
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
@@ -583,6 +586,24 @@ pub fn login(conn: &MysqlConnection,login: &mut Option<IcLoginDetails>,id: Strin
 	}
 }
 
-pub fn parse_ic_packet(packet: IcPacket,modules: &Vec<Box<dyn IcModule + Send + Sync>>) -> Result<Box<dyn IcExecute<Connection = MysqlConnection, LoginDetails = Option<IcLoginDetails>>>,IcError> {
+pub fn parse_ic_packet(packet: IcPacket,modules: &(Vec<Library>,Vec<Box<dyn IcModule>>)) -> Result<(Vec::<String>,Box<dyn IcExecute<Connection = IcConnection>>),IcError> {
+	let mut cmd = packet.parse_header();
+	if cmd.len() == 0 {
+		cmd = Vec::new();
+		cmd.push("CORE".to_string());
+		cmd.push("NULL".to_string());
+	}
+	println!("PARSING Command {:?}",cmd);
+	for m in &modules.1 {
+		unsafe {
+			if m.icm_get_name() == cmd[0] {
+				println!("{:?} matched to module {} version {}",packet.header,m.icm_get_name(),m.icm_get_version());
+				match m.icm_get_command(cmd[1..].to_vec()) {
+					Ok(v) => return Ok((cmd[1..].to_vec(),v)),
+					Err(e) => return Err(e),
+				}
+			}
+		}
+	}
 	Err(IcError("NOT IMPLEMENTED".to_string()))
 }

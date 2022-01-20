@@ -1,10 +1,8 @@
 pub mod ic_execute_mod;
-pub mod ic_command;
 pub mod ic_connection_mod;
 mod ic_packet_mod;
 mod ic_module_mod;
 
-pub use self::ic_command::IcCommand as IcCommand;
 pub use self::ic_execute_mod::IcExecute as IcExecute;
 pub use self::ic_packet_mod::IcPacket as IcPacket;
 pub use self::ic_connection_mod::IcConnection as IcConnection;

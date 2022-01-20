@@ -42,4 +42,56 @@ impl IcPacket {
 			return [0_u8,10_u8,10_u8,0_u8,10_u8].to_vec();
 		}
 	}
+	
+	pub fn parse_header(&self) -> Vec<String> {
+		self.finalize_command(self.header.as_ref().unwrap_or(&String::new()).split_whitespace().collect::<Vec<&str>>())
+	}
+
+	fn finalize_command(&self,cmd: Vec<&str>) -> Vec<String> {
+		let mut con = false;
+		let mut finalizedstr = String::new();
+		let mut retve: Vec<String> = Vec::new();
+		for c in cmd {
+			if ! con { 
+				if c.len() > 1 {
+					if &c[..2] == "((" && ! (&c[c.len() - 2..] == "))"){ 
+						con = true; 
+						finalizedstr.push_str(&c[2..].to_string());
+					} else {
+						retve.push(c.to_string()); 
+					}
+				} else { retve.push(c.to_string()) }
+			} else { 
+				if c.len() > 1 {
+					if &c[c.len() - 2..] == "))" {
+						finalizedstr.push(' ');
+						finalizedstr.push_str(&c[..c.len() - 2]);
+						retve.push(finalizedstr);
+						finalizedstr = String::new();
+						con = false 
+					}else { 
+						finalizedstr.push(' ');
+						finalizedstr.push_str(c);
+					} 
+				} else { finalizedstr.push(' '); finalizedstr.push_str(c) }
+			}
+		}
+		retve
+	}
+	
+	pub fn from_parsed_header(input: Vec<String>,d: Option<Vec<u8>>) -> IcPacket {
+		let i = IcPacket::unparse(input);
+		IcPacket { header:Some(i),body: d }
+	}
+	
+	pub fn unparse(cmd: Vec<String>) -> String {
+		let mut s = String::new();
+		for t in &cmd {
+			if t.contains(char::is_whitespace) {
+				s.push_str(&("((".to_owned()+&t+")) "));
+			}else {s.push_str(&(t.to_owned()+" "))}
+		}
+		s = s.trim_end().to_string();
+		s
+	}
 }

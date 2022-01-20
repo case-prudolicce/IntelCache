@@ -1,6 +1,6 @@
 use std::net::TcpStream;
 use std::io::{ErrorKind,Error};
-use crate::ic_types::{IcConnection,IcPacket,IcCommand};
+use crate::ic_types::{IcConnection,IcPacket};
 
 /// The Client interface struct for IntelCache. Used to interact with the server.
 pub struct IcClient { con: IcConnection }
@@ -31,10 +31,10 @@ impl IcClient {
 	/// `send_cmd` will send a command to the server
 	///
 	/// Returns an [`IcPacket`] from the server
-	pub fn send_cmd(&mut self,c: &mut IcCommand) -> IcPacket {
+	pub fn send_cmd(&mut self,c: &mut IcPacket) -> IcPacket {
 		if self.con.check_connection() {
 			//println!("[DEBUG#IcServer.handle_client] SENDING ICP_PACKET : {} ({:?})",(&c).to_ic_packet().header.as_ref().unwrap_or(&"None".to_string()),(&c).to_ic_packet().body.as_ref().unwrap_or(&Vec::new()).len());
-			self.con.send_packet(c.to_ic_packet()).unwrap(); 
+			self.con.send_packet(c).unwrap(); 
 			let retp = self.con.get_packet().unwrap_or(IcPacket::new_empty());
 			//println!("[DEBUG#IcServer.handle_client] RECIEVING IC_PACKET : {} ({:?})",(&retp).header.as_ref().unwrap_or(&"None".to_string()),(&retp).body.as_ref().unwrap_or(&Vec::new()).len());
 			return retp;

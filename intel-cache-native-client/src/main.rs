@@ -109,7 +109,7 @@ fn main() {
 				if input_cmd.cmd[1].parse::<i32>().unwrap_or(-1) != -1 {
 					input_cmd.cmd[0] = "get".to_string();
 					input_cmd.cmd.push("/tmp/tmpentry".to_string());
-					let r = client.send_cmd(&mut input_cmd.to_ic_command());
+					let r = client.send_cmd(&mut input_cmd.to_ic_packet());
 					let filename = input_cmd.cmd[2].clone();
 					IcInput::write_to_file(r,filename);
 					//input_cmd.databuff = write_entry().as_bytes().to_vec();
@@ -213,7 +213,7 @@ fn main() {
 		_ => {},
 		};
 		//Do something with response 
-		let r = client.send_cmd(&mut input_cmd.to_ic_command());
+		let r = client.send_cmd(&mut input_cmd.to_ic_packet());
 		match input_cmd.cmd[0].as_ref() {
 		"ls" | "showtags" => {input.display(r);},
 		"mktag" | "rmtag" | "rm" | "rmdir" | "new" | "edit" | "mv" | "mkdir" | "tag" | "untag" => {input.resp(r)},

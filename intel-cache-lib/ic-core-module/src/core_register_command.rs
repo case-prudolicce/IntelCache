@@ -9,26 +9,23 @@ use futures::executor::block_on;
 use intel_cache_lib::lib_backend::establish_connection;
 use intel_cache_lib::lib_backend::register;
 
-pub struct CoreRegister {cmd: Option<Vec<String>>,}
+pub struct CoreRegister {}
 impl CoreRegister {
-	pub fn new() -> CoreRegister {
-		CoreRegister { cmd: None }
+	#[no_mangle]
+	pub fn cr_new() -> CoreRegister {
+		CoreRegister { }
 	}
 	
-	pub fn load(&mut self,args: Vec<String>) {
-		self.cmd = Some(args);
-	}
-
-	pub fn to_exe() -> Box<dyn IcExecute<Connection = MysqlConnection,LoginDetails = Option<IcLoginDetails>>> {
-		Box::new(CoreRegister::new())
+	#[no_mangle]
+	pub fn cr_to_exe() -> Box<dyn IcExecute<Connection = IcConnection>> {
+		Box::new(CoreRegister::cr_new())
 	}
 }
 impl IcExecute for CoreRegister {
-	type Connection = MysqlConnection;
-	type LoginDetails = Option<IcLoginDetails>;
+	type Connection = IcConnection;
 	
-	fn exec(&mut self,con: Option<&mut Self::Connection>,login: &mut Self::LoginDetails) -> IcPacket {
-		match &self.cmd {
+	fn exec(&mut self,con: &mut Self::Connection,cmd: Option<Vec<String>>) -> IcPacket {
+		match &cmd {
 			Some(cmd) => {
 				let username = &cmd[1];
 				let pass = &cmd[2];
@@ -49,12 +46,7 @@ impl IcExecute for CoreRegister {
 				let globalid = format!("{:x}",hasher.finalize());
 				println!("{}->{}", gid,globalid);
 				if pass.len() == 128 {
-					let con: MysqlConnection;
-					match establish_connection() {
-					Ok(v) => con = v,
-					Err(e) => panic!("{:?}",e),
-					}
-					register(&con,login,username.to_string(),pass.to_string(),globalid);
+					register(&con.backend_con,&mut con.login,username.to_string(),pass.to_string(),globalid);
 				}else {
 					return IcPacket::new_empty()
 				}

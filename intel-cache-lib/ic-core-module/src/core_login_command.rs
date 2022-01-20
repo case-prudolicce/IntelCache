@@ -1,38 +1,32 @@
-use intel_cache_lib::ic_types::ic_command::ic_command_mod::IcExecute;
+use intel_cache_lib::ic_types::IcExecute;
 use diesel::MysqlConnection;
 use intel_cache_lib::ic_types::IcLoginDetails;
 use intel_cache_lib::ic_types::IcPacket;
 use intel_cache_lib::lib_backend::login;
-pub struct CoreLogin {cmd: Option<Vec<String>>,}
+use intel_cache_lib::ic_types::IcConnection;
+
+pub struct CoreLogin {}
 impl CoreLogin {
-	pub fn new() -> CoreLogin {
-		CoreLogin { cmd: None }
+	#[no_mangle]
+	pub fn cl_new() -> CoreLogin {
+		CoreLogin {}
 	}
 	
-	pub fn load(&mut self,args: Vec<String>) {
-		self.cmd = Some(args);
-	}
-
-	pub fn to_exe() -> Box<dyn IcExecute<Connection = MysqlConnection,LoginDetails = Option<IcLoginDetails>>> {
-		Box::new(CoreLogin::new())
+	#[no_mangle]
+	pub fn cl_to_exe() -> Box<dyn IcExecute<Connection = IcConnection>> {
+		Box::new(CoreLogin::cl_new())
 	}
 }
 impl IcExecute for CoreLogin {
-	type Connection = MysqlConnection;
-	type LoginDetails = Option<IcLoginDetails>;
+	type Connection = IcConnection;
 	
-	fn exec(&mut self,con: Option<&mut Self::Connection>,l: &mut Self::LoginDetails) -> IcPacket {
-		match &self.cmd {
+	fn exec(&mut self,con: &mut Self::Connection,cmd: Option<Vec<String>>) -> IcPacket {
+		match cmd {
 			Some(cmd) => {
 				let globalid = &cmd[1];
 				let pass = &cmd[2];
 				if pass.len() == 128 {
-					let c: &mut MysqlConnection;
-					match con {
-					Some(connection) => c = connection,
-					None => panic!("CONNECTION REQUIRED"),
-					}
-					match login(c,l,globalid.to_string(),pass.to_string()) {
+					match login(&con.backend_con,&mut con.login,globalid.to_string(),pass.to_string()) {
 						Ok(c) => return IcPacket::new(Some(c),None),
 						Err(e) => return IcPacket::new_denied(),
 					}

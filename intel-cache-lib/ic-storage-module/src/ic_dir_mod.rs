@@ -16,10 +16,9 @@ impl IcDir {
 	}
 }
 impl IcExecute for IcDir {
-	type Connection = MysqlConnection;
-	type LoginDetails = Option<IcLoginDetails>;
+	type Connection = IcConnection;
 	
-	fn exec(&mut self,con: Option<&mut Self::Connection>,login: &mut Self::LoginDetails) -> IcPacket {
+	fn exec(&mut self,con: Option<&mut Self::Connection>) -> IcPacket {
 		if self.cmd[self.cmd.len() - 1..][0] == (*login).as_ref().unwrap().cookie {
 			let mut create = false;
 			let mut set = false;
