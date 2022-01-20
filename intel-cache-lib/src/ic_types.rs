@@ -1,7 +1,7 @@
-mod ic_execute_mod;
-mod ic_command;
+pub mod ic_execute_mod;
+pub mod ic_command;
+pub mod ic_connection_mod;
 mod ic_packet_mod;
-mod ic_connection_mod;
 mod ic_module_mod;
 
 pub use self::ic_command::IcCommand as IcCommand;

@@ -24,6 +24,7 @@ use crate::ic_types::IcError;
 use crate::ic_types::IcLoginDetails;
 use crate::ic_types::IcPacket;
 use crate::ic_types::IcExecute;
+use crate::ic_types::IcModule;
 
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
@@ -582,6 +583,6 @@ pub fn login(conn: &MysqlConnection,login: &mut Option<IcLoginDetails>,id: Strin
 	}
 }
 
-pub fn parse_ic_packet(packet: IcPacket) -> Result<Box<dyn IcExecute<Connection = MysqlConnection, LoginDetails = Option<IcLoginDetails>>>,IcError> {
+pub fn parse_ic_packet(packet: IcPacket,modules: &Vec<Box<dyn IcModule + Send + Sync>>) -> Result<Box<dyn IcExecute<Connection = MysqlConnection, LoginDetails = Option<IcLoginDetails>>>,IcError> {
 	Err(IcError("NOT IMPLEMENTED".to_string()))
 }

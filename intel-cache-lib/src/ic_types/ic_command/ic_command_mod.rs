@@ -4,7 +4,7 @@ use crate::lib_backend::establish_testing_connection;
 use std::fmt::Display;
 use std::fmt;
 //use crate::ic_types::IcExecute;
-use crate::ic_types::ic_execute_mod::IcExecute;
+pub use crate::ic_types::ic_execute_mod::IcExecute as IcExecute;
 use crate::ic_types::IcPacket;
 use crate::ic_types::IcConnection;
 use std::str;
@@ -15,8 +15,8 @@ use self::ic_command_type::ic_dir_mod::IcDir as IcDir;
 use self::ic_command_type::ic_all_mod::IcAll as IcAll;
 use self::ic_command_type::ic_entry_mod::IcEntry as IcEntry;
 use self::ic_command_type::ic_tag_mod::IcTag as IcTag;
-use self::ic_command_type::ic_register_mod::IcRegister as IcRegister;
-use self::ic_command_type::ic_login_mod::IcLogin as IcLogin;
+//use self::ic_command_type::ic_register_mod::IcRegister as IcRegister;
+//use self::ic_command_type::ic_login_mod::IcLogin as IcLogin;
 use crate::ic_types::ic_connection_mod::IcLoginDetails as IcLoginDetails;
 
 /// The struct defining a single message to and from the server and client.
@@ -86,41 +86,42 @@ impl IcCommand {
 		//3: tag
 		//4: show/ALL
 		//-1: exit
-		if self.cmd.len() <= 0 {return Box::new(IcNull::new())}
-		let mut return_type = 0;
-		match self.cmd[0].as_str() {
-		//STORAGE
-		"DIR" => return_type = 1,
-		"ENTRY" => return_type = 2,
-		"TAG" => return_type = 3,
-		"SHOW" => return_type = 4,
-		//CORE
-		"LOGIN" => return_type = -2,
-		"REGISTER" => return_type = -3,
-		//To be fixed
-		"EXIT" => return_type = -1,
-		_ => (),
-		}
+		//if self.cmd.len() <= 0 {return Box::new(IcNull::new())}
+		//let mut return_type = 0;
+		//match self.cmd[0].as_str() {
+		////STORAGE
+		//"DIR" => return_type = 1,
+		//"ENTRY" => return_type = 2,
+		//"TAG" => return_type = 3,
+		//"SHOW" => return_type = 4,
+		////CORE
+		//"LOGIN" => return_type = -2,
+		//"REGISTER" => return_type = -3,
+		////To be fixed
+		//"EXIT" => return_type = -1,
+		//_ => (),
+		//}
 
-		if return_type == 0 {
-			return Box::new(IcNull::new());
-		} else if return_type == -3 {
-			return Box::new(IcRegister::new(self.cmd.to_vec()));
-		} else if return_type == -2 {
-			return Box::new(IcLogin::new(self.cmd.to_vec()));
-		} else if return_type == -1 {
-			return Box::new(IcNull::new());
-		} else if return_type == 1 {
-			return Box::new(IcDir::new(self.cmd.to_vec()));
-		} else if return_type == 2 {
-			return Box::new(IcEntry::from_ic_command(self.clone()));
-		} else if return_type == 3 {
-			return Box::new(IcTag::new(self.cmd.to_vec()));
-		} else if return_type == 4 {
-			return Box::new(IcAll::new(self.cmd.to_vec()));
-		} else {
-			return Box::new(IcNull::new());
-		}
+		//if return_type == 0 {
+		//	return Box::new(IcNull::new());
+		//} else if return_type == -3 {
+		//	return Box::new(IcRegister::new(self.cmd.to_vec()));
+		//} else if return_type == -2 {
+		//	return Box::new(IcLogin::new(self.cmd.to_vec()));
+		//} else if return_type == -1 {
+		//	return Box::new(IcNull::new());
+		//} else if return_type == 1 {
+		//	return Box::new(IcDir::new(self.cmd.to_vec()));
+		//} else if return_type == 2 {
+		//	return Box::new(IcEntry::from_ic_command(self.clone()));
+		//} else if return_type == 3 {
+		//	return Box::new(IcTag::new(self.cmd.to_vec()));
+		//} else if return_type == 4 {
+		//	return Box::new(IcAll::new(self.cmd.to_vec()));
+		//} else {
+		//	return Box::new(IcNull::new());
+		//}
+		return Box::new(IcNull::new());
 	}
 	
 	/// Parse [`IcCommand`] to [`IcPacket`]
