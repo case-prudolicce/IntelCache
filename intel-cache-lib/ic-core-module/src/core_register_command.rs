@@ -24,7 +24,7 @@ impl CoreRegister {
 impl IcExecute for CoreRegister {
 	type Connection = IcConnection;
 	
-	fn exec(&mut self,con: &mut Self::Connection,cmd: Option<Vec<String>>) -> IcPacket {
+	fn exec(&mut self,con: &mut Self::Connection,cmd: Option<Vec<String>>,_data: Option<Vec<u8>>) -> IcPacket {
 		match &cmd {
 			Some(cmd) => {
 				let username = &cmd[1];

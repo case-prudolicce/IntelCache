@@ -22,7 +22,7 @@ impl StorageShow {
 impl IcExecute for StorageShow {
 	type Connection = IcConnection;
 	
-	fn exec(&mut self,con: &mut Self::Connection, cmd: Option<Vec<String>>) -> IcPacket {
+	fn exec(&mut self,con: &mut Self::Connection, cmd: Option<Vec<String>>, data: Option<Vec<u8>>) -> IcPacket {
 		let mut retstr: String;
 		let mut c: Vec<String>;
 		if cmd != None {

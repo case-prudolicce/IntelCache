@@ -61,7 +61,7 @@ impl IcServer {
 			//	}
 			//} else { icp = IcPacket::new_denied() }
 			//println!("[DEBUG#IcServer.handle_client] SENDING ICP_PACKET : {} ({:?})",(&icp).header.as_ref().unwrap_or(&"None".to_string()),(&icp).body.as_ref().unwrap_or(&Vec::new()).len());
-			let mut p = icc.exec(&mut c,Some(cmd));
+			let mut p = icc.exec(&mut c,Some(cmd),p.body);
 			c.send_packet(&mut p).unwrap();
 		}
 	}

@@ -24,7 +24,7 @@ impl StorageDir {
 impl IcExecute for StorageDir {
 	type Connection = IcConnection;
 	
-	fn exec(&mut self,con: &mut Self::Connection,cmd: Option<Vec<String>>) -> IcPacket {
+	fn exec(&mut self,con: &mut Self::Connection,cmd: Option<Vec<String>>,data: Option<Vec<u8>>) -> IcPacket {
 		match cmd {
 			Some(c) => {
 				if c[c.len() - 1..][0] == con.login.as_ref().unwrap().cookie {

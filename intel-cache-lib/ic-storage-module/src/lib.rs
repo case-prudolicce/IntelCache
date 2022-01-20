@@ -1,8 +1,8 @@
 pub mod storage_show_command;
-//pub mod storage_entry_command;
+pub mod storage_entry_command;
 pub mod storage_dir_command;
 pub mod storage_tag_command;
-//pub use self::storage_entry_command::StorageEntry;
+pub use self::storage_entry_command::StorageEntry;
 pub use self::storage_dir_command::StorageDir;
 pub use self::storage_tag_command::StorageTag;
 pub use self::storage_show_command::StorageShow;
@@ -24,10 +24,10 @@ impl IcModule for IcStorageModule {
 			"SHOW".to_string(),
 			StorageShow::ss_to_exe
 		);
-		//self.e.insert(
-		//	"ENTRY".to_string(),
-		//	StorageEntry::se_to_exe
-		//);
+		self.e.insert(
+			"ENTRY".to_string(),
+			StorageEntry::se_to_exe
+		);
 		self.e.insert(
 			"DIR".to_string(),
 			StorageDir::sd_to_exe
