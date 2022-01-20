@@ -1,10 +1,10 @@
 pub mod storage_show_command;
 //pub mod storage_entry_command;
 pub mod storage_dir_command;
-//pub mod storage_tag_command;
+pub mod storage_tag_command;
 //pub use self::storage_entry_command::StorageEntry;
 pub use self::storage_dir_command::StorageDir;
-//pub use self::storage_tag_command::StorageTag;
+pub use self::storage_tag_command::StorageTag;
 pub use self::storage_show_command::StorageShow;
 
 use diesel::MysqlConnection;
@@ -32,10 +32,10 @@ impl IcModule for IcStorageModule {
 			"DIR".to_string(),
 			StorageDir::sd_to_exe
 		);
-		//self.e.insert(
-		//	"TAG".to_string(),
-		//	StorageTag::st_to_exe
-		//);
+		self.e.insert(
+			"TAG".to_string(),
+			StorageTag::st_to_exe
+		);
 	}
 	
 	#[no_mangle]
