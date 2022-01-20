@@ -1,13 +1,9 @@
-use std::io::{Write,BufRead,BufReader};
+use std::io::Write;
 use std::process::{Command,Stdio};
-use std::os::unix::io::FromRawFd;
-use std::os::unix::io::AsRawFd;
 
 use libloading::Library;
 
 use diesel::prelude::*;
-use dotenv::dotenv;
-use std::env;
 use std::str;
 use std::fs::File;
 use ipfs_api_backend_hyper::{IpfsApi, IpfsClient};
@@ -32,50 +28,58 @@ use crate::ic_types::IcConnection;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 
-pub fn delete_sql(username: &str,password: &str) {
-	let url = format!("mysql://{}:{}@localhost/",username,password);
+pub fn delete_sql(username: &str,password: &str) -> Result<(),Box<dyn Error>>{
+	//let url = format!("mysql://{}:{}@localhost/",username,password);
 	let p = format!("--password={}",password);
-	let mut echo =
+	let echo =
 		Command::new("echo")
 		//Make intelcache user/pass
 		.arg("DROP DATABASE IntelCache;DROP USER 'intelcache'@'localhost'")
 		.stdout(Stdio::piped())
 		.stderr(Stdio::piped())
-		.spawn().unwrap();
+		.spawn()?;
 	
-	let mut mysqldelete =
-		Command::new("mysql")
+	//let mut mysqldelete =
+	//	Command::new("mysql")
+	//	.args(["-u",username])
+	//	.arg(p)
+	//	.stdin(echo.stdout.unwrap())
+	//	.stdout(stdio::piped())
+	//	.stderr(stdio::piped()).spawn().unwrap().wait();
+	Command::new("mysql")
 		.args(["-u",username])
 		.arg(p)
 		.stdin(echo.stdout.unwrap())
 		.stdout(Stdio::piped())
-		.stderr(Stdio::piped()).spawn().unwrap().wait();
+		.stderr(Stdio::piped()).spawn()?.wait()?;
+	Ok(())
 }
 
-pub fn delete_testing_sql(username: &str,password: &str) {
-	let url = format!("mysql://{}:{}@localhost/",username,password);
+pub fn delete_testing_sql(username: &str,password: &str) -> Result<(),Box<dyn Error>>{
+	//let url = format!("mysql://{}:{}@localhost/",username,password);
 	let p = format!("--password={}",password);
-	let mut echo =
+	let echo =
 		Command::new("echo")
 		//Make intelcache user/pass
 		.arg("DROP DATABASE IntelCache_testing;DROP USER 'intelcache_tester'@'localhost'")
 		.stdout(Stdio::piped())
 		.stderr(Stdio::piped())
-		.spawn().unwrap();
+		.spawn()?;
 	
-	let mut mysqldelete =
-		Command::new("mysql")
+	//let mut mysqldelete =
+	Command::new("mysql")
 		.args(["-u",username])
 		.arg(p)
 		.stdin(echo.stdout.unwrap())
 		.stdout(Stdio::piped())
-		.stderr(Stdio::piped()).spawn().unwrap().wait();
+		.stderr(Stdio::piped()).spawn()?.wait()?;
+	Ok(())
 }
 
 pub fn build_sql(username: &str,password: &str) -> Result<(),Box<dyn Error>>{
-	let url = format!("mysql://{}:{}@localhost/",username,password);
+	//let url = format!("mysql://{}:{}@localhost/",username,password);
 	let p = format!("--password={}",password);
-	let mut echo =
+	let echo =
 		Command::new("echo")
 		//Make intelcache user/pass
 		.arg("CREATE DATABASE IntelCache;CREATE USER IF NOT EXISTS 'intelcache'@'localhost' IDENTIFIED BY 'intelcache';GRANT ALL ON `IntelCache`.* TO 'intelcache'@'localhost' IDENTIFIED BY 'intelcache';")
@@ -83,8 +87,8 @@ pub fn build_sql(username: &str,password: &str) -> Result<(),Box<dyn Error>>{
 		.stderr(Stdio::piped())
 		.spawn()?;
 	
-	let mut mysqlcreate =
-		Command::new("mysql")
+	//let mut mysqlcreate =
+	Command::new("mysql")
 		.args(["-u",username])
 		.arg(p)
 		.stdin(echo.stdout.unwrap())
@@ -97,9 +101,9 @@ pub fn build_sql(username: &str,password: &str) -> Result<(),Box<dyn Error>>{
 	Ok(())
 }
 pub fn build_testing_sql(username: &str,password: &str) -> Result<(),Box<dyn Error>>{
-	let url = format!("mysql://{}:{}@localhost/",username,password);
+	//let url = format!("mysql://{}:{}@localhost/",username,password);
 	let p = format!("--password={}",password);
-	let mut echo =
+	let echo =
 		Command::new("echo")
 		//Make intelcache user/pass
 		.arg("CREATE DATABASE IntelCache_testing;CREATE USER IF NOT EXISTS 'intelcache_tester'@'localhost' IDENTIFIED BY 'intelcache';GRANT ALL ON `IntelCache_testing`.* TO 'intelcache_tester'@'localhost' IDENTIFIED BY 'intelcache';")
@@ -107,8 +111,8 @@ pub fn build_testing_sql(username: &str,password: &str) -> Result<(),Box<dyn Err
 		.stderr(Stdio::piped())
 		.spawn()?;
 	
-	let mut mysqlcreate =
-		Command::new("mysql")
+	//let mut mysqlcreate =
+	Command::new("mysql")
 		.args(["-u",username])
 		.arg(p)
 		.stdin(echo.stdout.unwrap())
@@ -122,11 +126,11 @@ pub fn build_testing_sql(username: &str,password: &str) -> Result<(),Box<dyn Err
 }
 
 pub fn export_sql(username: &str,password: &str,filename: &str) -> Result<(),Box<dyn Error>>{
-	let url = format!("mysql://{}:{}@localhost/",username,password);
+	//let url = format!("mysql://{}:{}@localhost/",username,password);
 	let p = format!("--password={}",password);
 	
-	let mut mysqlexportoutput =
-		Command::new("mysqldump")
+	//let mut mysqlexportoutput =
+	Command::new("mysqldump")
 		.args(["-u",username])
 		.arg(p)
 		.arg("IntelCache")
@@ -135,11 +139,11 @@ pub fn export_sql(username: &str,password: &str,filename: &str) -> Result<(),Box
 	Ok(())
 }
 pub fn export_testing_sql(username: &str,password: &str,filename: &str) -> Result<(),Box<dyn Error>>{
-	let url = format!("mysql://{}:{}@localhost/",username,password);
+	//let url = format!("mysql://{}:{}@localhost/",username,password);
 	let p = format!("--password={}",password);
 	
-	let mut mysqlexportoutput =
-		Command::new("mysqldump")
+	//let mut mysqlexportoutput =
+	Command::new("mysqldump")
 		.args(["-u",username])
 		.arg(p)
 		.arg("IntelCache_testing")
@@ -149,7 +153,7 @@ pub fn export_testing_sql(username: &str,password: &str,filename: &str) -> Resul
 }
 
 pub fn import_sql(username: &str,password: &str,filename: &str) -> Result<(),Box<dyn Error>>{
-	let url = format!("mysql://{}:{}@localhost/",username,password);
+	//let url = format!("mysql://{}:{}@localhost/",username,password);
 	let p = format!("--password={}",password);
 	let mut mysqlcreate =
 		Command::new("mysql")
@@ -162,8 +166,8 @@ pub fn import_sql(username: &str,password: &str,filename: &str) -> Result<(),Box
 	mysqlcreate.stdin.as_mut().unwrap().write(b"CREATE DATABASE IntelCache;CREATE USER IF NOT EXISTS 'intelcache'@'localhost' IDENTIFIED BY 'intelcache';GRANT ALL ON `IntelCache`.* TO 'intelcache'@'localhost' IDENTIFIED BY 'intelcache';")?;
 	mysqlcreate.wait()?;
 	
-	let mut mysqlimport =
-		Command::new("mysql")
+	//let mut mysqlimport =
+	Command::new("mysql")
 		.args(["-u",username])
 		.arg(&p)
 		.arg("IntelCache")
@@ -175,7 +179,7 @@ pub fn import_sql(username: &str,password: &str,filename: &str) -> Result<(),Box
 }
 
 pub fn import_testing_sql(username: &str,password: &str,filename: &str) -> Result<(),Box<dyn Error>>{
-	let url = format!("mysql://{}:{}@localhost/",username,password);
+	//let url = format!("mysql://{}:{}@localhost/",username,password);
 	let p = format!("--password={}",password);
 	let mut mysqlcreate =
 		Command::new("mysql")
@@ -188,8 +192,8 @@ pub fn import_testing_sql(username: &str,password: &str,filename: &str) -> Resul
 	mysqlcreate.stdin.as_mut().unwrap().write(b"CREATE DATABASE IntelCache_testing;CREATE USER IF NOT EXISTS 'intelcache_tester'@'localhost' IDENTIFIED BY 'intelcache';GRANT ALL ON `IntelCache_testing`.* TO 'intelcache_tester'@'localhost' IDENTIFIED BY 'intelcache';")?;
 	mysqlcreate.wait()?;
 	
-	let mut mysqlimport =
-		Command::new("mysql")
+	//let mut mysqlimport =
+	Command::new("mysql")
 		.args(["-u",username])
 		.arg(&p)
 		.arg("IntelCache_testing")
@@ -233,7 +237,7 @@ pub fn create_dir(conn: &MysqlConnection, name: &str, loc: Option<i32>, public: 
 	match diesel::insert_into(dir::table).values(&new_dir).execute(conn) {
 	Ok(_v) => (),
 	//Err(_err) => return Err(IcError("Error creating new directory.".to_string())),}
-	Err(_err) => return panic!("{:?}",_err),}
+	Err(_err) => panic!("{:?}",_err),}
 	
 	Ok(dir::table.order(dir::id.desc()).first(conn).unwrap())
 }
@@ -543,7 +547,7 @@ pub fn validate_tag(conn: &MysqlConnection,tagid: i32) -> Option<String> {
 	}
 }
 
-pub fn register(conn: &MysqlConnection,login: &mut Option<IcLoginDetails>,username: String,password: String,id: String) -> Result<(),IcError> {
+pub fn register(conn: &MysqlConnection,username: String,password: String,id: String) -> Result<(),IcError> {
 	use schema::user;
 	let user = NewUser{ global_id: id, username: username, password: password };
 		let res = diesel::insert_into(user::table).values(&user).execute(conn);
@@ -595,15 +599,14 @@ pub fn parse_ic_packet(packet: IcPacket,modules: &(Vec<Library>,Vec<Box<dyn IcMo
 	}
 	println!("PARSING Command {:?}",cmd);
 	for m in &modules.1 {
-		unsafe {
-			if m.icm_get_name() == cmd[0] {
-				println!("{:?} matched to module {} version {}",packet.header,m.icm_get_name(),m.icm_get_version());
-				match m.icm_get_command(cmd[1..].to_vec()) {
-					Ok(v) => return Ok((cmd[1..].to_vec(),v)),
-					Err(e) => return Err(e),
-				}
+		if m.icm_get_name() == cmd[0] {
+			println!("{:?} matched to module {} version {}",packet.header,m.icm_get_name(),m.icm_get_version());
+			match m.icm_get_command(cmd[1..].to_vec()) {
+				Ok(v) => return Ok((cmd[1..].to_vec(),v)),
+				Err(e) => return Err(e),
 			}
 		}
+		
 	}
 	Err(IcError("NOT IMPLEMENTED".to_string()))
 }

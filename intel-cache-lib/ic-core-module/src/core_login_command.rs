@@ -1,6 +1,4 @@
 use intel_cache_lib::ic_types::IcExecute;
-use diesel::MysqlConnection;
-use intel_cache_lib::ic_types::IcLoginDetails;
 use intel_cache_lib::ic_types::IcPacket;
 use intel_cache_lib::lib_backend::login;
 use intel_cache_lib::ic_types::IcConnection;
@@ -20,7 +18,7 @@ impl CoreLogin {
 impl IcExecute for CoreLogin {
 	type Connection = IcConnection;
 	
-	fn exec(&mut self,con: &mut Self::Connection,cmd: Option<Vec<String>>,data: Option<Vec<u8>>) -> IcPacket {
+	fn exec(&mut self,con: &mut Self::Connection,cmd: Option<Vec<String>>,_data: Option<Vec<u8>>) -> IcPacket {
 		match cmd {
 			Some(cmd) => {
 				let globalid = &cmd[1];
@@ -28,13 +26,12 @@ impl IcExecute for CoreLogin {
 				if pass.len() == 128 {
 					match login(&con.backend_con,&mut con.login,globalid.to_string(),pass.to_string()) {
 						Ok(c) => return IcPacket::new(Some(c),None),
-						Err(e) => return IcPacket::new_denied(),
+						Err(_e) => return IcPacket::new_denied(),
 					}
 					
 				}else {
 					return IcPacket::new_denied();
 				}
-				return IcPacket::new_denied()
 			},
 			None => return IcPacket::new_denied(),
 		}

@@ -1,12 +1,9 @@
-use diesel::MysqlConnection;
 use intel_cache_lib::ic_types::ic_execute_mod::IcExecute;
 use intel_cache_lib::ic_types::IcConnection;
 use intel_cache_lib::ic_types::IcPacket;
-use intel_cache_lib::ic_types::ic_connection_mod::IcLoginDetails;
 use sha2::{Sha256, Digest};
 use std::time::{SystemTime,UNIX_EPOCH};
 use futures::executor::block_on;
-use intel_cache_lib::lib_backend::establish_connection;
 use intel_cache_lib::lib_backend::register;
 
 pub struct CoreRegister {}
@@ -46,11 +43,14 @@ impl IcExecute for CoreRegister {
 				let globalid = format!("{:x}",hasher.finalize());
 				println!("{}->{}", gid,globalid);
 				if pass.len() == 128 {
-					register(&con.backend_con,&mut con.login,username.to_string(),pass.to_string(),globalid);
+					match register(&con.backend_con,username.to_string(),pass.to_string(),globalid) {
+						Ok(_v) => { return IcPacket::new(Some("OK!".to_string()),None) }
+						Err(_e) => { return IcPacket::new(Some("Err: register".to_string()),None) }
+						
+					}
 				}else {
 					return IcPacket::new_empty()
 				}
-				return IcPacket::new_empty()
 			}
 			None => return IcPacket::new_empty(),
 		}

@@ -4,10 +4,8 @@ pub mod core_null_command;
 pub use self::core_register_command::CoreRegister;
 pub use self::core_login_command::CoreLogin;
 pub use self::core_null_command::CoreNull;
-use diesel::MysqlConnection;
 use std::collections::HashMap;
 use intel_cache_lib::ic_types::IcExecute;
-use intel_cache_lib::ic_types::IcLoginDetails;
 use intel_cache_lib::ic_types::IcModule;
 use intel_cache_lib::ic_types::IcError;
 use intel_cache_lib::ic_types::IcConnection;
@@ -52,7 +50,7 @@ impl IcModule for IcCoreModule {
 	}
 }
 #[no_mangle]
-pub extern "C" fn icm_new() -> *mut dyn IcModule {
+pub fn icm_new() -> *mut dyn IcModule {
 	let mut ret = IcCoreModule { name: "CORE".to_string(), version: "1.0.0".to_string(), e: HashMap::new() };
 	ret.icm_load();
 	Box::into_raw(Box::new(ret))

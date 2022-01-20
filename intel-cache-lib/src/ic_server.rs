@@ -10,10 +10,8 @@ use crate::lib_backend::establish_testing_connection;
 use crate::lib_backend::parse_ic_packet;
 use crate::ic_types::IcConnection;
 //use crate::ic_types::IcExecute;
-use crate::ic_types::IcPacket;
 use crate::ic_types::IcModule;
 use crate::ic_types::IcExecute;
-use crate::ic_types::IcLoginDetails;
 
 /// The Server interface struct for IntelCache. It will listen on port 64209 for new clients.
 /// Then for each client, it will create a new thread for the client,
@@ -23,15 +21,14 @@ use crate::ic_types::IcLoginDetails;
 /// Note: to initialize the server the struct must be defined as a global.
 pub struct IcServer { }
 impl IcServer {
-	fn handle_client(mut c: IcConnection,testing: bool) -> Result<(),Error> {
+	fn handle_client(mut c: IcConnection) -> Result<(),Error> {
 		println!("Connection received! {:?} is sending data.", c.addr());
 		let modules = IcServer::load_basic_modules();
 		loop {
 			let p = c.get_packet().unwrap();
 			println!("[DEBUG#IcServer.handle_client] RECIEVING IC_PACKET : {} ({:?})",(&p).header.as_ref().unwrap_or(&"None".to_string()),(&p).body.as_ref().unwrap_or(&Vec::new()).len());
-			let icp: IcPacket;
 			let mut icc: Box<dyn IcExecute<Connection = IcConnection>>;
-			let mut cmd: Vec::<String>;
+			let cmd: Vec::<String>;
 			match parse_ic_packet(p.clone(),&modules){
 				Ok(v) => { 
 					cmd = v.0;
@@ -91,12 +88,12 @@ impl IcServer {
 					let loopback:Ipv4Addr = Ipv4Addr::new(0, 0, 0, 0);
 					let socket:SocketAddrV4 = SocketAddrV4::new(loopback, 64209);
 					let listener = TcpListener::bind(socket).unwrap();
-					let port = listener.local_addr().unwrap();
+					//let port = listener.local_addr().unwrap();
 					for stream in listener.incoming() { 
 						match stream {
 							Err(e) => { eprintln!("failed: {}",e) },
 							Ok(stream) => { thread::spawn( move || {
-									IcServer::handle_client(IcConnection::new(stream,testing),testing).unwrap_or_else(|error| eprintln!("{:?}",error));
+									IcServer::handle_client(IcConnection::new(stream,testing)).unwrap_or_else(|error| eprintln!("{:?}",error));
 								});
 							},
 						}
@@ -111,12 +108,12 @@ impl IcServer {
 					let loopback:Ipv4Addr = Ipv4Addr::new(0, 0, 0, 0);
 					let socket:SocketAddrV4 = SocketAddrV4::new(loopback, 46290);
 					let listener = TcpListener::bind(socket).unwrap();
-					let port = listener.local_addr().unwrap();
+					//let port = listener.local_addr().unwrap();
 					for stream in listener.incoming() { 
 						match stream {
 							Err(e) => { eprintln!("failed: {}",e) },
 							Ok(stream) => { thread::spawn(  move || {
-									IcServer::handle_client(IcConnection::new(stream,testing),true).unwrap_or_else(|error| eprintln!("{:?}",error));
+									IcServer::handle_client(IcConnection::new(stream,testing)).unwrap_or_else(|error| eprintln!("{:?}",error));
 								});
 							},
 						}

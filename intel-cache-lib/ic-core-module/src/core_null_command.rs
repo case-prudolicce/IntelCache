@@ -1,9 +1,6 @@
-use diesel::MysqlConnection;
-
 use intel_cache_lib::ic_types::IcPacket;
 //use crate::ic_types::IcExecute;
 use intel_cache_lib::ic_types::ic_execute_mod::IcExecute;
-use intel_cache_lib::ic_types::ic_connection_mod::IcLoginDetails;
 use intel_cache_lib::ic_types::IcConnection;
 
 pub struct CoreNull {}

@@ -1,6 +1,4 @@
 use crate::ic_types::ic_execute_mod::IcExecute;
-use diesel::MysqlConnection;
-use crate::ic_types::IcLoginDetails;
 use crate::ic_types::IcError;
 use crate::ic_types::IcConnection;
 
