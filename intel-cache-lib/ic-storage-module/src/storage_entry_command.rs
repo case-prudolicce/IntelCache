@@ -1,4 +1,3 @@
-use diesel::MysqlConnection;
 use intel_cache_lib::ic_types::IcPacket;
 use intel_cache_lib::lib_backend::show_entries;
 use intel_cache_lib::lib_backend::delete_entry;
@@ -16,7 +15,6 @@ use ipfs_api_backend_hyper::IpfsClient;
 use ipfs_api_backend_hyper::IpfsApi;
 use futures::TryStreamExt;
 use tar::Archive;
-use intel_cache_lib::ic_types::ic_connection_mod::IcLoginDetails;
 
 #[derive(Clone)]
 pub struct StorageEntry { }
@@ -43,7 +41,7 @@ impl IcExecute for StorageEntry {
 					let mut delete = false;
 					let mut show = false;
 					let mut rstr = "".to_string();
-					let mut d = data.unwrap_or(Vec::new());
+					let d = data.unwrap_or(Vec::new());
 
 					match c[1].as_str() {
 					"DELETE" => delete = true,
@@ -56,7 +54,7 @@ impl IcExecute for StorageEntry {
 					
 					if create {
 						//ENTRY CREATE ((NAME)) {PUBLIC|PRIVATE} [UNDER <LOC>]
-						let mut public = false;
+						let public;
 						if (c.len() as i32) >= 5 {
 							match c[3].as_ref() {
 								"PUBLIC" => public = true,

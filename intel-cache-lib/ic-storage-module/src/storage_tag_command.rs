@@ -1,4 +1,3 @@
-use diesel::MysqlConnection;
 use intel_cache_lib::lib_backend::untag_entry;
 use intel_cache_lib::lib_backend::tag_entry;
 use intel_cache_lib::lib_backend::untag_dir;
@@ -8,7 +7,6 @@ use intel_cache_lib::ic_types::IcPacket;
 use intel_cache_lib::lib_backend::show_tags;
 use intel_cache_lib::lib_backend::delete_tag;
 use intel_cache_lib::ic_types::ic_execute_mod::IcExecute;
-use intel_cache_lib::ic_types::ic_connection_mod::IcLoginDetails;
 use intel_cache_lib::ic_types::IcConnection;
 
 pub struct StorageTag {}
@@ -25,7 +23,7 @@ impl StorageTag {
 }
 impl IcExecute for StorageTag {
 	type Connection = IcConnection;
-	fn exec(&mut self,con: &mut Self::Connection,cmd: Option<Vec<String>>,data: Option<Vec<u8>>) -> IcPacket {
+	fn exec(&mut self,con: &mut Self::Connection,cmd: Option<Vec<String>>,_data: Option<Vec<u8>>) -> IcPacket {
 		match cmd {
 			Some(c) => {
 				if con.login != None && con.login.as_ref().unwrap().cookie == c[c.len() - 1..][0] {
@@ -69,7 +67,7 @@ impl IcExecute for StorageTag {
 					if create {
 						if c.len() == 4 {
 							//TODO: create_tag hardening
-							let mut public = false;
+							let public;
 							match c[3].as_ref() {
 								"PUBLIC" => public = true,
 								_ => public = false,

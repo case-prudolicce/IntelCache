@@ -1,10 +1,8 @@
-use diesel::MysqlConnection;
 use intel_cache_lib::ic_types::IcPacket; 
 use intel_cache_lib::lib_backend::show_entries;
 use intel_cache_lib::lib_backend::show_dirs;
 use intel_cache_lib::lib_backend::validate_dir;
 use intel_cache_lib::ic_types::ic_execute_mod::IcExecute;
-use intel_cache_lib::ic_types::ic_connection_mod::IcLoginDetails;
 use intel_cache_lib::ic_types::IcConnection;
 
 pub struct StorageShow { }
@@ -22,9 +20,9 @@ impl StorageShow {
 impl IcExecute for StorageShow {
 	type Connection = IcConnection;
 	
-	fn exec(&mut self,con: &mut Self::Connection, cmd: Option<Vec<String>>, data: Option<Vec<u8>>) -> IcPacket {
+	fn exec(&mut self,con: &mut Self::Connection, cmd: Option<Vec<String>>, _data: Option<Vec<u8>>) -> IcPacket {
 		let mut retstr: String;
-		let mut c: Vec<String>;
+		let c: Vec<String>;
 		if cmd != None {
 			c = cmd.unwrap();
 		} else { return IcPacket::new_denied(); }

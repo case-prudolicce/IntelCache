@@ -1,4 +1,3 @@
-use diesel::MysqlConnection;
 use intel_cache_lib::ic_types::IcPacket;
 use intel_cache_lib::ic_types::ic_execute_mod::IcExecute;
 use intel_cache_lib::lib_backend::delete_dir;
@@ -6,7 +5,6 @@ use intel_cache_lib::lib_backend::show_dirs;
 use intel_cache_lib::lib_backend::create_dir;
 use intel_cache_lib::lib_backend::update_dir;
 use intel_cache_lib::lib_backend::validate_dir;
-use intel_cache_lib::ic_types::ic_connection_mod::IcLoginDetails;
 use intel_cache_lib::ic_types::IcConnection;
 
 pub struct StorageDir { }
@@ -24,7 +22,7 @@ impl StorageDir {
 impl IcExecute for StorageDir {
 	type Connection = IcConnection;
 	
-	fn exec(&mut self,con: &mut Self::Connection,cmd: Option<Vec<String>>,data: Option<Vec<u8>>) -> IcPacket {
+	fn exec(&mut self,con: &mut Self::Connection,cmd: Option<Vec<String>>,_data: Option<Vec<u8>>) -> IcPacket {
 		match cmd {
 			Some(c) => {
 				if c[c.len() - 1..][0] == con.login.as_ref().unwrap().cookie {
@@ -45,8 +43,7 @@ impl IcExecute for StorageDir {
 					
 					if create {
 						//DIR CREATE <NAME> {PUBLIC|PRIVATE} <COOKIE>
-						let mut public = false;
-						println!("DIR CREATE: {}",c.len());
+						let public;
 						if c.len() == 5 {
 							match c[3].as_ref() {
 								"PUBLIC" => public = true,

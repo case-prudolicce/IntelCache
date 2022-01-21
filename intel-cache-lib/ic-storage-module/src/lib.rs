@@ -7,10 +7,8 @@ pub use self::storage_dir_command::StorageDir;
 pub use self::storage_tag_command::StorageTag;
 pub use self::storage_show_command::StorageShow;
 
-use diesel::MysqlConnection;
 use std::collections::HashMap;
 use intel_cache_lib::ic_types::IcExecute;
-use intel_cache_lib::ic_types::IcLoginDetails;
 use intel_cache_lib::ic_types::IcModule;
 use intel_cache_lib::ic_types::IcError;
 use intel_cache_lib::ic_types::IcConnection;
@@ -59,7 +57,7 @@ impl IcModule for IcStorageModule {
 	}
 }
 #[no_mangle]
-pub extern "C" fn icm_new() -> *mut dyn IcModule {
+pub fn icm_new() -> *mut dyn IcModule {
 	let mut ret = IcStorageModule { name: "STORAGE".to_string(), version: "1.0.0".to_string(), e: HashMap::new() };
 	ret.icm_load();
 	Box::into_raw(Box::new(ret))
