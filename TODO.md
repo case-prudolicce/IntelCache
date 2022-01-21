@@ -1,39 +1,27 @@
-# General
-## Features
-* Links
-* Entry labels
-* calendar
-* ENTRY/DIR/TAG RENAME command
-* Modular future function
-* Users and data visibility (public/private)
-		- ACCOUNT Command
-		- LOGOUT Command
-		- Command Visibility/ownership integration:
-				- ENTRY
-				- SHOW
-				- TAG
-* e2e encryption
+# To Implement
+* CALENDAR Module
+* NOTE Module
+* PROFILE Module
+* E2E encryption
 * Decentralization
-## Future Hardening
-* Lib backend ownership hardening (Dir)
-* IcCommand validation (Hardening)
 
-# Native IC Client
-## Features
+## CORE module
+* CORE ACCOUNT {RENAME,CHPASSWD}
+
+## STORAGE module
+* STORAGE Links
+* STORAGE ENTRY labels
+* STORAGE ENTRY/DIR/TAG RENAME
+
+## Native IC Client
+* Upgrade to 2.0
 * README
 * ls a prints as tree
-## Bugs to fix
-* new with third arg (dir loc) does not work
-* crash on get\_packet (if server restarts)
-* mkdir <name> <dir id> doesn't work
-* ls is pretty bugged in general
-* will crash (no EDITOR var) on edit
 
-# Server
-## Features
+## Server
 * --export,--import and --teardown handle ipfs
 * logging 
-## Bugs to fix
-* DIR CREATE/DELETE doesn't return right response.
-* DIR SET <DIR ID> 0 doesn't work.
-* Server crashes if client disconnects (Handle ungraceful exits from client)
+* 1.0 to 2.0 conversion
+
+# Known Bugs to fix
+* To be determined
