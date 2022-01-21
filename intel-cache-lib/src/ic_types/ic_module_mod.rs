@@ -1,6 +1,4 @@
-use crate::ic_types::ic_execute_mod::IcExecute;
-use crate::ic_types::IcError;
-use crate::ic_types::IcConnection;
+use crate::ic_types::{ic_execute_mod::IcExecute,IcError,IcConnection};
 
 pub trait IcModule {
 	fn icm_load(&mut self);

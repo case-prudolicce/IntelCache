@@ -1,17 +1,11 @@
-extern crate libloading;
 use libloading::Library;
 
 use std::io::{Error};
 use std::thread;
 use std::net::{TcpListener,SocketAddrV4,Ipv4Addr};
 
-use crate::lib_backend::establish_connection;
-use crate::lib_backend::establish_testing_connection;
-use crate::lib_backend::parse_ic_packet;
-use crate::ic_types::IcConnection;
-//use crate::ic_types::IcExecute;
-use crate::ic_types::IcModule;
-use crate::ic_types::IcExecute;
+use crate::lib_backend::{establish_connection,establish_testing_connection,parse_ic_packet};
+use crate::ic_types::{IcConnection,IcModule,IcExecute};
 
 /// The Server interface struct for IntelCache. It will listen on port 64209 for new clients.
 /// Then for each client, it will create a new thread for the client,

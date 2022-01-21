@@ -1,10 +1,11 @@
+use diesel::MysqlConnection;
+
+use crate::lib_backend::{establish_connection,establish_testing_connection};
 use crate::ic_types::{IcPacket,IcError};
+
 use std::net::TcpStream;
 use std::io::{Read,Write};
 
-use diesel::MysqlConnection;
-use crate::lib_backend::establish_connection;
-use crate::lib_backend::establish_testing_connection;
 
 #[derive(PartialEq)]
 pub struct IcLoginDetails { pub username: String,pub id: String, pub cookie: String }

@@ -1,32 +1,25 @@
-use std::io::Write;
-use std::process::{Command,Stdio};
-
-use libloading::Library;
-
-use diesel::prelude::*;
-use std::str;
-use std::fs::File;
-use ipfs_api_backend_hyper::{IpfsApi, IpfsClient};
-use std::io::Cursor;
-use futures::executor::block_on;
-use std::error::Error;
-
 mod models;
 mod schema;
+
+use diesel::prelude::*;
 use diesel_migrations::embed_migrations;
-embed_migrations!("migrations/");
+use libloading::Library;
+use ipfs_api_backend_hyper::{IpfsApi, IpfsClient};
+use futures::executor::block_on;
 use sha2::{Sha256, Digest};
 
-use self::models::{EntryTag,NewEntryTag,NewEntry, Entry, NewDirTag, DirTag, Tag, NewTag, Dir, NewDir,NewUser,User};
-use crate::ic_types::IcError;
-use crate::ic_types::IcLoginDetails;
-use crate::ic_types::IcPacket;
-use crate::ic_types::IcExecute;
-use crate::ic_types::IcModule;
-use crate::ic_types::IcConnection;
+use std::io::{Write,Cursor};
+use std::process::{Command,Stdio};
+use std::time::{SystemTime,UNIX_EPOCH};
+use std::str;
+use std::fs::File;
+use std::error::Error;
 
-use std::time::SystemTime;
-use std::time::UNIX_EPOCH;
+use self::models::{EntryTag,NewEntryTag,NewEntry, Entry, NewDirTag, DirTag, Tag, NewTag, Dir, NewDir,NewUser,User};
+use crate::ic_types::{IcError,IcLoginDetails,IcPacket,IcExecute,IcModule,IcConnection};
+
+
+embed_migrations!("migrations/");
 
 pub fn delete_sql(username: &str,password: &str) -> Result<(),Box<dyn Error>>{
 	//let url = format!("mysql://{}:{}@localhost/",username,password);
