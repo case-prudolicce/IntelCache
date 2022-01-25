@@ -93,6 +93,9 @@ impl IcConnection {
 		self.final_buffer = Vec::new();
 		let mut bsize_gotten = false;
 		//Finish rest of buffer to get bodysize
+		if br == 0 {
+			return Err(IcError("Client disconnected disgracefully.".to_string()));
+		}
 		for b in self.local_buffer[buffer_pointer..br].to_vec() {
 			if b == 10 {bsize_gotten = true;break}
 			sstr.push(if b > 0 {b as char} else {'0'});

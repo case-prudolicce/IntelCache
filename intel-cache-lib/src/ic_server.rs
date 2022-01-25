@@ -5,7 +5,7 @@ use std::thread;
 use std::net::{TcpListener,SocketAddrV4,Ipv4Addr};
 
 use crate::lib_backend::{establish_connection,establish_testing_connection,parse_ic_packet};
-use crate::ic_types::{IcConnection,IcModule,IcExecute};
+use crate::ic_types::{IcPacket,IcConnection,IcModule,IcExecute};
 
 /// The Server interface struct for IntelCache. It will listen on port 64209 for new clients.
 /// Then for each client, it will create a new thread for the client,
@@ -17,43 +17,27 @@ pub struct IcServer { }
 impl IcServer {
 	fn handle_client(mut c: IcConnection) -> Result<(),Error> {
 		println!("Connection received! {:?} is sending data.", c.addr());
-		let modules = IcServer::load_basic_modules();
+		let mut modules = IcServer::load_basic_modules();
 		loop {
-			let p = c.get_packet().unwrap();
-			println!("[DEBUG#IcServer.handle_client] RECIEVING IC_PACKET : {} ({:?})",(&p).header.as_ref().unwrap_or(&"None".to_string()),(&p).body.as_ref().unwrap_or(&Vec::new()).len());
-			let mut icc: Box<dyn IcExecute<Connection = IcConnection>>;
-			let cmd: Vec::<String>;
-			match parse_ic_packet(p.clone(),&modules){
-				Ok(v) => { 
-					cmd = v.0;
-					icc = v.1;
+			match c.get_packet() {
+				Ok(p) => {
+					println!("[DEBUG#IcServer.handle_client] RECIEVING IC_PACKET : {} ({:?})",(&p).header.as_ref().unwrap_or(&"None".to_string()),(&p).body.as_ref().unwrap_or(&Vec::new()).len());
+					let mut icc: Box<dyn IcExecute<Connection = IcConnection>>;
+					let cmd: Vec::<String>;
+					match parse_ic_packet(p.clone(),&modules){
+						Ok(v) => { 
+							cmd = v.0;
+							icc = v.1;
+							let mut p = icc.exec(&mut c,Some(cmd),p.body);
+							c.send_packet(&mut p).unwrap();
+						},
+						Err(e) => {
+							c.send_packet(&mut IcPacket::new(Some("Err: Not Found".to_string()),None)).unwrap();
+						},
+					}
 				},
-				Err(e) => panic!("{:?}",e),
+				Err(e) =>{IcServer::unload_modules(&mut modules);return Ok(())},
 			}
-			//if (icc.login_required() && c.logged_in()) || ! icc.login_required() {
-			//	if ! testing {
-			//		if (&p).header.as_ref() != None {
-			//			icp = icc.exec(Some(&mut c.backend_con),&mut c.login);
-			//			if (&p).header.as_ref().unwrap() == "EXIT" /*&& icp.body == None*/ {
-			//				println!("{:?} disconnected.",c.addr());
-			//				c.send_packet(icp).unwrap();
-			//				return Ok(());
-			//			}
-			//		} else { icp = IcCommand::from_packet(p.clone()).exec(&mut c.login,testing) }
-			//	} else {
-			//		if (&p).header.as_ref() != None {
-			//			icp = icc.exec(Some(&mut c.backend_con),&mut c.login);
-			//			if (&p).header.as_ref().unwrap() == "EXIT" /*&& icp.body == None*/ {
-			//				println!("{:?} disconnected.",c.addr());
-			//				c.send_packet(icp).unwrap();
-			//				return Ok(());
-			//			}
-			//		} else { icp = IcCommand::from_packet(p.clone()).exec(&mut c.login,testing) }
-			//	}
-			//} else { icp = IcPacket::new_denied() }
-			//println!("[DEBUG#IcServer.handle_client] SENDING ICP_PACKET : {} ({:?})",(&icp).header.as_ref().unwrap_or(&"None".to_string()),(&icp).body.as_ref().unwrap_or(&Vec::new()).len());
-			let mut p = icc.exec(&mut c,Some(cmd),p.body);
-			c.send_packet(&mut p).unwrap();
 		}
 	}
 	
@@ -72,6 +56,13 @@ impl IcServer {
 		}
 		println!("LOADING FINISHED");
 		(libs,ret)
+	}
+	
+	fn unload_modules(modules: &mut(Vec<Library>,Vec<Box<dyn IcModule>>)) {
+		println!("UNLOADING MODULES");
+		modules.1.clear();
+		modules.0.clear();
+		println!("UNLOADING FINISHED");
 	}
 	
 	/// `listen` will start the server. 
