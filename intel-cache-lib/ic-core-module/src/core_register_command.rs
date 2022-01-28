@@ -5,6 +5,7 @@ use sha2::{Sha256, Digest};
 use std::time::{SystemTime,UNIX_EPOCH};
 use futures::executor::block_on;
 use intel_cache_lib::lib_backend::register;
+use intel_cache_lib::lib_backend::get_pip;
 
 pub struct CoreRegister {}
 impl CoreRegister {
@@ -32,25 +33,21 @@ impl IcExecute for CoreRegister {
 					.expect("Time went backwards")
 					.as_secs().to_string();
 				let mut hasher = Sha256::new();
-				let pip: String;
-				if let Some(ip) = block_on(public_ip::addr()) {
-					pip = format!("{:?}", ip);
-				} else {
-					panic!("couldn't get an IP address");
-				}
-				let gid = username.to_owned()+pass+&since_the_epoch+&pip;
-				hasher.update(&gid);
-				let globalid = format!("{:x}",hasher.finalize());
-				println!("{}->{}", gid,globalid);
-				if pass.len() == 128 {
-					match register(&con.backend_con,username.to_string(),pass.to_string(),globalid) {
-						Ok(_v) => { return IcPacket::new(Some("OK!".to_string()),None) }
-						Err(_e) => { return IcPacket::new(Some("Err: register".to_string()),None) }
-						
+				if let Some(pip) = get_pip() {
+					let gid = username.to_owned()+pass+&since_the_epoch+&pip;
+					hasher.update(&gid);
+					let globalid = format!("{:x}",hasher.finalize());
+					println!("{}->{}", gid,globalid);
+					if pass.len() == 128 {
+						match register(&con.backend_con,username.to_string(),pass.to_string(),globalid) {
+							Ok(_v) => { return IcPacket::new(Some("OK!".to_string()),None) }
+							Err(_e) => { return IcPacket::new(Some("Err: register".to_string()),None) }
+							
+						}
+					}else {
+						return IcPacket::new_empty()
 					}
-				}else {
-					return IcPacket::new_empty()
-				}
+				} else { return IcPacket::new_empty() }
 			}
 			None => return IcPacket::new_empty(),
 		}

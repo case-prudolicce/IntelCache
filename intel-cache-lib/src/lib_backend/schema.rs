@@ -24,7 +24,7 @@ table! {
         type_ -> Varchar,
         date_added -> Datetime,
         date_last_modified -> Datetime,
-        loc -> Integer,
+        loc -> Nullable<Integer>,
         label -> Nullable<Text>,
         visibility -> Bool,
         owner -> Varchar,

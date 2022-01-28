@@ -61,44 +61,44 @@ impl IcExecute for StorageEntry {
 								_ => public = false,
 							}
 							let loc: i32;
-							match str::parse::<i32>(&c[4]){
-							Ok(l) => loc = l,
-							Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
+							match str::parse::<i32>(&c[5]){
+								Ok(l) => loc = l,
+								Err(_err) => return IcPacket::new(Some("ERR: Sixth argument isn't a number.".to_string()),None),
 							}
-							let r = make_file_entry(&con.backend_con,&c[2],d.clone(),Some(loc),None,public);
+							let r = make_file_entry(con,&c[2],d.clone(),Some(loc),None,public);
 							match r {
-							Ok(_e) => (),
-							Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
+								Ok(_e) => return IcPacket::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec())),
+								Err(_err) => panic!("{}",_err),//return IcPacket::new(Some("ERR: Failed to make entry.".to_string()),None),
 							}
 						} else if (c.len() as i32) >= 4 {
 							match c[3].as_ref() {
 								"PUBLIC" => public = true,
 								_ => public = false,
 							}
-							let r = make_file_entry(&con.backend_con,&c[2],d.clone(),None,None,public);
+							let r = make_file_entry(con,&c[2],d.clone(),None,None,public);
 							match r {
-							Ok(_e) => (),
-							Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
+								Ok(_e) => return IcPacket::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec())),
+								Err(_err) => panic!("{}",_err)//return IcPacket::new(Some("ERR: Failed to make entry.".to_string()),None),
 							}
-						} else { return IcPacket::new(Some("Err.".to_string()),None) }
-						return IcPacket::new(Some("OK!".to_string()),None)
+						} else { return IcPacket::new(Some(format!("ERR: Requires 5 to 7 arguments But {} were given",c.len()).to_string()),None) }
 					}
 					if delete {
-						if c.len() == 3 {
+						//ENTRY DELETE ((NAME)) <COOKIE>
+						if c.len() == 4 {
 							let etd: i32;
 							match c[2].parse::<i32>() {
-							Ok(e) => etd = e,
-							Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
+								Ok(e) => etd = e,
+								Err(_err) => return IcPacket::new(Some(format!("ERR: Third argument is not a number ({})",c[2]).to_string()),None),
 							}
 							let res = delete_entry(&con.backend_con,etd);
 							match res {
-							Ok(_e) => return IcPacket::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec())),
-							Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
+								Ok(_e) => return IcPacket::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec())),
+								Err(_err) => return IcPacket::new(Some("ERR: Deleting entry failed.".to_string()),None),
 							}
 						}
 					}
 					if show {
-						//ENTRY SHOW [<DIR ID>]
+						//ENTRY SHOW [<DIR ID>] <COOKIE>
 						if c.len() >= 3 {
 							rstr = show_entries(&con.backend_con,Some(false),Some(true),Some(c[2].parse::<i32>().unwrap()));
 						} else {
@@ -107,8 +107,8 @@ impl IcExecute for StorageEntry {
 						return if rstr != "" {IcPacket::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec()))} else {IcPacket::new(Some("Err.".to_string()),None)};
 					}
 					if get {
-						//ENTRY GET <ENTRY ID>
-						if c.len() == 3 {
+						//ENTRY GET <ENTRY ID> <COOKIE>
+						if c.len() == 4 {
 							if get_entry_by_id(&con.backend_con,c[2].parse::<i32>().unwrap()) != None {
 								let e = get_entry_by_id(&con.backend_con,c[2].parse::<i32>().unwrap()).unwrap();
 								
@@ -135,62 +135,62 @@ impl IcExecute for StorageEntry {
 								}else if e.type_ == "text" {
 									return IcPacket::new(Some("OK!".to_string()),Some(e.data));
 								}
-							} else {return IcPacket::new(Some("Err.".to_string()),None)}
-						} else {return IcPacket::new(Some("Err.".to_string()),None)}
+							} else {return IcPacket::new(Some(format!("ERR: Entry {} not found.",c[2]).to_string()),None)}
+						} else {return IcPacket::new(Some(format!("ERR: Requires 4 Arguments but {} were provided.",c.len()).to_string()),None)}
 					}
 					if set {
-						//ENTRY SET <ENTRY ID> [<NEW NAME> <NEW LOC>]
-						if c.len() == 3 {
+						//ENTRY SET <ENTRY ID> [<NEW NAME> <NEW LOC>] <COOKIE>
+						if c.len() == 4 {
 							//Harden entry id
 							match c[2].parse::<i32>() {
 							Ok(v) => {
 								match block_on(update_entry(&con.backend_con,v,d.clone(),None,None,None)) {
-								Ok(_v) => return IcPacket::new(Some("OK!".to_string()),None),
-								Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
+									Ok(_v) => return IcPacket::new(Some("OK!".to_string()),None),
+									Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
 								};
 							},
 							Err(_err) => { return IcPacket::new(Some("Err.".to_string()),None)},
 							}
-						} else if c.len() == 4 {
+						} else if c.len() == 5 {
 							//Harden entry id
 							let its: i32;
 							match c[2].parse::<i32>() {
-							Ok(v) => its = v,
-							Err(_err) => { return IcPacket::new(Some("Err.".to_string()),None)},
+								Ok(v) => its = v,
+								Err(_err) => { return IcPacket::new(Some("ERR: Third argument isn't a number.".to_string()),None)},
 							}
 							//Harden third arg (New name or new loc)
 							let pnl = c[3].parse::<i32>().unwrap_or(-1);
 							if pnl == -1 {
 								match block_on(update_entry(&con.backend_con,its,d.clone(),Some(&c[3]),None,None)) {
-								Ok(_v) => return IcPacket::new(Some("OK!".to_string()),None),
-								Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
+									Ok(_v) => return IcPacket::new(Some("OK!".to_string()),None),
+									Err(_err) => return IcPacket::new(Some("ERR: Cannot update entry with new name.".to_string()),None),
 								};
 							} else {
 								match block_on(update_entry(&con.backend_con,its,d.clone(),None,Some(c[3].parse::<i32>().unwrap()),None)) {
-								Ok(_v) => return IcPacket::new(Some("OK!".to_string()),None),
-								Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
+									Ok(_v) => return IcPacket::new(Some("OK!".to_string()),None),
+									Err(_err) => return IcPacket::new(Some("ERR: Cannot update entry with new loc.".to_string()),None),
 								};
 							}
-						} else if c.len() >= 5 {
+						} else if c.len() > 5 {
 							//Harden entry id
 							let its: i32;
 							match c[2].parse::<i32>() {
-							Ok(v) => its = v,
-							Err(_err) => { return IcPacket::new(Some("Err.".to_string()),None)},
+								Ok(v) => its = v,
+								Err(_err) => { return IcPacket::new(Some("Err.".to_string()),None)},
 							}
 							//Harden new loc id
 							let nli: i32;
 							match c[4].parse::<i32>() {
-							Ok(v) => nli = v,
-							Err(_err) => { return IcPacket::new(Some("Err.".to_string()),None)},
+								Ok(v) => nli = v,
+								Err(_err) => { return IcPacket::new(Some("Err.".to_string()),None)},
 							}
 							match block_on(update_entry(&con.backend_con,its,d.clone(),Some(&c[3]),Some(nli),None)) {
-							Ok(_v) => return IcPacket::new(Some("OK!".to_string()),None),
-							Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
+								Ok(_v) => return IcPacket::new(Some("OK!".to_string()),None),
+								Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
 							};
 						}
 					}
-					IcPacket::new(Some("Err.".to_string()),None)
+					IcPacket::new(Some(format!("ERR: STORAGE COMMAND {:?} NOT FOUND",c).to_string()),None)
 				} else { return IcPacket::new_denied(); }
 			},
 			None => return IcPacket::new(Some("Err.".to_string()),None),

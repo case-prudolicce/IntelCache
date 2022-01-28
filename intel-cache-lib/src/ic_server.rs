@@ -16,22 +16,36 @@ use crate::ic_types::{IcPacket,IcConnection,IcModule,IcExecute};
 pub struct IcServer { }
 impl IcServer {
 	fn handle_client(mut c: IcConnection) -> Result<(),Error> {
-		println!("Connection received! {:?} is sending data.", c.addr());
+		println!("CONNECTION FROM {:?}", c.addr());
 		let mut modules = IcServer::load_basic_modules();
 		loop {
 			match c.get_packet() {
 				Ok(p) => {
-					println!("[DEBUG#IcServer.handle_client] RECIEVING IC_PACKET : {} ({:?})",(&p).header.as_ref().unwrap_or(&"None".to_string()),(&p).body.as_ref().unwrap_or(&Vec::new()).len());
+					if c.login != None {
+						println!("{}->SERVER: {}",c.login.as_ref().unwrap().username,&p.header.as_ref().unwrap_or(&"NONE".to_string()))
+					} else {
+						println!("ANONYMOUS->SERVER: {}",&p.header.as_ref().unwrap_or(&"NONE".to_string()))
+					}
 					let mut icc: Box<dyn IcExecute<Connection = IcConnection>>;
 					let cmd: Vec::<String>;
 					match parse_ic_packet(p.clone(),&modules){
 						Ok(v) => { 
 							cmd = v.0;
 							icc = v.1;
-							let mut p = icc.exec(&mut c,Some(cmd),p.body);
-							c.send_packet(&mut p).unwrap();
+							let mut op = icc.exec(&mut c,Some(cmd),p.body);
+							if c.login != None {
+								println!("SERVER->{}: {}",c.login.as_ref().unwrap().username,&op.header.as_ref().unwrap_or(&"NONE".to_string()))
+							} else {
+								println!("SERVER->ANONYMOUS: {}",&op.header.as_ref().unwrap_or(&"NONE".to_string()))
+							}
+							c.send_packet(&mut op).unwrap();
 						},
 						Err(e) => {
+							if c.login != None {
+								println!("SERVER->{}: {}",c.login.as_ref().unwrap().username,&p.header.as_ref().unwrap_or(&"NONE".to_string()))
+							} else {
+								println!("SERVER->ANONYMOUS: {}",&p.header.as_ref().unwrap_or(&"NONE".to_string()))
+							}
 							c.send_packet(&mut IcPacket::new(Some("Err: Not Found".to_string()),None)).unwrap();
 						},
 					}
@@ -42,7 +56,6 @@ impl IcServer {
 	}
 	
 	fn load_basic_modules() -> (Vec<Library>,Vec<Box<dyn IcModule>>){
-		println!("LOADING MODULES");
 		let mut ret = Vec::<Box<dyn IcModule>>::new();
 		let mut libs = Vec::<Library>::new();
 		let basic_module_paths = vec!["libic_core_module.so","libic_storage_module.so"];
@@ -54,15 +67,12 @@ impl IcServer {
 				ret.push(Box::from_raw(icmc()));
 			}
 		}
-		println!("LOADING FINISHED");
 		(libs,ret)
 	}
 	
 	fn unload_modules(modules: &mut(Vec<Library>,Vec<Box<dyn IcModule>>)) {
-		println!("UNLOADING MODULES");
 		modules.1.clear();
 		modules.0.clear();
-		println!("UNLOADING FINISHED");
 	}
 	
 	/// `listen` will start the server. 
@@ -73,12 +83,11 @@ impl IcServer {
 					let loopback:Ipv4Addr = Ipv4Addr::new(0, 0, 0, 0);
 					let socket:SocketAddrV4 = SocketAddrV4::new(loopback, 64209);
 					let listener = TcpListener::bind(socket).unwrap();
-					//let port = listener.local_addr().unwrap();
 					for stream in listener.incoming() { 
 						match stream {
-							Err(e) => { eprintln!("failed: {}",e) },
+							Err(e) => { eprintln!("ERR <ic_server.rs:73>: {}",e) },
 							Ok(stream) => { thread::spawn( move || {
-									IcServer::handle_client(IcConnection::new(stream,testing)).unwrap_or_else(|error| eprintln!("{:?}",error));
+									IcServer::handle_client(IcConnection::new(stream,testing)).unwrap_or_else(|error| eprintln!("ERR <ic_server.rs:75>: {:?}",error));
 								});
 							},
 						}
@@ -87,18 +96,17 @@ impl IcServer {
 			Err(e) => println!("Error connecting to internal database: {}",e),
 			}
 		} else {
-			println!("SERVER ON TESTING");
+			println!("TESTING ON");
 			match establish_testing_connection() {
 			Ok(_v) =>{
 					let loopback:Ipv4Addr = Ipv4Addr::new(0, 0, 0, 0);
 					let socket:SocketAddrV4 = SocketAddrV4::new(loopback, 46290);
 					let listener = TcpListener::bind(socket).unwrap();
-					//let port = listener.local_addr().unwrap();
 					for stream in listener.incoming() { 
 						match stream {
-							Err(e) => { eprintln!("failed: {}",e) },
+							Err(e) => { eprintln!("ERR <ic_server.rs:92>: {}",e) },
 							Ok(stream) => { thread::spawn(  move || {
-									IcServer::handle_client(IcConnection::new(stream,testing)).unwrap_or_else(|error| eprintln!("{:?}",error));
+									IcServer::handle_client(IcConnection::new(stream,testing)).unwrap_or_else(|error| eprintln!("ERR <ic_server.rs:94>: {:?}",error));
 								});
 							},
 						}

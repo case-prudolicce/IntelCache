@@ -1,11 +1,5 @@
-use intel_cache_lib::ic_types::IcPacket;
-use intel_cache_lib::ic_types::ic_execute_mod::IcExecute;
-use intel_cache_lib::lib_backend::delete_dir;
-use intel_cache_lib::lib_backend::show_dirs;
-use intel_cache_lib::lib_backend::create_dir;
-use intel_cache_lib::lib_backend::update_dir;
-use intel_cache_lib::lib_backend::validate_dir;
-use intel_cache_lib::ic_types::IcConnection;
+use intel_cache_lib::lib_backend::{delete_dir,show_dirs,create_dir,update_dir,validate_dir};
+use intel_cache_lib::ic_types::{IcConnection,ic_execute_mod::IcExecute,IcPacket};
 
 pub struct StorageDir { }
 impl StorageDir {

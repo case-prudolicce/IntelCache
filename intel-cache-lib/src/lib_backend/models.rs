@@ -74,7 +74,7 @@ pub struct Entry {
 	pub type_: String,
 	pub date_added: NaiveDateTime,
 	pub date_last_modified: NaiveDateTime,
-	pub loc: i32,
+	pub loc: Option<i32>,
 	pub label: Option<String>,
 	pub visibility: bool,
 	pub owner: String,
@@ -86,9 +86,10 @@ pub struct NewEntry<'a> {
 	pub name: &'a str,
 	pub data: &'a [u8],
 	pub type_: &'a str,
-	pub loc: i32,
+	pub loc: Option<i32>,
 	pub label: Option<&'a str>,
 	pub visibility: bool,
+	pub owner: &'a str
 }
 
 #[derive(Queryable)]

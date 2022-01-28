@@ -259,7 +259,6 @@ pub fn show_dirs(conn: &MysqlConnection,by_id: Option<i32>,o: &String,owned_only
 	use self::schema::dir::dsl::*;
 	use schema::dir;
 	let mut results: Vec<Dir>;
-	println!("OWNER: {}",o);
 	if by_id != None {
 		if by_id.unwrap() != 0 {
 			results = dir.filter(dir::loc.eq(by_id.unwrap()).and(dir::owner.eq(o))).load::<Dir>(conn).expect("Error loading dirs");
@@ -366,8 +365,8 @@ pub fn show_entries(conn: &MysqlConnection, _display: Option<bool>, shortened: O
 	use self::schema::entry::dsl::*;
 	use schema::entry;
 	let results: Vec<Entry>;
-	if under_id == None {
-		results = entry.load::<Entry>(conn).expect("Error loading entries");
+	if (under_id != None && under_id.unwrap() == 0) || under_id == None {
+		results = entry.filter(entry::loc.is_null()).load::<Entry>(conn).expect("Error loading entries");
 	} else {
 		results = entry.filter(entry::loc.eq(under_id.unwrap())).load::<Entry>(conn).expect("Error loading entries");
 	}
@@ -380,12 +379,12 @@ pub fn show_entries(conn: &MysqlConnection, _display: Option<bool>, shortened: O
 				Ok(v) => v,
 				Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
 			};
-			retstr.push_str(format!("{} {} ({}) {} [{}]\n{}\n",e.id,e.name,e.type_,e.loc,tags,text).as_str());
+			retstr.push_str(format!("{} {} ({}) {} [{}]\n{}\n",e.id,e.name,e.type_,e.loc.unwrap_or(0),tags,text).as_str());
 		}
 	} else {
 		for e in results {
 			let tags = get_entry_tags(conn,e.id);
-			retstr.push_str(format!("{} {} ({}) {} {}\n",e.id,e.name,e.type_,e.loc,tags).as_str());
+			retstr.push_str(format!("{} {} ({}) {} {}\n",e.id,e.name,e.type_,e.loc.unwrap_or(0),tags).as_str());
 		}
 	}
 	retstr
@@ -446,35 +445,40 @@ pub fn get_entry_tags(conn: &MysqlConnection, entry_id: i32) -> String {
 	retstr
 }
 
-pub fn make_file_entry(conn: &MysqlConnection,name: &str,dt: Vec<u8>,location: Option<i32>,lbl: Option<&str>,public: bool) -> Result<Entry,IcError> {
+pub fn make_file_entry(conn: &IcConnection,name: &str,dt: Vec<u8>,location: Option<i32>,lbl: Option<&str>,public: bool) -> Result<Entry,IcError> {
 	use schema::entry;
 
 	let ipfsclient = IpfsClient::default();
+	let l = if (location != None && location.unwrap() <= 0) || location == None {None} else {Some(location.unwrap())}; 
 	
 	if dt.len() < 65535 {
-		let new_entry = NewEntry { name: name,data: &dt,type_: "text",loc: location.unwrap_or(1),label: lbl, visibility: public };
+		let new_entry = NewEntry { name: name,data: &dt,type_: "text",loc: l,label: lbl, visibility: public,owner: &conn.login.as_ref().unwrap().id };
 		
-		let res = diesel::insert_into(entry::table).values(&new_entry).execute(conn);
+		let query = diesel::insert_into(entry::table).values(&new_entry);
+		//let debug = diesel::debug_query::<diesel::mysql::Mysql, _>(&query);
+		//println!("The insert query: {:?}", debug);
+		//let res = diesel::insert_into(entry::table).values(&new_entry).execute(&conn.backend_con);
+		let res = query.execute(&conn.backend_con);
 		match res {
-		Ok(_e) => (),
-		Err(_err) => return Err(IcError("Error making new entry.".to_string())),
+			Ok(_e) => (),
+			Err(_err) => panic!("{}",_err),//return Err(IcError("Error making new entry in the IntelCache.".to_string())),
 		}
 	} else {
 		let hash: String;
 		match block_on(ipfsclient.add(Cursor::new(dt))) {
 			Ok(res) => hash = res.hash,
-			Err(_e) => return Err(IcError("Error making new entry.".to_string())),
+			Err(_e) => return Err(IcError("Error inserting file in IPFS.".to_string())),
 		}
-		let new_entry = NewEntry { name: name,data: hash.as_bytes(),type_: "ipfs_file",loc: location.unwrap_or(1),label: lbl, visibility: public};
+		let new_entry = NewEntry { name: name,data: hash.as_bytes(),type_: "ipfs_file",loc: l,label: lbl, visibility: public, owner: &conn.login.as_ref().unwrap().id };
 		
-		let res = diesel::insert_into(entry::table).values(&new_entry).execute(conn);
+		let res = diesel::insert_into(entry::table).values(&new_entry).execute(&conn.backend_con);
 		match res {
 		Ok(_e) => (),
-		Err(_err) => return Err(IcError("Error making new entry.".to_string())),
+		Err(_err) => return Err(IcError("Error making new IPFS entry in the IntelCache.".to_string())),
 		}
 		
 	}
-	Ok(entry::table.order(entry::id.desc()).first(conn).unwrap())
+	Ok(entry::table.order(entry::id.desc()).first(&conn.backend_con).unwrap())
 }
 
 pub async fn update_entry(conn: &MysqlConnection,uid: i32,dt: Vec<u8>,n: Option<&str>,l: Option<i32>,_lbl: Option<&str>) -> Result<(),IcError>{
@@ -484,19 +488,20 @@ pub async fn update_entry(conn: &MysqlConnection,uid: i32,dt: Vec<u8>,n: Option<
 	if get_entry_by_id(conn,uid) != None {
 		//Harden l
 		let e = get_entry_by_id(conn,uid).unwrap();
-		let nl: i32;
+		let nl: Option<i32> = if (l != None && l.unwrap() == 0) || l == None {None} else {Some(l.unwrap())};
 		//Check if we got a new loc
-		match l {
-		//If we do, validate it.
-		Some(v) => match validate_dir(conn,v) {
-			//if validated, set nl to validated new loc
-			Some(_iv) => nl = v,
-			//Otherwise return error
-			None => return Err(IcError("Error validating directory.".to_string())),
-			},
-		//Otherwise, set nl to original loc.
-		None => nl = e.loc,
-		}
+		//match l {
+		////If we do, validate it.
+		//Some(v) => match validate_dir(conn,v) {
+		//	//if validated, set nl to validated new loc
+		//	Some(_iv) => nl = Some(v),
+		//	//Otherwise return error
+		//	//None => return Err(IcError("Error validating directory.".to_string())),
+		//	None => panic!("{:?}",IcError("Error validating directory.".to_string())),
+		//	},
+		////Otherwise, set nl to original loc.
+		//None => nl = e.loc,
+		//}
 		
 		if dt.len() < 65535 {
 			diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::data.eq(&dt),entry::type_.eq("text"),entry::name.eq(n.unwrap_or(&e.name)),entry::loc.eq(nl))).execute(conn).expect("Error updating entry.");
@@ -511,6 +516,14 @@ pub async fn update_entry(conn: &MysqlConnection,uid: i32,dt: Vec<u8>,n: Option<
 			Ok(())
 		}
 	} else {return Err(IcError("Error getting entry for update".to_string()))}
+}
+
+#[tokio::main]
+pub async fn get_pip() -> Option<String> {
+	match block_on(public_ip::addr()) {
+		Some(ip) => return Some(format!("{:?}", ip)),
+		None => return None,
+	}
 }
 
 pub fn get_entry_by_id(conn: &MysqlConnection,entryid: i32) -> Option<Entry> {
@@ -562,7 +575,6 @@ pub fn login(conn: &MysqlConnection,login: &mut Option<IcLoginDetails>,id: Strin
 			return Err(IcError("Error: wrong password.".to_string()));
 		} else {
 			//Make cookie and fill login
-			
 			let start = SystemTime::now();
 			let since_the_epoch = start
 				.duration_since(UNIX_EPOCH)
@@ -574,7 +586,6 @@ pub fn login(conn: &MysqlConnection,login: &mut Option<IcLoginDetails>,id: Strin
 			let cookie = format!("{:x}",hasher.finalize());
 			if *login == None {
 				*login = Some(IcLoginDetails{username: n[0].username.clone(),id: id.clone(),cookie: cookie.clone()});
-				println!("[DEBUG#IcServer.handle_client.IcLogin.exec] User {} logged in!",(*login).as_ref().unwrap().username);
 				return Ok(cookie);
 			} else { return Ok(cookie); }
 		}
@@ -590,10 +601,8 @@ pub fn parse_ic_packet(packet: IcPacket,modules: &(Vec<Library>,Vec<Box<dyn IcMo
 		cmd.push("CORE".to_string());
 		cmd.push("NULL".to_string());
 	}
-	println!("PARSING Command {:?}",cmd);
 	for m in &modules.1 {
 		if m.icm_get_name() == cmd[0] {
-			println!("{:?} matched to module {} version {}",packet.header,m.icm_get_name(),m.icm_get_version());
 			match m.icm_get_command(cmd[1..].to_vec()) {
 				Ok(v) => return Ok((cmd[1..].to_vec(),v)),
 				Err(e) => return Err(e),
@@ -602,4 +611,19 @@ pub fn parse_ic_packet(packet: IcPacket,modules: &(Vec<Library>,Vec<Box<dyn IcMo
 		
 	}
 	Err(IcError("NOT IMPLEMENTED".to_string()))
+}
+
+pub fn fetch_users(conn: &MysqlConnection,username: String) -> Vec<String> {
+	use schema::user;
+	let mut ret = Vec::<String>::new();
+	let d = user::table.filter(user::username.eq(&username)).load::<User>(conn);
+	match d {
+		Ok(v) => {
+			for user in v {
+				ret.push(user.global_id);
+			}
+		},
+		Err(_e) => (),
+	}
+	return ret
 }
