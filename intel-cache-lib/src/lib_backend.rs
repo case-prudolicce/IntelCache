@@ -489,19 +489,6 @@ pub async fn update_entry(conn: &MysqlConnection,uid: i32,dt: Vec<u8>,n: Option<
 		//Harden l
 		let e = get_entry_by_id(conn,uid).unwrap();
 		let nl: Option<i32> = if (l != None && l.unwrap() == 0) || l == None {None} else {Some(l.unwrap())};
-		//Check if we got a new loc
-		//match l {
-		////If we do, validate it.
-		//Some(v) => match validate_dir(conn,v) {
-		//	//if validated, set nl to validated new loc
-		//	Some(_iv) => nl = Some(v),
-		//	//Otherwise return error
-		//	//None => return Err(IcError("Error validating directory.".to_string())),
-		//	None => panic!("{:?}",IcError("Error validating directory.".to_string())),
-		//	},
-		////Otherwise, set nl to original loc.
-		//None => nl = e.loc,
-		//}
 		
 		if dt.len() < 65535 {
 			diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::data.eq(&dt),entry::type_.eq("text"),entry::name.eq(n.unwrap_or(&e.name)),entry::loc.eq(nl))).execute(conn).expect("Error updating entry.");
