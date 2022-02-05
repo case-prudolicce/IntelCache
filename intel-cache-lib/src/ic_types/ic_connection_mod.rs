@@ -87,7 +87,6 @@ impl IcConnection {
 			}
 			header = Some(std::str::from_utf8(&mut self.final_buffer).unwrap().to_string());
 		} else {header = None}
-		buffer_pointer += 1; //To skip the next newline (after header grab)
 		//reset size string and final_buffer
 		sstr = String::new(); 
 		self.final_buffer = Vec::new();
@@ -114,23 +113,23 @@ impl IcConnection {
 			}
 			
 		} 
-		bodysize = sstr.parse::<i32>().unwrap() as usize;
+		bodysize = sstr.parse::<i64>().unwrap() as usize;
 		if bodysize > 0 {
 			//Get body
 			buffer_pointer += 1; //To skip the next newline (after first body buffer grab)
 			//Loop though remainder of buffer to get body
 			for b in &mut self.local_buffer[buffer_pointer..br] {
-				if (self.final_buffer.len() as i32) + 1 <= bodysize as i32{
+				if (self.final_buffer.len() as i64) + 1 <= bodysize as i64{
 					self.final_buffer.push(*b);
 					buffer_pointer += 1;
 				}
 			}
 			//Then gets new buffers to get the rest
-			while (self.final_buffer.len() as i32) < (bodysize as i32) {
+			while (self.final_buffer.len() as i64) < (bodysize as i64) {
 				buffer_pointer = 1;
 				let br = self.con.read(&mut self.local_buffer).unwrap();
 				for b in &mut self.local_buffer[..br] {
-					if (self.final_buffer.len() as i32) + 1 <= bodysize as i32{
+					if (self.final_buffer.len() as i64) + 1 <= bodysize as i64{
 						self.final_buffer.push(*b);
 						buffer_pointer += 1;
 					}
@@ -138,6 +137,7 @@ impl IcConnection {
 				}
 			}
 		}
+		println!("GOT BUFFER {}",self.final_buffer.len());
 		
 		if self.final_buffer.len() > 0 {
 			Ok(IcPacket::new(header,Some(self.final_buffer.clone())))

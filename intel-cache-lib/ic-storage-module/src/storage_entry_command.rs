@@ -5,16 +5,14 @@ use intel_cache_lib::ic_types::ic_execute_mod::IcExecute;
 use intel_cache_lib::lib_backend::make_file_entry;
 use intel_cache_lib::lib_backend::get_entry_by_id;
 use intel_cache_lib::lib_backend::update_entry;
+use intel_cache_lib::lib_backend::get_entry;
 use intel_cache_lib::ic_types::IcConnection;
 
 use futures::executor::block_on;
 use std::str;
 use std::fs::File;
-use std::fs;
 use ipfs_api_backend_hyper::IpfsClient;
 use ipfs_api_backend_hyper::IpfsApi;
-use futures::TryStreamExt;
-use tar::Archive;
 
 #[derive(Clone)]
 pub struct StorageEntry { }
@@ -110,31 +108,7 @@ impl IcExecute for StorageEntry {
 						//ENTRY GET <ENTRY ID> <COOKIE>
 						if c.len() == 4 {
 							if get_entry_by_id(&con.backend_con,c[2].parse::<i32>().unwrap()) != None {
-								let e = get_entry_by_id(&con.backend_con,c[2].parse::<i32>().unwrap()).unwrap();
-								
-								if e.type_ == "ipfs_file" {
-									let client = IpfsClient::default();
-									match block_on(client
-									    .get(str::from_utf8(&e.data).unwrap())
-									    .map_ok(|chunk| chunk.to_vec())
-									    .try_concat())
-									{
-									    Ok(res) => {
-										fs::write(&c[3],res).unwrap();
-
-									    }
-									    Err(e) => eprintln!("error getting file: {}", e)
-									}
-									let mut archive = Archive::new(File::open(&c[3]).unwrap());
-									archive.unpack(".").unwrap();
-									fs::rename(str::from_utf8(&e.data).unwrap(),&c[3]).unwrap();
-									let ret = fs::read(&c[3]).unwrap();
-									fs::remove_file(&c[3]).unwrap();
-									return IcPacket::new(Some("OK!".to_string()),Some(ret));
-									
-								}else if e.type_ == "text" {
-									return IcPacket::new(Some("OK!".to_string()),Some(e.data));
-								}
+								return get_entry(con,c[2].parse::<i32>().unwrap(),&c[3])
 							} else {return IcPacket::new(Some(format!("ERR: Entry {} not found.",c[2]).to_string()),None)}
 						} else {return IcPacket::new(Some(format!("ERR: Requires 4 Arguments but {} were provided.",c.len()).to_string()),None)}
 					}

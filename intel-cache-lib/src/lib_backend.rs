@@ -13,10 +13,13 @@ use std::process::{Command,Stdio};
 use std::time::{SystemTime,UNIX_EPOCH};
 use std::str;
 use std::fs::File;
+use std::fs;
 use std::error::Error;
 
 use self::models::{EntryTag,NewEntryTag,NewEntry, Entry, NewDirTag, DirTag, Tag, NewTag, Dir, NewDir,NewUser,User};
 use crate::ic_types::{IcError,IcLoginDetails,IcPacket,IcExecute,IcModule,IcConnection};
+use futures::TryStreamExt;
+use tar::Archive;
 
 
 embed_migrations!("migrations/");
@@ -390,7 +393,8 @@ pub fn show_entries(conn: &MysqlConnection, _display: Option<bool>, shortened: O
 	retstr
 }
 
-pub fn delete_entry(conn: &MysqlConnection,entryid: i32) -> Result<(),IcError>{
+#[tokio::main]
+pub async fn delete_entry(conn: &MysqlConnection,entryid: i32) -> Result<(),IcError>{
 	use self::schema::entry::dsl::*;
 	if get_entry_by_id(conn,entryid) != None {
 		let e = get_entry_by_id(conn,entryid).unwrap();
@@ -400,7 +404,36 @@ pub fn delete_entry(conn: &MysqlConnection,entryid: i32) -> Result<(),IcError>{
 		} 
 		diesel::delete(entry.filter(id.eq(entryid))).execute(conn).unwrap();
 		return Ok(());
-	} else { return Err(IcError("Entry id not found".to_string())) } }
+	} else { return Err(IcError("Entry id not found".to_string())) } 
+}
+
+#[tokio::main]
+pub async fn get_entry(conn: &mut IcConnection,id: i32,name: &str) -> IcPacket{
+	let e = get_entry_by_id(&conn.backend_con,id).unwrap();
+	
+	if e.type_ == "ipfs_file" {
+		let client = IpfsClient::default();
+		match block_on(client
+		    .get(str::from_utf8(&e.data).unwrap())
+		    .map_ok(|chunk| chunk.to_vec())
+		    .try_concat())
+		{
+		    Ok(res) => {
+			fs::write(name,res).unwrap();
+
+		    }
+		    Err(e) => return IcPacket::new(Some(format!("ERR: error getting file: {}", e)),None)
+		}
+		let mut archive = Archive::new(File::open(name).unwrap());
+		archive.unpack(".").unwrap();
+		fs::rename(str::from_utf8(&e.data).unwrap(),name).unwrap();
+		let ret = fs::read(name).unwrap();
+		fs::remove_file(name).unwrap();
+		return IcPacket::new(Some("OK!".to_string()),Some(ret));
+	}else if e.type_ == "text" {
+		return IcPacket::new(Some("OK!".to_string()),Some(e.data));
+	} else { return IcPacket::new(Some("ERR: Type unknown".to_string()),None) }
+}
 
 pub fn tag_entry(conn: &MysqlConnection, entry_id: i32,tag_id: i32) -> Result<EntryTag,IcError>{
 	use schema::entry_tags;
@@ -445,7 +478,8 @@ pub fn get_entry_tags(conn: &MysqlConnection, entry_id: i32) -> String {
 	retstr
 }
 
-pub fn make_file_entry(conn: &IcConnection,name: &str,dt: Vec<u8>,location: Option<i32>,lbl: Option<&str>,public: bool) -> Result<Entry,IcError> {
+#[tokio::main]
+pub async fn make_file_entry(conn: &IcConnection,name: &str,dt: Vec<u8>,location: Option<i32>,lbl: Option<&str>,public: bool) -> Result<Entry,IcError> {
 	use schema::entry;
 
 	let ipfsclient = IpfsClient::default();
