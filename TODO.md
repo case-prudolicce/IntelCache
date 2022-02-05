@@ -4,6 +4,7 @@
 * PROFILE Module
 * E2E encryption
 * Decentralization
+* Testing (Docker, 
 
 ## CORE module
 * CORE ACCOUNT {RENAME,CHPASSWD}
@@ -20,8 +21,11 @@
 
 ## Server
 * --export,--import and --teardown handle ipfs
+* --raw\_dump (Dumping all files from user in archive)
 * logging 
 * 1.0 to 2.0 conversion
 
 # Known Bugs to fix
-* To be determined
+
+## Server
+* Filesizes too large will kill the server due to lack of memory
