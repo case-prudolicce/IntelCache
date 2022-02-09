@@ -32,7 +32,7 @@ impl IcServer {
 						Ok(v) => { 
 							cmd = v.0;
 							icc = v.1;
-							let mut op = icc.exec(&mut c,Some(cmd),p.body);
+							let mut op = icc.exec(&mut c,Some(cmd),p.body,p.cached);
 							if c.login != None {
 								println!("SERVER->{}: {}",c.login.as_ref().unwrap().username,&op.header.as_ref().unwrap_or(&"NONE".to_string()))
 							} else {

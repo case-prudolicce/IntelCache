@@ -23,7 +23,7 @@ impl StorageTag {
 }
 impl IcExecute for StorageTag {
 	type Connection = IcConnection;
-	fn exec(&mut self,con: &mut Self::Connection,cmd: Option<Vec<String>>,_data: Option<Vec<u8>>) -> IcPacket {
+	fn exec(&mut self,con: &mut Self::Connection,cmd: Option<Vec<String>>,_data: Option<Vec<u8>>,cached: bool) -> IcPacket {
 		match cmd {
 			Some(c) => {
 				if con.login != None && con.login.as_ref().unwrap().cookie == c[c.len() - 1..][0] {

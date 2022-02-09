@@ -21,7 +21,7 @@ impl CoreFetch {
 impl IcExecute for CoreFetch {
 	type Connection = IcConnection;
 	
-	fn exec(&mut self,con: &mut Self::Connection,cmd: Option<Vec<String>>,_data: Option<Vec<u8>>) -> IcPacket {
+	fn exec(&mut self,con: &mut Self::Connection,cmd: Option<Vec<String>>,_data: Option<Vec<u8>>,cached: bool) -> IcPacket {
 		if cmd != None {
 			let c = cmd.unwrap();
 			if c[1] == "USER" && c.len() > 2 {

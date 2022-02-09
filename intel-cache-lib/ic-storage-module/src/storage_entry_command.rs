@@ -29,7 +29,7 @@ impl StorageEntry{
 }
 impl IcExecute for StorageEntry {
 	type Connection = IcConnection;
-	fn exec(&mut self,con: &mut Self::Connection,cmd: Option<Vec<String>>, data: Option<Vec<u8>>) -> IcPacket {
+	fn exec(&mut self,con: &mut Self::Connection,cmd: Option<Vec<String>>, data: Option<Vec<u8>>,cached: bool) -> IcPacket {
 		match cmd {
 			Some(c) => {
 				if con.login != None && con.login.as_ref().unwrap().cookie == c[c.len() - 1..][0] {
@@ -63,7 +63,7 @@ impl IcExecute for StorageEntry {
 								Ok(l) => loc = l,
 								Err(_err) => return IcPacket::new(Some("ERR: Sixth argument isn't a number.".to_string()),None),
 							}
-							let r = make_file_entry(con,&c[2],d.clone(),Some(loc),None,public);
+							let r = make_file_entry(con,&c[2],d.clone(),Some(loc),None,public,cached);
 							match r {
 								Ok(_e) => return IcPacket::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec())),
 								Err(_err) => panic!("{}",_err),//return IcPacket::new(Some("ERR: Failed to make entry.".to_string()),None),
@@ -73,7 +73,7 @@ impl IcExecute for StorageEntry {
 								"PUBLIC" => public = true,
 								_ => public = false,
 							}
-							let r = make_file_entry(con,&c[2],d.clone(),None,None,public);
+							let r = make_file_entry(con,&c[2],d.clone(),None,None,public,cached);
 							match r {
 								Ok(_e) => return IcPacket::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec())),
 								Err(_err) => panic!("{}",_err)//return IcPacket::new(Some("ERR: Failed to make entry.".to_string()),None),
@@ -107,8 +107,8 @@ impl IcExecute for StorageEntry {
 					if get {
 						//ENTRY GET <ENTRY ID> <COOKIE>
 						if c.len() == 4 {
-							if get_entry_by_id(&con.backend_con,c[2].parse::<i32>().unwrap()) != None {
-								return get_entry(con,c[2].parse::<i32>().unwrap(),&c[3])
+							if let e = get_entry_by_id(&con.backend_con,c[2].parse::<i32>().unwrap()) {
+								return get_entry(con,c[2].parse::<i32>().unwrap(),&e.unwrap().name)
 							} else {return IcPacket::new(Some(format!("ERR: Entry {} not found.",c[2]).to_string()),None)}
 						} else {return IcPacket::new(Some(format!("ERR: Requires 4 Arguments but {} were provided.",c.len()).to_string()),None)}
 					}

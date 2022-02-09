@@ -413,6 +413,7 @@ pub async fn get_entry(conn: &mut IcConnection,id: i32,name: &str) -> IcPacket{
 	
 	if e.type_ == "ipfs_file" {
 		let client = IpfsClient::default();
+		//TODO: 1
 		match block_on(client
 		    .get(str::from_utf8(&e.data).unwrap())
 		    .map_ok(|chunk| chunk.to_vec())
@@ -427,9 +428,9 @@ pub async fn get_entry(conn: &mut IcConnection,id: i32,name: &str) -> IcPacket{
 		let mut archive = Archive::new(File::open(name).unwrap());
 		archive.unpack(".").unwrap();
 		fs::rename(str::from_utf8(&e.data).unwrap(),name).unwrap();
-		let ret = fs::read(name).unwrap();
-		fs::remove_file(name).unwrap();
-		return IcPacket::new(Some("OK!".to_string()),Some(ret));
+		let p = IcPacket::new_cached(Some("OK!".to_string()),Some(name.as_bytes().to_vec())); 
+		println!("RETURNING PACKET TO SEND: {} ({:?})",&p.header.as_ref().unwrap(),&p.body.as_ref().unwrap());
+		return p;
 	}else if e.type_ == "text" {
 		return IcPacket::new(Some("OK!".to_string()),Some(e.data));
 	} else { return IcPacket::new(Some("ERR: Type unknown".to_string()),None) }
@@ -479,27 +480,52 @@ pub fn get_entry_tags(conn: &MysqlConnection, entry_id: i32) -> String {
 }
 
 #[tokio::main]
-pub async fn make_file_entry(conn: &IcConnection,name: &str,dt: Vec<u8>,location: Option<i32>,lbl: Option<&str>,public: bool) -> Result<Entry,IcError> {
+pub async fn make_file_entry(conn: &IcConnection,name: &str,dt: Vec<u8>,location: Option<i32>,lbl: Option<&str>,public: bool,cached: bool) -> Result<Entry,IcError> {
 	use schema::entry;
 
 	let ipfsclient = IpfsClient::default();
 	let l = if (location != None && location.unwrap() <= 0) || location == None {None} else {Some(location.unwrap())}; 
-	
-	if dt.len() < 65535 {
-		let new_entry = NewEntry { name: name,data: &dt,type_: "text",loc: l,label: lbl, visibility: public,owner: &conn.login.as_ref().unwrap().id };
-		
-		let query = diesel::insert_into(entry::table).values(&new_entry);
-		//let debug = diesel::debug_query::<diesel::mysql::Mysql, _>(&query);
-		//println!("The insert query: {:?}", debug);
-		//let res = diesel::insert_into(entry::table).values(&new_entry).execute(&conn.backend_con);
-		let res = query.execute(&conn.backend_con);
-		match res {
-			Ok(_e) => (),
-			Err(_err) => panic!("{}",_err),//return Err(IcError("Error making new entry in the IntelCache.".to_string())),
+	if ! cached {
+		if dt.len() < 65535 {
+			let new_entry = NewEntry { name: name,data: &dt,type_: "text",loc: l,label: lbl, visibility: public,owner: &conn.login.as_ref().unwrap().id };
+			
+			let query = diesel::insert_into(entry::table).values(&new_entry);
+			//let debug = diesel::debug_query::<diesel::mysql::Mysql, _>(&query);
+			//println!("The insert query: {:?}", debug);
+			//let res = diesel::insert_into(entry::table).values(&new_entry).execute(&conn.backend_con);
+			let res = query.execute(&conn.backend_con);
+			match res {
+				Ok(_e) => (),
+				Err(_err) => panic!("{}",_err),//return Err(IcError("Error making new entry in the IntelCache.".to_string())),
+			}
+		} else {
+			let hash: String;
+			match block_on(ipfsclient.add(Cursor::new(dt))) {
+				Ok(res) => hash = res.hash,
+				Err(_e) => return Err(IcError("Error inserting file in IPFS.".to_string())),
+			}
+			let new_entry = NewEntry { name: name,data: hash.as_bytes(),type_: "ipfs_file",loc: l,label: lbl, visibility: public, owner: &conn.login.as_ref().unwrap().id };
+			
+			let res = diesel::insert_into(entry::table).values(&new_entry).execute(&conn.backend_con);
+			match res {
+				Ok(_e) => (),
+				Err(_err) => return Err(IcError("Error making new IPFS entry in the IntelCache.".to_string())),
+			}
+			
 		}
+		Ok(entry::table.order(entry::id.desc()).first(&conn.backend_con).unwrap())
 	} else {
+		let b = match str::from_utf8(&dt) {
+			Ok(v) => v,
+			Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
+		};
+		let f = match File::open(b) {
+			Ok(v) => v,
+			Err(e) => panic!("Invalid File: {}", e),
+		};
+		
 		let hash: String;
-		match block_on(ipfsclient.add(Cursor::new(dt))) {
+		match block_on(ipfsclient.add(f)) {
 			Ok(res) => hash = res.hash,
 			Err(_e) => return Err(IcError("Error inserting file in IPFS.".to_string())),
 		}
@@ -507,12 +533,12 @@ pub async fn make_file_entry(conn: &IcConnection,name: &str,dt: Vec<u8>,location
 		
 		let res = diesel::insert_into(entry::table).values(&new_entry).execute(&conn.backend_con);
 		match res {
-		Ok(_e) => (),
-		Err(_err) => return Err(IcError("Error making new IPFS entry in the IntelCache.".to_string())),
+			Ok(_e) => (),
+			Err(_err) => return Err(IcError("Error making new IPFS entry in the IntelCache.".to_string())),
 		}
 		
+		Ok(entry::table.order(entry::id.desc()).first(&conn.backend_con).unwrap())
 	}
-	Ok(entry::table.order(entry::id.desc()).first(&conn.backend_con).unwrap())
 }
 
 pub async fn update_entry(conn: &MysqlConnection,uid: i32,dt: Vec<u8>,n: Option<&str>,l: Option<i32>,_lbl: Option<&str>) -> Result<(),IcError>{

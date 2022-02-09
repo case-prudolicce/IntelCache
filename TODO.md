@@ -1,10 +1,13 @@
 # To Implement
-* CALENDAR Module
-* NOTE Module
-* PROFILE Module
 * E2E encryption
 * Decentralization
 * Testing (Docker, 
+
+## Modules
+* CALENDAR 
+* NOTE
+* PROFILE
+* HABIT
 
 ## CORE module
 * CORE ACCOUNT {RENAME,CHPASSWD}
@@ -13,6 +16,8 @@
 * STORAGE Links
 * STORAGE ENTRY labels
 * STORAGE ENTRY/DIR/TAG RENAME
+* STORAGE ENTRY GET \<DIR\>
+* STORAGE ENTRY CREATE \<ARCHIVE\>
 
 ## Native IC Client
 * Upgrade to 2.0
@@ -26,6 +31,9 @@
 * 1.0 to 2.0 conversion
 
 # Known Bugs to fix
+* To be determined
 
-## Server
-* Filesizes too large will kill the server due to lack of memory
+# MISC/MARKERS
+
+## LIB
+* lib\_backed @ get\_entry: Write file directly from ipfs instead of holding in memory (TODO:1)

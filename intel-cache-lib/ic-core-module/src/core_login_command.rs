@@ -18,7 +18,7 @@ impl CoreLogin {
 impl IcExecute for CoreLogin {
 	type Connection = IcConnection;
 	
-	fn exec(&mut self,con: &mut Self::Connection,cmd: Option<Vec<String>>,_data: Option<Vec<u8>>) -> IcPacket {
+	fn exec(&mut self,con: &mut Self::Connection,cmd: Option<Vec<String>>,_data: Option<Vec<u8>>,cached: bool) -> IcPacket {
 		match cmd {
 			Some(cmd) => {
 				let globalid = &cmd[1];
