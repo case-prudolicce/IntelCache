@@ -2,10 +2,12 @@ pub mod core_login_command;
 pub mod core_register_command;
 pub mod core_null_command;
 pub mod core_fetch_command;
+pub mod core_account_command;
 pub use self::core_register_command::CoreRegister;
 pub use self::core_login_command::CoreLogin;
 pub use self::core_null_command::CoreNull;
 pub use self::core_fetch_command::CoreFetch;
+pub use self::core_account_command::CoreAccount;
 use std::collections::HashMap;
 use intel_cache_lib::ic_types::IcExecute;
 use intel_cache_lib::ic_types::IcModule;
@@ -32,6 +34,10 @@ impl IcModule for IcCoreModule {
 		self.e.insert(
 			"FETCH".to_string(),
 			CoreFetch::cf_to_exe
+		);
+		self.e.insert(
+			"ACCOUNT".to_string(),
+			CoreAccount::ca_to_exe
 		);
 	}
 	

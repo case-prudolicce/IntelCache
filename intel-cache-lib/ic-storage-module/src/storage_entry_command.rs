@@ -113,26 +113,23 @@ impl IcExecute for StorageEntry {
 						} else {return IcPacket::new(Some(format!("ERR: Requires 4 Arguments but {} were provided.",c.len()).to_string()),None)}
 					}
 					if set {
-						//ENTRY SET <ENTRY ID> [<NEW NAME> <NEW LOC>] <COOKIE>
-						if c.len() == 4 {
-							//Harden entry id
+						//ENTRY SET <ENTRY ID> {<NEW NAME>|<NEW LOC>} <COOKIE>
+						if c.len() == 4 { //No new loc or name.
 							match c[2].parse::<i32>() {
-							Ok(v) => {
-								match block_on(update_entry(&con.backend_con,v,d.clone(),None,None,None)) {
-									Ok(_v) => return IcPacket::new(Some("OK!".to_string()),None),
-									Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
-								};
-							},
-							Err(_err) => { return IcPacket::new(Some("Err.".to_string()),None)},
+								Ok(v) => {
+									match block_on(update_entry(&con.backend_con,v,d.clone(),None,None,None)) {
+										Ok(_v) => return IcPacket::new(Some("OK!".to_string()),None),
+										Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
+									};
+								},
+								Err(_err) => { return IcPacket::new(Some("Err.".to_string()),None)},
 							}
-						} else if c.len() == 5 {
-							//Harden entry id
+						} else if c.len() == 5 { //New loc OR new name
 							let its: i32;
 							match c[2].parse::<i32>() {
 								Ok(v) => its = v,
 								Err(_err) => { return IcPacket::new(Some("ERR: Third argument isn't a number.".to_string()),None)},
 							}
-							//Harden third arg (New name or new loc)
 							let pnl = c[3].parse::<i32>().unwrap_or(-1);
 							if pnl == -1 {
 								match block_on(update_entry(&con.backend_con,its,d.clone(),Some(&c[3]),None,None)) {
@@ -145,7 +142,7 @@ impl IcExecute for StorageEntry {
 									Err(_err) => return IcPacket::new(Some("ERR: Cannot update entry with new loc.".to_string()),None),
 								};
 							}
-						} else if c.len() > 5 {
+						} else if c.len() > 5 { //New loc + new name
 							//Harden entry id
 							let its: i32;
 							match c[2].parse::<i32>() {

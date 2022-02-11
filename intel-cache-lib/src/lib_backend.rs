@@ -6,7 +6,7 @@ use diesel_migrations::embed_migrations;
 use libloading::Library;
 use ipfs_api_backend_hyper::{IpfsApi, IpfsClient};
 use futures::executor::block_on;
-use sha2::{Sha256, Digest};
+use sha2::{Sha512,Sha256, Digest};
 
 use std::io::{Write,Cursor};
 use std::process::{Command,Stdio};
@@ -247,15 +247,31 @@ pub fn delete_dir(conn: &MysqlConnection,dirid: i32) -> Result<(),IcError>{
 	diesel::delete(dir.filter(id.eq(rv))).execute(conn).unwrap();
 	Ok(())
 }
-pub fn update_dir(conn: &MysqlConnection,dirid: i32,iddest: i32,new_name: Option<&str>) -> Result<(),IcError>{
+pub fn update_dir(conn: &MysqlConnection,dirid: i32,iddest: Option<i32>,new_name: Option<&str>) -> Result<(),IcError>{
 	use schema::dir;
 	if new_name == None {
-		let rv = diesel::update(dir::table.filter(dir::id.eq(dirid))).set(dir::loc.eq(&iddest)).execute(conn);
-		match rv {
-		Ok(_v) => return Ok(()),
-		Err(_err) => return Err(IcError("Failed to update directory.".to_string())),
-		};
-	} else { return Err(IcError("Failed to update directory.".to_string())) }
+		if iddest != None {
+			let rv = diesel::update(dir::table.filter(dir::id.eq(dirid))).set(dir::loc.eq(&iddest)).execute(conn);
+			match rv {
+				Ok(_v) => return Ok(()),
+				Err(_err) => return Err(IcError("Failed to update directory.".to_string())),
+			};
+		} else {return Err(IcError("Failed to update directory.".to_string()))}
+	} else {  
+		if iddest != None {
+			let rv = diesel::update(dir::table.filter(dir::id.eq(dirid))).set((dir::loc.eq(&iddest),dir::name.eq(&new_name.unwrap()))).execute(conn);
+			match rv {
+				Ok(_v) => return Ok(()),
+				Err(_err) => return Err(IcError("Failed to update directory.".to_string())),
+			};
+		} else {
+			let rv = diesel::update(dir::table.filter(dir::id.eq(dirid))).set(dir::name.eq(&new_name.unwrap())).execute(conn);
+			match rv {
+				Ok(_v) => return Ok(()),
+				Err(_err) => return Err(IcError("Failed to update directory.".to_string())),
+			};
+		}
+	}
 }
 
 pub fn show_dirs(conn: &MysqlConnection,by_id: Option<i32>,o: &String,owned_only: bool) -> String{
@@ -297,6 +313,14 @@ pub fn show_tags(conn: &MysqlConnection, _display: Option<bool>) -> String {
 		retstr.push_str(&format!("{} {}\n",d.id,&d.name));
 	}
 	retstr
+}
+
+pub fn rename_tag(conn: &IcConnection,tagid: i32, tagname: &str) -> Result<(),Box<dyn Error>> {
+	use schema::tag;
+	match diesel::update(tag::table.filter(tag::id.eq(tagid))).set(tag::name.eq(tagname)).execute(&conn.backend_con) {
+		Ok(_v) => return Ok(()),
+		Err(e) => return Err(Box::new(e)),
+	}
 }
 
 pub fn create_tag(conn: &IcConnection, name: &str,public: bool) -> Tag {
@@ -673,4 +697,34 @@ pub fn fetch_users(conn: &MysqlConnection,username: String) -> Vec<String> {
 		Err(_e) => (),
 	}
 	return ret
+}
+
+pub fn rename_account(conn: &mut IcConnection,new_name: &str) -> Result<String,Box<dyn Error>> {
+	use schema::user;
+	match diesel::update(user::table.filter(user::global_id.eq(&conn.login.as_ref().unwrap().id))).set(user::username.eq(new_name)).execute(&conn.backend_con) {
+		Ok(_v) => {
+			conn.login.as_mut().unwrap().username = new_name.to_string();
+			return Ok("OK!".to_string())
+		},
+		Err(e) => return Err(Box::new(e)),
+	}
+}
+
+pub fn change_password(conn: &mut IcConnection,password: &str) -> Result<String,Box<dyn Error>> {
+	use schema::user;
+	//HASH PASSWORD BEFORE UPDATING
+	let mut hasher = Sha512::new();
+	hasher.update(password);
+	let hp = format!("{:x}",hasher.finalize());
+	match diesel::update(user::table.filter(user::global_id.eq(&conn.login.as_ref().unwrap().id))).set(user::password.eq(hp)).execute(&conn.backend_con) {
+		Ok(_v) => {
+			return Ok("OK!".to_string())
+		},
+		Err(e) => return Err(Box::new(e)),
+	}
+}
+
+pub fn logout(conn: &mut IcConnection,new_name: &str) -> Result<String,Box<dyn Error>> {
+	conn.login = None;
+	Ok("OK!".to_string())
 }

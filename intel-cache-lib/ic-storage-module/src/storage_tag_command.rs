@@ -6,6 +6,7 @@ use intel_cache_lib::lib_backend::create_tag;
 use intel_cache_lib::ic_types::IcPacket;
 use intel_cache_lib::lib_backend::show_tags;
 use intel_cache_lib::lib_backend::delete_tag;
+use intel_cache_lib::lib_backend::rename_tag;
 use intel_cache_lib::ic_types::ic_execute_mod::IcExecute;
 use intel_cache_lib::ic_types::IcConnection;
 
@@ -30,12 +31,14 @@ impl IcExecute for StorageTag {
 					let mut delete = false;
 					let mut show = false;
 					let mut create = false;
+					let mut rename = false;
 					let mut tagdir = 0;
 					let mut tagentry = 0;
 		
 					match c[1].as_str() {
 					"DELETE" => delete = true,
 					"SHOW" => show = true,
+					"RENAME" => rename = true,
 					"CREATE" => create = true,
 					"DIR" => tagdir = 1,
 					"UNDIR" => tagdir = -1,
@@ -75,6 +78,18 @@ impl IcExecute for StorageTag {
 							create_tag(con, &c[2],public);
 							return IcPacket::new(Some("OK!".to_string()),None);
 						}
+					}
+
+					if rename {
+						//TAG RENAME <TAG ID> <NEW NAME> <COOKIE>
+						if c.len() == 5 {
+							let nn = &c[3];
+							if let tid = (&c[2]).parse::<i32>().unwrap() { 
+								println!("RENAMING TAG {} to name {}",tid,nn); 
+								rename_tag(&con,tid,nn);
+								return IcPacket::new(Some("OK!".to_string()),None);
+							}
+						} else { println!("MISSING ARGS ({})",c.len()) }
 					}
 		
 					if tagdir == 1{

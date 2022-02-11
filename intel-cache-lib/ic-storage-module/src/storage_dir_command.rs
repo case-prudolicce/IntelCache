@@ -89,31 +89,42 @@ impl IcExecute for StorageDir {
 						}
 					}
 					if set {
-						//DIR SET <DIR ID> <NEW DIR ID> <COOKIE>
+						//MARKER 1: DIR SET <DIR ID> {<NEW DIR ID>|<NEW NAME>} <COOKIE>
 						if c.len() == 5 {
 							let dts: i32;
 							let nli: i32;
-							match c[2].parse::<i32>() {
-							Ok(v) => match c[3].parse::<i32>() {
-								Ok(iv) => match validate_dir(&con.backend_con,v) {
-									Some(_dip) => match validate_dir(&con.backend_con,iv) {
-										Some(_drip) => {
-											dts = v;
-											nli = iv;
+							let nns: &str;
+							match c[2].parse::<i32>() { //TEST <DIR IF>
+								Ok(v) => match c[3].parse::<i32>() {//TEST <NEW DIR ID>/<NEW NAME>
+										Ok(iv) => match validate_dir(&con.backend_con,v) { //NEW DIR ID
+												Some(_dip) => match validate_dir(&con.backend_con,iv) {
+														Some(_drip) => {
+															dts = v;
+															nli = iv;
+															match update_dir(&con.backend_con,dts,Some(nli),None) {
+																Ok(_) => return IcPacket::new(Some("OK!".to_string()),None),
+																Err(_err) => return IcPacket::new(Some("Err.".to_string()),None), 
+															}
+														},
+														None => return IcPacket::new(Some("Err.".to_string()),None),
+													},
+												None => return IcPacket::new(Some("Err.".to_string()),None),
 										},
-										None => return IcPacket::new(Some("Err.".to_string()),None),
-									},
-									None => return IcPacket::new(Some("Err.".to_string()),None),
+										Err(_e1) => match validate_dir(&con.backend_con,v) { //NEW DIR NAME
+												Some(_dip) => {
+													dts = v;
+													nns = &c[3];
+													nli = v;
+													match update_dir(&con.backend_con,dts,None,Some(nns)) {
+														Ok(_) => return IcPacket::new(Some("OK!".to_string()),None),
+														Err(_err) => return IcPacket::new(Some("Err.".to_string()),None), 
+													}
+												},
+												None => {return IcPacket::new(Some("Err.".to_string()),None);},
+										}
 								},
-								Err(_e2) => return IcPacket::new(Some("Err.".to_string()),None), 
-							},
-							Err(_e1) => return IcPacket::new(Some("Err.".to_string()),None), 
+								Err(_e2) => return IcPacket::new(Some("Err.".to_string()),None),
 							};
-							
-							match update_dir(&con.backend_con,dts,nli,None) {
-							Ok(_) => return IcPacket::new(Some("OK!".to_string()),None),
-							Err(_err) => return IcPacket::new(Some("Err.".to_string()),None), 
-							}
 						}
 					}
 					if validate {
