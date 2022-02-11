@@ -31,7 +31,7 @@ impl IcExecute for StorageDir {
 					"CREATE" => create = true,
 					"SET" => set = true,
 					"VALIDATE" => validate = true,
-					_ => eprintln!("{} is not a valid subcommand of DIR",c[0]),
+					_ => return IcPacket::new(Some(format!("{} is not a valid subcommand of DIR",c[0])),None),
 					}
 
 					
@@ -61,7 +61,7 @@ impl IcExecute for StorageDir {
 								Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
 								}
 							} else { return IcPacket::new(Some("Err.".to_string()),None) }
-						}
+						} else { return IcPacket::new(Some(format!("Err. {} arguments is invalid.",c.len()).to_string()),None) }
 					}
 					if show {
 						//DIR SHOW {PUBLIC|PRIVATE} [<DIR_ID>] <COOKIE>

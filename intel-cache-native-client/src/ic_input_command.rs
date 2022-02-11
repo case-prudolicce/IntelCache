@@ -2,6 +2,7 @@ use crate::ic_input::IcInput;
 use std::fmt::Display;
 use std::fmt;
 use intel_cache_lib::ic_types::IcPacket;
+use sha2::{Sha512, Digest};
 pub struct IcInputCommand<'a> { 
 	pub cmd: Vec<String>, 
 	pub databuff: Vec<u8>,
@@ -76,10 +77,11 @@ impl IcInputCommand<'_> {
 		}
 		IcInputCommand { cmd:fcmd, databuff: vec![0;512],ref_in: input }
 	}
-	pub fn to_ic_packet(&self) -> IcPacket {
+	pub fn to_ic_packet(&self,cookie: &Option<String>) -> IcPacket {
 		let mut fmt_vec:Vec<String> = Vec::new();
 		match self.cmd[0].as_ref() {
 		"new" | "import" => {
+			fmt_vec.push("STORAGE".to_string());
 			fmt_vec.push("ENTRY".to_string());
 			fmt_vec.push("CREATE".to_string());
 			if self.cmd[0] == "new" {
@@ -91,12 +93,15 @@ impl IcInputCommand<'_> {
 			}else if self.cmd[0] == "import" {
 					fmt_vec.push(self.cmd[2].clone());
 			}
+			fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
 			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
 		},
 		"get" => {
+			fmt_vec.push("STORAGE".to_string());
 			fmt_vec.push("ENTRY".to_string());
 			fmt_vec.push("GET".to_string());
 			fmt_vec.push(self.string_wrap(self.cmd[1].clone()));
+			fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
 			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
 		},
 		"ls" => {
@@ -104,114 +109,162 @@ impl IcInputCommand<'_> {
 				if self.cmd[1].parse::<i32>().unwrap_or(-1) == -1 {
 					match self.cmd[1].chars().nth(0).unwrap() {
 					'f' => {
+						fmt_vec.push("STORAGE".to_string());
 						fmt_vec.push("ENTRY".to_string());
 						fmt_vec.push("SHOW".to_string());
 						fmt_vec.push(self.cmd[1][1..].to_string());
 					},
 					'd' => {
+						fmt_vec.push("STORAGE".to_string());
 						fmt_vec.push("DIR".to_string());
 						fmt_vec.push("SHOW".to_string());
 						fmt_vec.push(self.cmd[1][1..].to_string());
 					}
 					'a' => {
+						fmt_vec.push("STORAGE".to_string());
 						fmt_vec.push("SHOW".to_string());
 					}
 					_ =>(),
 					};
-				} else { fmt_vec.push("SHOW".to_string());fmt_vec.push(self.cmd[1].clone()) }
+				} else { fmt_vec.push("STORAGE".to_string());fmt_vec.push("SHOW".to_string());fmt_vec.push(self.cmd[1].clone()) }
 			} else {
+				fmt_vec.push("STORAGE".to_string());
 				fmt_vec.push("SHOW".to_string());
 				fmt_vec.push(self.ref_in.pwd.to_string());
 			}
+			fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
 			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
 		},
 		"rm" => {
+			fmt_vec.push("STORAGE".to_string());
 			fmt_vec.push("ENTRY".to_string());
 			fmt_vec.push("DELETE".to_string());
 			fmt_vec.push(self.cmd[1].clone());
+			fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
 			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
 		},
 		"set" => {
+			fmt_vec.push("STORAGE".to_string());
 			fmt_vec.push("ENTRY".to_string());
 			fmt_vec.push("SET".to_string());
 			fmt_vec.push(self.cmd[1].clone());
+			fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
 			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
 		},
 		"mv" => {
 			if self.cmd[1].chars().last().unwrap() == '/' {
+				fmt_vec.push("STORAGE".to_string());
 				fmt_vec.push("DIR".to_string());
 				fmt_vec.push("SET".to_string());
 				fmt_vec.push(self.cmd[1][..self.cmd[1].len() - 1].to_string());
 				fmt_vec.push(self.cmd[2].clone());
 			} else {
+				fmt_vec.push("STORAGE".to_string());
 				fmt_vec.push("ENTRY".to_string());
 				fmt_vec.push("SET".to_string());
 				fmt_vec.push(self.cmd[1].clone());
 				fmt_vec.push(self.cmd[2].clone());
 			}
 			
+			fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
 			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
 		},
 		"mkdir" => {
+			fmt_vec.push("STORAGE".to_string());
 			fmt_vec.push("DIR".to_string());
 			fmt_vec.push("CREATE".to_string());
 			fmt_vec.push(self.cmd[1].clone());
+			fmt_vec.push("PRIVATE".to_string());
 			fmt_vec.push("UNDER".to_string());
 			fmt_vec.push(self.ref_in.pwd.to_string());
+			fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
 			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
 		},
 		"rmdir" => {
+			fmt_vec.push("STORAGE".to_string());
 			fmt_vec.push("DIR".to_string());
 			fmt_vec.push("DELETE".to_string());
 			fmt_vec.push(self.cmd[1].clone());
+			fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
 			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
 		},
 		"tag" => {
 			if self.cmd[1].chars().last().unwrap() == '/' {
+				fmt_vec.push("STORAGE".to_string());
 				fmt_vec.push("TAG".to_string());
 				fmt_vec.push("DIR".to_string());
 				fmt_vec.push(self.cmd[1][..self.cmd[1].len() - 1].to_string());
 				fmt_vec.push(self.cmd[2].clone());
 			} else {
+				fmt_vec.push("STORAGE".to_string());
 				fmt_vec.push("TAG".to_string());
 				fmt_vec.push("ENTRY".to_string());
 				fmt_vec.push(self.cmd[1].clone());
 				fmt_vec.push(self.cmd[2].clone());
 			}
+			fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
 			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
 		},
 		"untag" => {
 			if self.cmd[1].chars().last().unwrap() == '/' {
+				fmt_vec.push("STORAGE".to_string());
 				fmt_vec.push("TAG".to_string());
 				fmt_vec.push("UNDIR".to_string());
 				fmt_vec.push(self.cmd[1][..self.cmd[1].len() - 1].to_string());
 				fmt_vec.push(self.cmd[2].clone());
 			} else {
+				fmt_vec.push("STORAGE".to_string());
 				fmt_vec.push("TAG".to_string());
 				fmt_vec.push("UNENTRY".to_string());
 				fmt_vec.push(self.cmd[1].clone());
 				fmt_vec.push(self.cmd[2].clone());
 			}
+			fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
 			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
 		},
 		"showtags" => {
+			fmt_vec.push("STORAGE".to_string());
 			fmt_vec.push("TAG".to_string());
 			fmt_vec.push("SHOW".to_string());
+			fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
 			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
 		},
 		"mktag" => {
+			fmt_vec.push("STORAGE".to_string());
 			fmt_vec.push("TAG".to_string());
 			fmt_vec.push("CREATE".to_string());
 			fmt_vec.push(self.cmd[1].clone());
+			fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
 			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
 		},
 		"rmtag" => {
+			fmt_vec.push("STORAGE".to_string());
 			fmt_vec.push("TAG".to_string());
 			fmt_vec.push("DELETE".to_string());
 			fmt_vec.push(self.cmd[1].clone());
+			fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
 			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
 		},
+		"fetchusers" => {
+			fmt_vec.push("CORE".to_string());
+			fmt_vec.push("FETCH".to_string());
+			fmt_vec.push("USER".to_string());
+			fmt_vec.push(self.cmd[1].clone());
+			return IcPacket::from_parsed_header(fmt_vec,None);
+		}
+		"login" => {
+			fmt_vec.push("CORE".to_string());
+			fmt_vec.push("LOGIN".to_string());
+			fmt_vec.push(self.cmd[1].clone());
+			let p = self.cmd[2].clone();
+			//HASH P with sha512 and push
+			let mut hasher = Sha512::new();
+			hasher.update(p);
+			fmt_vec.push(format!("{:x}",hasher.finalize()));
+			return IcPacket::from_parsed_header(fmt_vec,None);
+		}
 		"exit" => {
+			fmt_vec.push("CORE".to_string());
 			fmt_vec.push("EXIT".to_string());
 			return IcPacket::from_parsed_header(fmt_vec,None);
 		}

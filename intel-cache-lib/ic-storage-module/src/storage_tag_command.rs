@@ -72,21 +72,22 @@ impl IcExecute for StorageTag {
 								"PUBLIC" => public = true,
 								_ => public = false,
 							}
-							create_tag(&con.backend_con, &c[2],public);
+							create_tag(con, &c[2],public);
 							return IcPacket::new(Some("OK!".to_string()),None);
 						}
 					}
 		
 					if tagdir == 1{
-						if c.len() == 4 {
+						if c.len() == 5 {
+							println!("DEBUG: TAGGING DIR");
 							let res = tag_dir(&con.backend_con, (&c[2]).parse::<i32>().unwrap(),(&c[3]).parse::<i32>().unwrap());
 							match res {
-							Ok(_e) => {return IcPacket::new(Some("OK!".to_string()),None)},
-							Err(_err) => {return IcPacket::new(Some("Err.".to_string()),None) }
+								Ok(_e) => {return IcPacket::new(Some("OK!".to_string()),None)},
+								Err(_err) => {return IcPacket::new(Some("Err.".to_string()),None) }
 							};
 						}
 					} else if tagdir == -1 {
-						if c.len() == 4 {
+						if c.len() == 5 {
 							//TODO: untag_dir hardening
 							untag_dir(&con.backend_con, (&c[2]).parse::<i32>().unwrap(),(&c[3]).parse::<i32>().unwrap());
 							return IcPacket::new(Some("OK!".to_string()),None)
@@ -94,7 +95,7 @@ impl IcExecute for StorageTag {
 					}
 		
 					if tagentry == 1{
-						if c.len() == 4 {
+						if c.len() == 5 {
 							let res = tag_entry(&con.backend_con, (&c[2]).parse::<i32>().unwrap(),(&c[3]).parse::<i32>().unwrap());
 							match res {
 							Ok(_e) => {return IcPacket::new(Some("OK!".to_string()),None)},
@@ -102,7 +103,7 @@ impl IcExecute for StorageTag {
 							};
 						}
 					} else if tagentry == -1 {
-						if c.len() == 4 {
+						if c.len() == 5 {
 							//TODO: untag_entry hardening
 							untag_entry(&con.backend_con, (&c[2]).parse::<i32>().unwrap(),(&c[3]).parse::<i32>().unwrap());
 							return IcPacket::new(Some("OK!".to_string()),None)

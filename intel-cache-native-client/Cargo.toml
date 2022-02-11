@@ -10,3 +10,4 @@ license = "GPL-3.0"
 
 [dependencies]
 intel-cache-lib = { version="1.0.0", path = "../intel-cache-lib" }
+sha2 = "0.10.1"

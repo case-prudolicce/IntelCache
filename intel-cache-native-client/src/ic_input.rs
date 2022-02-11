@@ -6,10 +6,10 @@ use crate::ic_input_command::IcInputCommand;
 use std::io::stdin;
 use std::io::stdout;
 use std::io::Write;
-pub struct IcInput {pub input_str: String,pub fmt_str: Vec<String>, pub pwd: i32, pub pwdstr: String}
+pub struct IcInput {pub cookie: Option<String>,pub input_str: String,pub fmt_str: Vec<String>, pub pwd: i32, pub pwdstr: String}
 impl IcInput {
 	pub fn new() -> IcInput {
-		let mut proto_ici = IcInput { input_str: "".to_string(), fmt_str: Vec::new(),pwd: 0,pwdstr: "ROOT".to_string() };
+		let mut proto_ici = IcInput { cookie: None,input_str: "".to_string(), fmt_str: Vec::new(),pwd: 0,pwdstr: "ROOT".to_string() };
 		proto_ici.fmt_str.push(String::new());
 		proto_ici
 	}
@@ -29,7 +29,7 @@ impl IcInput {
 		IcInputCommand::from_input(self)
 	}
 	pub fn display(&self,p: IcPacket) {
-		if p.header.as_ref().unwrap_or(&"None".to_string()) == "OK!" && p.body.as_ref().unwrap_or(&Vec::new()).len() > 0 {
+		if p.header.as_ref().unwrap_or(&"None".to_string()) != "None" && p.body.as_ref().unwrap_or(&Vec::new()).len() > 0 {
 			println!("{}",str::from_utf8(&p.body.unwrap()).unwrap());
 		} else if p.header.as_ref().unwrap_or(&"None".to_string()) == "OK!" {
 			println!("Nothing.");
@@ -59,21 +59,26 @@ impl IcInput {
 			println!("Failed.");
 		}
 	}
-	pub fn set_pwd(&mut self, pwdid: i32,client: &mut IcClient) -> bool {
+	pub fn set_pwd(&mut self, pwdid: i32,client: &mut IcClient,cookie: &Option<String>) -> bool {
 		if pwdid < 0 {return false}
 		else if pwdid == 0 {self.pwd = pwdid;self.pwdstr = "ROOT".to_string();return true;}
 		let mut p = Vec::<String>::new();
-		p.push("DIR".to_string());
-		p.push("VALIDATE".to_string());
-		p.push(pwdid.to_string());
-		let icp = IcInputCommand::from_vec(self,p);
-		
-		let resp = client.send_cmd(&mut icp.to_ic_packet());
-		if resp.header.as_ref().unwrap() == "true" {
-			self.pwdstr = str::from_utf8(&resp.body.unwrap()).unwrap().to_string();
-			self.pwd = pwdid;
-			return true;
-		} else { return false; }
+		if let c = cookie.as_ref().unwrap(){
+			p.push("STORAGE".to_string());
+			p.push("DIR".to_string());
+			p.push("VALIDATE".to_string());
+			p.push(pwdid.to_string());
+			p.push(c.to_string());
+			let icp = IcInputCommand::from_vec(self,p);
+			
+			
+			let resp = client.send_cmd(&mut icp.to_ic_packet(cookie));
+			if resp.header.as_ref().unwrap() == "true" {
+				self.pwdstr = str::from_utf8(&resp.body.unwrap()).unwrap().to_string();
+				self.pwd = pwdid;
+				return true;
+			} else { return false; }
+		} else {return false}
 	}
 }
 

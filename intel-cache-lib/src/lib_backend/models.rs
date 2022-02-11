@@ -49,6 +49,7 @@ pub struct Tag {
 #[table_name = "tag"]
 pub struct NewTag<'a> {
 	pub name: &'a str,
+	pub owner: &'a str,
 	pub visibility: bool,
 }
 

@@ -125,8 +125,8 @@ impl IcConnection {
 			header = Some(std::str::from_utf8(&mut self.final_buffer).unwrap().to_string());
 		} else {header = None}
 		//reset size string and final_buffer
-		println!("DEBUG 0: sstr = {}",&sstr);
-		println!("DEBUG 1: sstr = {:?}",&header);
+		//println!("DEBUG 0: sstr = {}",&sstr);
+		//println!("DEBUG 1: sstr = {:?}",&header);
 		sstr = String::new(); 
 		self.final_buffer = Vec::new();
 		let mut bsize_gotten = false;
@@ -136,7 +136,7 @@ impl IcConnection {
 		}
 		buffer_pointer += 1;
 		for b in self.local_buffer[buffer_pointer..br].to_vec() {
-			println!("DEBUG: 1.5: {}",b);
+			//println!("DEBUG: 1.5: {}",b);
 			if b == 10 {bsize_gotten = true;break}
 			sstr.push(if b > 0 {b as char} else {'0'});
 			buffer_pointer += 1;

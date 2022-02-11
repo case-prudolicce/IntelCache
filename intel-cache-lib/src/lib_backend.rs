@@ -269,7 +269,7 @@ pub fn show_dirs(conn: &MysqlConnection,by_id: Option<i32>,o: &String,owned_only
 			results = dir.filter(dir::loc.is_null().and(dir::owner.eq(o))).load::<Dir>(conn).expect("Error loading dirs");
 		}
 	} else {
-		results = dir.filter(dir::owner.eq(o)).load::<Dir>(conn).expect("Error loading dirs");
+		results = dir.filter(dir::owner.eq(o).and(dir::loc.is_null())).load::<Dir>(conn).expect("Error loading dirs");
 	}
 	let mut retstr = String::new();
 	
@@ -299,15 +299,15 @@ pub fn show_tags(conn: &MysqlConnection, _display: Option<bool>) -> String {
 	retstr
 }
 
-pub fn create_tag(conn: &MysqlConnection, name: &str,public: bool) -> Tag {
+pub fn create_tag(conn: &IcConnection, name: &str,public: bool) -> Tag {
 	use schema::tag;
 	
-	let new_tag = NewTag { name,visibility: public };
+	let new_tag = NewTag { name,visibility: public,owner: &conn.login.as_ref().unwrap().id };
 	
 	diesel::insert_into(tag::table)
-		.values(&new_tag).execute(conn).expect("Error saving draft");
+		.values(&new_tag).execute(&conn.backend_con).expect("Error saving draft");
 	
-	tag::table.order(tag::id.desc()).first(conn).unwrap()
+	tag::table.order(tag::id.desc()).first(&conn.backend_con).unwrap()
 }
 
 pub fn delete_tag(conn: &MysqlConnection,tagid: i32) -> Result<(),IcError>{

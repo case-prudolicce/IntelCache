@@ -30,19 +30,21 @@ impl IcExecute for StorageShow {
 		if c.len() > 2 {
 			if c[2] == (con.login).as_ref().unwrap().cookie {
 				let si = match c[1].parse::<i32>() {
-				Ok(v) => if v == 0 {None} else {
-					match validate_dir(&con.backend_con,v) {
-					Some(_iv) => Some(v),
-					None => return IcPacket::new(Some("Err.".to_string()),None),
-					}
-				},
-				Err(_err) => return IcPacket::new(Some("Err.".to_string()),None)
+					Ok(v) => if v == 0 {None} else {
+						match validate_dir(&con.backend_con,v) {
+						Some(_iv) => Some(v),
+						None => return IcPacket::new(Some("Err.".to_string()),None),
+						}
+					},
+					Err(_err) => return IcPacket::new(Some("Err.".to_string()),None)
 				};
 
 				if c.len() == 3 && si != None {
+					println!("SI: {}",si.unwrap());
 					retstr = show_dirs(&con.backend_con,Some(si.unwrap()),&(con.login).as_ref().unwrap().id,true);
 					retstr += &show_entries(&con.backend_con,Some(false),Some(true),Some(si.unwrap()));
 				} else if c.len() == 3 {
+					println!("SI: NONE");
 					retstr = show_dirs(&con.backend_con,None,&(con.login).as_ref().unwrap().id,true);
 					retstr += &show_entries(&con.backend_con,Some(false),Some(true),None);
 				} else { return IcPacket::new(Some("Err.".to_string()),None) }
