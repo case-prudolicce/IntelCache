@@ -222,6 +222,35 @@ impl IcInputCommand<'_> {
 			fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
 			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
 		},
+		"tagrename" => {
+			fmt_vec.push("STORAGE".to_string());
+			fmt_vec.push("TAG".to_string());
+			fmt_vec.push("RENAME".to_string());
+			fmt_vec.push(self.cmd[1].clone());
+			fmt_vec.push(self.cmd[2].clone());
+			fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
+			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
+		},
+		"rename" => {
+			if self.cmd[1].chars().last().unwrap() == '/' {
+				fmt_vec.push("STORAGE".to_string());
+				fmt_vec.push("DIR".to_string());
+				fmt_vec.push("SET".to_string());
+				fmt_vec.push(self.cmd[1][..self.cmd.len()-1].to_string());
+				fmt_vec.push(self.cmd[2].clone());
+				fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
+				return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
+			} else { 
+				fmt_vec.push("STORAGE".to_string());
+				fmt_vec.push("ENTRY".to_string());
+				fmt_vec.push("SET".to_string());
+				fmt_vec.push(self.cmd[1].clone());
+				fmt_vec.push(self.cmd[2].clone());
+				fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
+				return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
+			}
+			
+		}
 		"showtags" => {
 			fmt_vec.push("STORAGE".to_string());
 			fmt_vec.push("TAG".to_string());

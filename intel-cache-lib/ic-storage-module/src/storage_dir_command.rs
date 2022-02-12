@@ -31,7 +31,7 @@ impl IcExecute for StorageDir {
 					"CREATE" => create = true,
 					"SET" => set = true,
 					"VALIDATE" => validate = true,
-					_ => return IcPacket::new(Some(format!("{} is not a valid subcommand of DIR",c[0])),None),
+					_ => return IcPacket::new(Some(format!("{} is not a valid subcommand of DIR",c[1])),None),
 					}
 
 					

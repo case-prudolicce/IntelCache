@@ -174,6 +174,25 @@ fn main() {
 					continue;
 				}
 			},
+			"tagrename" | "rename" => {
+				//RENAME
+				//tagrename/rename id[/] newname
+				if input_cmd.cmd.len() == 3 {
+					let id_type = match input_cmd.cmd[1].parse::<i32>() {
+						Ok(v) => 1, // tag/entry
+						Err(_e) => {
+							match input_cmd.cmd[1][..input_cmd.cmd[1].len() - 1].parse::<i32>() {
+								Ok(v) => -1,
+								Err(e) => {
+									println!("{} is not a valid id.",input_cmd.cmd[1]);return 
+									continue;
+								} //None/Err
+							}
+						}, // dir
+					};
+					println!("Renaming {} to {}",input_cmd.cmd[1],input_cmd.cmd[2]);
+				}
+			},
 			"cd" => {
 				if input_cmd.cmd.len() >= 2 {
 					match input_cmd.cmd[1].parse::<i32>() {
@@ -218,7 +237,7 @@ fn main() {
 			let r = client.send_cmd(&mut input_cmd.to_ic_packet(&cookie));
 			match input_cmd.cmd[0].as_ref() {
 			"ls" | "showtags" => {input.display(r);},
-			"mktag" | "rmtag" | "rm" | "rmdir" | "new" | "edit" | "mv" | "mkdir" | "tag" | "untag" => {input.resp(r)},
+			"tagrename" | "rename" | "mktag" | "rmtag" | "rm" | "rmdir" | "new" | "edit" | "mv" | "mkdir" | "tag" | "untag" => {input.resp(r)},
 			"get" => {let filename = input_cmd.cmd[2].clone();IcInput::write_to_file(r,filename)},
 			
 			"raw" => {input.debug(r);},
