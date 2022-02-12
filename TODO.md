@@ -22,8 +22,6 @@
 * STORAGE ENTRY MAKE \<ARCHIVE\>
 
 ## Native IC Client
-	* (WO) (B2.0) tagrename command
-	* (AWO) (B2.0) rename command
 * (B2.0) Change pwd to USER@LOC
 * ls a prints as tree
 
