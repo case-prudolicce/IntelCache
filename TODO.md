@@ -27,8 +27,7 @@
 ## Server
 * --export,--import and --teardown handle ipfs
 * --raw\_dump (Dumping all files from user in archive)
-* (B2.0) logging 
-* (B2.0) README
+* logging 
 
 # Known Bugs to fix
 
@@ -54,6 +53,7 @@
 * (B2.0) `edit` reset the entry's loc to 0
 
 # MISC/MARKERS
+* (B2.0) READMEs Readthrough.
 
 ## LIB
 * lib\_backed @ get\_entry: Write file directly from ipfs instead of holding in memory (TODO:1)
