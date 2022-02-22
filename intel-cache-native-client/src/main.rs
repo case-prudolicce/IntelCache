@@ -256,7 +256,7 @@ fn main() {
 			};
 			match input_cmd.cmd[0].as_ref() {
 				"exit" | "quit" => {process::exit(1);},
-				"login" => { let r = client.send_cmd(&mut input_cmd.to_ic_packet(&cookie));cookie = if r.header != None && r.header.as_ref().unwrap().len() > 10 {println!("Logged in");Some(r.header.unwrap())} else {println!("Access denied.");None} },
+				"login" => { let r = client.send_cmd(&mut input_cmd.to_ic_packet(&cookie));cookie = if r.header != None && r.header.as_ref().unwrap().len() > 10 {println!("Logged in");Some(r.header.unwrap())} else {println!("Access denied.");None};input.set_pwd(0,&mut client,&cookie);},
 				"fetchusers" => {let r = client.send_cmd(&mut input_cmd.to_ic_packet(&cookie));input.display(r)},
 				_ => println!("Invalid/Denied"),
 			};

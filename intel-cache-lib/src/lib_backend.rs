@@ -728,3 +728,11 @@ pub fn logout(conn: &mut IcConnection,new_name: &str) -> Result<String,Box<dyn E
 	conn.login = None;
 	Ok("OK!".to_string())
 }
+
+pub fn validate_user(conn: &mut IcConnection,cookie: &str) -> Result<String,Box<dyn Error>> {
+	match &conn.login {
+		Some(l) => if l.cookie == cookie { return Ok(l.username.clone()) } 
+			else { return Err(Box::new(IcError("WRONG COOKIE".to_string()))) },
+		None => return Err(Box::new(IcError("NO LOGIN.".to_string()))),
+	};
+}

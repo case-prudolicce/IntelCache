@@ -3,7 +3,7 @@ use std::io::{ErrorKind,Error};
 use crate::ic_types::{IcConnection,IcPacket};
 
 /// The Client interface struct for IntelCache. Used to interact with the server.
-pub struct IcClient { con: IcConnection }
+pub struct IcClient { pub con: IcConnection }
 impl IcClient {
 	/// Connect to `ip` address
 	///
@@ -32,13 +32,16 @@ impl IcClient {
 	///
 	/// Returns an [`IcPacket`] from the server
 	pub fn send_cmd(&mut self,c: &mut IcPacket) -> IcPacket {
-		if self.con.check_connection() {
-			self.con.send_packet(c).unwrap(); 
-			let retp = self.con.get_packet().unwrap_or(IcPacket::new_empty());
-			return retp;
-		} else {
-			return IcPacket::new_empty();
-		}
+		//if self.con.check_connection() {
+		//	self.con.send_packet(c).unwrap(); 
+		//	let retp = self.con.get_packet().unwrap_or(IcPacket::new_empty());
+		//	return retp;
+		//} else {
+		//	return IcPacket::new_empty();
+		//}
+		self.con.send_packet(c).unwrap(); 
+		let retp = self.con.get_packet().unwrap_or(IcPacket::new_empty());
+		return retp;
 	}
 }
 

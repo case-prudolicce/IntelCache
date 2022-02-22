@@ -9,6 +9,7 @@ use intel_cache_lib::lib_backend::get_pip;
 use intel_cache_lib::lib_backend::rename_account;
 use intel_cache_lib::lib_backend::change_password;
 use intel_cache_lib::lib_backend::logout;
+use intel_cache_lib::lib_backend::validate_user;
 
 pub struct CoreAccount {}
 impl CoreAccount {
@@ -33,11 +34,13 @@ impl IcExecute for CoreAccount {
 					let mut rename = false;
 					let mut chpwd = false;
 					let mut lo = false;
+					let mut validate = false;
 					match cmd[1].as_ref() {
 						"RENAME" => rename = true,
 						"CHPASSWD" => chpwd = true,
 						"LOGOUT" => lo = true,
-						_=> return IcPacket::new_empty(),
+						"VALIDATE" => validate = true,
+						_=> return IcPacket::new(Some(cmd[1].clone()),None),
 					};
 					if rename {
 						match rename_account(con,&cmd[2]) { 
@@ -58,6 +61,12 @@ impl IcExecute for CoreAccount {
 							Ok(v) => return IcPacket::new(Some(v),None), 
 							Err(e) => return IcPacket::new(Some("Err.".to_string()),None), 
 						};
+					} else if validate {
+						println!("VALIDATING!");
+						match validate_user(con,&cmd[cmd.len() - 1..][0]) {
+							Ok(v) => return IcPacket::new(Some(v),None), 
+							Err(e) => return IcPacket::new(Some("Err.".to_string()),None), 
+						}
 					} else { return IcPacket::new_empty(); }
 					return IcPacket::new_empty();
 				} else { return IcPacket::new_empty(); }

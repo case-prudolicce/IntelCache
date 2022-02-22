@@ -9,7 +9,7 @@ use std::io::Write;
 pub struct IcInput {pub cookie: Option<String>,pub input_str: String,pub fmt_str: Vec<String>, pub pwd: i32, pub pwdstr: String}
 impl IcInput {
 	pub fn new() -> IcInput {
-		let mut proto_ici = IcInput { cookie: None,input_str: "".to_string(), fmt_str: Vec::new(),pwd: 0,pwdstr: "ROOT".to_string() };
+		let mut proto_ici = IcInput { cookie: None,input_str: "".to_string(), fmt_str: Vec::new(),pwd: 0,pwdstr: "ANONYMOUS@ROOT".to_string() };
 		proto_ici.fmt_str.push(String::new());
 		proto_ici
 	}
@@ -59,9 +59,22 @@ impl IcInput {
 			println!("Failed.");
 		}
 	}
+	pub fn get_username(&mut self,client: &mut IcClient,cookie: &Option<String>) -> String {
+		let mut p = Vec::<String>::new();
+		if let c = cookie.as_ref().unwrap(){
+			p.push("CORE".to_string());
+			p.push("ACCOUNT".to_string());
+			p.push("VALIDATE".to_string());
+			p.push(c.to_string());
+			let icp = IcInputCommand::from_vec(self,p);
+			
+			let resp = client.send_cmd(&mut icp.to_ic_packet(cookie));
+			return resp.header.unwrap();
+		} else {return "ANONYMOUS".to_string()}
+	}
 	pub fn set_pwd(&mut self, pwdid: i32,client: &mut IcClient,cookie: &Option<String>) -> bool {
 		if pwdid < 0 {return false}
-		else if pwdid == 0 {self.pwd = pwdid;self.pwdstr = "ROOT".to_string();return true;}
+		else if pwdid == 0 {self.pwd = pwdid;self.pwdstr = self.get_username(client,cookie)+"@ROOT";return true;}
 		let mut p = Vec::<String>::new();
 		if let c = cookie.as_ref().unwrap(){
 			p.push("STORAGE".to_string());
@@ -74,7 +87,7 @@ impl IcInput {
 			
 			let resp = client.send_cmd(&mut icp.to_ic_packet(cookie));
 			if resp.header.as_ref().unwrap() == "true" {
-				self.pwdstr = str::from_utf8(&resp.body.unwrap()).unwrap().to_string();
+				self.pwdstr = self.get_username(client,cookie)+"@"+str::from_utf8(&resp.body.unwrap()).unwrap();
 				self.pwd = pwdid;
 				return true;
 			} else { return false; }
