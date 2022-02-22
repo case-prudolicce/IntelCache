@@ -22,7 +22,6 @@
 * STORAGE ENTRY MAKE \<ARCHIVE\>
 
 ## Native IC Client
-* (WO) (B2.0) Change pwd to USER@LOC
 * ls a prints as tree
 
 ## Server
