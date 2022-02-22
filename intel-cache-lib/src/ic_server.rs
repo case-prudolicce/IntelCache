@@ -50,7 +50,7 @@ impl IcServer {
 						},
 					}
 				},
-				Err(e) =>{IcServer::unload_modules(&mut modules);return Ok(())},
+				Err(e) =>{println!("Client disconnected.");IcServer::unload_modules(&mut modules);return Ok(())},
 			}
 		}
 	}

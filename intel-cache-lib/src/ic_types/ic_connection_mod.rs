@@ -86,151 +86,154 @@ impl IcConnection {
 		let mut tfn = String::new();
 		self.local_buffer = vec![0;512];
 		self.final_buffer = Vec::new();
-		let br = self.con.read(&mut self.local_buffer).unwrap();
-		let mut buffer_pointer = 1;
-		let mut sstr = String::new();
-		let mut body_cached: bool = false;
-		for b in self.local_buffer[..br].to_vec() {
-			if b == 10 {break}
-			sstr.push(b as char);
-			buffer_pointer += 1;
-		}
-		if sstr.parse::<i32>().unwrap_or(-1) != -1 && sstr.parse::<i32>().unwrap_or(-1) != 0 {
-			match sstr.parse::<i32>() {
-			Ok(e) => headersize = e as usize,
-			Err(_err) => return Err(IcError("Error getting IcPacket header.".to_string())),
+		if let Ok(br) = self.con.read(&mut self.local_buffer) {
+			let mut buffer_pointer = 1;
+			let mut sstr = String::new();
+			let mut body_cached: bool = false;
+			for b in self.local_buffer[..br].to_vec() {
+				if b == 10 {break}
+				sstr.push(b as char);
+				buffer_pointer += 1;
 			}
-			//Get header
-			if headersize <= 512 {
-				//Loop though remainder of buffer to get header
+			if sstr.parse::<i32>().unwrap_or(-1) != -1 && sstr.parse::<i32>().unwrap_or(-1) != 0 {
+				match sstr.parse::<i32>() {
+				Ok(e) => headersize = e as usize,
+				Err(_err) => return Err(IcError("Error getting IcPacket header.".to_string())),
+				}
+				//Get header
+				if headersize <= 512 {
+					//Loop though remainder of buffer to get header
+					for b in &mut self.local_buffer[buffer_pointer..br] {
+						if (self.final_buffer.len() as i32) + 1 <= headersize as i32 {
+							self.final_buffer.push(*b);
+							buffer_pointer += 1;
+						}
+					}
+					//Then gets new buffers to get the rest
+					while (self.final_buffer.len() as i32) < (headersize as i32) {
+						buffer_pointer = 1;
+						let br = self.con.read(&mut self.local_buffer).unwrap();
+						for b in &mut self.local_buffer[..br] {
+							if (self.final_buffer.len() as i32) + 1 <= headersize as i32{
+								self.final_buffer.push(*b);
+								buffer_pointer += 1;
+							}
+							
+						}
+					}
+				}
+				header = Some(std::str::from_utf8(&mut self.final_buffer).unwrap().to_string());
+			} else {header = None}
+			//reset size string and final_buffer
+			//println!("DEBUG 0: sstr = {}",&sstr);
+			//println!("DEBUG 1: sstr = {:?}",&header);
+			sstr = String::new(); 
+			self.final_buffer = Vec::new();
+			let mut bsize_gotten = false;
+			//Finish rest of buffer to get bodysize
+			if br == 0 {
+				return Err(IcError("Client disconnected disgracefully.".to_string()));
+			}
+			buffer_pointer += 1;
+			for b in self.local_buffer[buffer_pointer..br].to_vec() {
+				//println!("DEBUG: 1.5: {}",b);
+				if b == 10 {bsize_gotten = true;break}
+				sstr.push(if b > 0 {b as char} else {'0'});
+				buffer_pointer += 1;
+			}
+			if ! bsize_gotten {
+				//Get a new buffer to get rest of the bodysize
+				while !bsize_gotten {
+					buffer_pointer = 1;
+					let br = self.con.read(&mut self.local_buffer).unwrap();
+					for b in self.local_buffer[buffer_pointer..br].to_vec() {
+						if b == 10 {bsize_gotten = true;break}
+						sstr.push(b as char);
+						buffer_pointer += 1;
+					}
+				}
+				
+			} 
+			bodysize = sstr.parse::<i64>().unwrap_or(0_i64) as usize;
+			if bodysize > 0 && bodysize <= 536870912 {
+				//Get body
+				body_cached = false;
+				buffer_pointer += 1; //To skip the next newline (after first body buffer grab)
+				//Loop though remainder of buffer to get body
 				for b in &mut self.local_buffer[buffer_pointer..br] {
-					if (self.final_buffer.len() as i32) + 1 <= headersize as i32 {
+					if (self.final_buffer.len() as i64) + 1 <= bodysize as i64{
 						self.final_buffer.push(*b);
 						buffer_pointer += 1;
 					}
 				}
 				//Then gets new buffers to get the rest
-				while (self.final_buffer.len() as i32) < (headersize as i32) {
+				while (self.final_buffer.len() as i64) < (bodysize as i64) {
 					buffer_pointer = 1;
 					let br = self.con.read(&mut self.local_buffer).unwrap();
 					for b in &mut self.local_buffer[..br] {
-						if (self.final_buffer.len() as i32) + 1 <= headersize as i32{
+						if (self.final_buffer.len() as i64) + 1 <= bodysize as i64{
 							self.final_buffer.push(*b);
 							buffer_pointer += 1;
 						}
 						
 					}
 				}
-			}
-			header = Some(std::str::from_utf8(&mut self.final_buffer).unwrap().to_string());
-		} else {header = None}
-		//reset size string and final_buffer
-		//println!("DEBUG 0: sstr = {}",&sstr);
-		//println!("DEBUG 1: sstr = {:?}",&header);
-		sstr = String::new(); 
-		self.final_buffer = Vec::new();
-		let mut bsize_gotten = false;
-		//Finish rest of buffer to get bodysize
-		if br == 0 {
-			return Err(IcError("Client disconnected disgracefully.".to_string()));
-		}
-		buffer_pointer += 1;
-		for b in self.local_buffer[buffer_pointer..br].to_vec() {
-			//println!("DEBUG: 1.5: {}",b);
-			if b == 10 {bsize_gotten = true;break}
-			sstr.push(if b > 0 {b as char} else {'0'});
-			buffer_pointer += 1;
-		}
-		if ! bsize_gotten {
-			//Get a new buffer to get rest of the bodysize
-			while !bsize_gotten {
-				buffer_pointer = 1;
-				let br = self.con.read(&mut self.local_buffer).unwrap();
-				for b in self.local_buffer[buffer_pointer..br].to_vec() {
-					if b == 10 {bsize_gotten = true;break}
-					sstr.push(b as char);
-					buffer_pointer += 1;
-				}
-			}
-			
-		} 
-		bodysize = sstr.parse::<i64>().unwrap_or(0_i64) as usize;
-		if bodysize > 0 && bodysize <= 536870912 {
-			//Get body
-			body_cached = false;
-			buffer_pointer += 1; //To skip the next newline (after first body buffer grab)
-			//Loop though remainder of buffer to get body
-			for b in &mut self.local_buffer[buffer_pointer..br] {
-				if (self.final_buffer.len() as i64) + 1 <= bodysize as i64{
-					self.final_buffer.push(*b);
-					buffer_pointer += 1;
-				}
-			}
-			//Then gets new buffers to get the rest
-			while (self.final_buffer.len() as i64) < (bodysize as i64) {
-				buffer_pointer = 1;
-				let br = self.con.read(&mut self.local_buffer).unwrap();
-				for b in &mut self.local_buffer[..br] {
-					if (self.final_buffer.len() as i64) + 1 <= bodysize as i64{
-						self.final_buffer.push(*b);
+			} else if bodysize > 536870912 {
+				//Body is to be written to a tmp file
+				println!("CACHING {} BYTES...",bodysize);
+				body_cached = true;
+				let mut rng = rand::thread_rng();
+				let start = SystemTime::now();
+				let time = start
+					.duration_since(UNIX_EPOCH)
+					.expect("Time went backwards");
+				tfn = "./IC_TMP_".to_owned()+&time.as_secs().to_string()+"_"+&rng.gen::<i32>().to_string();
+				//println!("{}",tfn);
+				File::create(&tfn).unwrap();
+				let mut file = OpenOptions::new()
+					.write(true)
+					.append(true)
+					.open(&tfn)
+					.unwrap();
+				let mut file_pointer = 0;
+				//Loop though remainder of buffer to get body
+				buffer_pointer += 1;
+				for b in &mut self.local_buffer[buffer_pointer..br] {
+					if (file_pointer as i64) + 1 <= bodysize as i64{
+						file.write(&[*b]);
 						buffer_pointer += 1;
+						file_pointer += 1
 					}
-					
+				}
+				println!("BS: {}, FS: {}, {}%",bodysize,file_pointer,(file_pointer*100)/bodysize);
+				let mut large_buffer: Vec<u8> = vec![0;536870912];
+				//Then gets new buffers to get the rest
+				let mut br = self.con.read(&mut large_buffer).unwrap();
+				while br != 0 && file_pointer < bodysize {
+					if (file_pointer as i64) + (br as i64) <= bodysize as i64{
+						file.write(&large_buffer[..br]);
+						file_pointer += br;
+						println!("BS: {}, FS: {}, {}% (+{})",bodysize,file_pointer,(file_pointer*100)/bodysize,br);
+					}
+					if file_pointer < bodysize {
+						br = self.con.read(&mut large_buffer).unwrap();
+					}
 				}
 			}
-		} else if bodysize > 536870912 {
-			//Body is to be written to a tmp file
-			println!("CACHING {} BYTES...",bodysize);
-			body_cached = true;
-			let mut rng = rand::thread_rng();
-			let start = SystemTime::now();
-			let time = start
-				.duration_since(UNIX_EPOCH)
-				.expect("Time went backwards");
-			tfn = "./IC_TMP_".to_owned()+&time.as_secs().to_string()+"_"+&rng.gen::<i32>().to_string();
-			//println!("{}",tfn);
-			File::create(&tfn).unwrap();
-			let mut file = OpenOptions::new()
-				.write(true)
-				.append(true)
-				.open(&tfn)
-				.unwrap();
-			let mut file_pointer = 0;
-			//Loop though remainder of buffer to get body
-			buffer_pointer += 1;
-			for b in &mut self.local_buffer[buffer_pointer..br] {
-				if (file_pointer as i64) + 1 <= bodysize as i64{
-					file.write(&[*b]);
-					buffer_pointer += 1;
-					file_pointer += 1
+			println!("GOT BUFFER {}",self.final_buffer.len());
+			
+			if ! body_cached {
+				if self.final_buffer.len() > 0 {
+					Ok(IcPacket::new(header,Some(self.final_buffer.clone())))
+				} else {
+					Ok(IcPacket::new(header,None))
 				}
+			} else { 
+				println!("BODY CACHED AT {}",&tfn);
+				Ok(IcPacket::new_cached(header,Some(tfn.as_bytes().to_vec())))
 			}
-			println!("BS: {}, FS: {}, {}%",bodysize,file_pointer,(file_pointer*100)/bodysize);
-			let mut large_buffer: Vec<u8> = vec![0;536870912];
-			//Then gets new buffers to get the rest
-			let mut br = self.con.read(&mut large_buffer).unwrap();
-			while br != 0 && file_pointer < bodysize {
-				if (file_pointer as i64) + (br as i64) <= bodysize as i64{
-					file.write(&large_buffer[..br]);
-					file_pointer += br;
-					println!("BS: {}, FS: {}, {}% (+{})",bodysize,file_pointer,(file_pointer*100)/bodysize,br);
-				}
-				if file_pointer < bodysize {
-					br = self.con.read(&mut large_buffer).unwrap();
-				}
-			}
-		}
-		println!("GOT BUFFER {}",self.final_buffer.len());
-		
-		if ! body_cached {
-			if self.final_buffer.len() > 0 {
-				Ok(IcPacket::new(header,Some(self.final_buffer.clone())))
-			} else {
-				Ok(IcPacket::new(header,None))
-			}
-		} else { 
-			println!("BODY CACHED AT {}",&tfn);
-			Ok(IcPacket::new_cached(header,Some(tfn.as_bytes().to_vec())))
+		} else {
+			return return Err(IcError("Error getting IcPacket header.".to_string()));
 		}
 	}
 

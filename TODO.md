@@ -31,13 +31,10 @@
 
 # Known Bugs to fix
 
-## Server
-* (B2.0) crash when peer resets it's connection.
-* (B2.0) Logging out crashes (CORE ACCOUNT LOGOUT)
+## (WOF) Server
 
-### STORAGE MODULE
-* (B2.0) crash on some commands
-	* STORAGE ENTRY SHOW (On invalid input)
+### (WOF) STORAGE MODULE
+* (WO) (B2.0) STORAGE ENTRY SHOW (On invalid input or if logged out)
 * STORAGE TAG UNDIR returns OK! even if it fails.
 * (B2.0) STORAGE SHOW ignores visibility.
 * (B2.0) STORAGE ENTRY SET \<NEW NAME\> doesn't unwrap the surrounding parantheses.
