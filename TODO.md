@@ -27,17 +27,14 @@
 ## Server
 * --export,--import and --teardown handle ipfs
 * --raw\_dump (Dumping all files from user in archive)
-* logging 
 
 # Known Bugs to fix
 
 ## (WOF) Server
 
 ### (WOF) STORAGE MODULE
-* (WO) (B2.0) STORAGE ENTRY SHOW (On invalid input or if logged out)
 * STORAGE TAG UNDIR returns OK! even if it fails.
-* (B2.0) STORAGE SHOW ignores visibility.
-* (B2.0) STORAGE ENTRY SET \<NEW NAME\> doesn't unwrap the surrounding parantheses.
+* (WO) (B2.0) STORAGE ENTRY SET \<NEW NAME\> doesn't unwrap the surrounding parantheses.
 * (B2.0) STORAGE DIR SET \<NEW NAME\> doesn't unwrap the surrounding parantheses.
 
 ## Native IC Client
@@ -51,6 +48,10 @@
 
 # MISC/MARKERS
 * (B2.0) READMEs Readthrough.
+
+## Native IC Client
+* (B2.0) Supress warnings.
+* (B2.0) Invalid twice.
 
 ## LIB
 * lib\_backed @ get\_entry: Write file directly from ipfs instead of holding in memory (TODO:1)

@@ -98,9 +98,9 @@ impl IcExecute for StorageEntry {
 					if show {
 						//ENTRY SHOW [<DIR ID>] <COOKIE>
 						if c.len() >= 3 {
-							rstr = show_entries(&con.backend_con,Some(false),Some(true),Some(c[2].parse::<i32>().unwrap()));
+							rstr = show_entries(&con.backend_con,Some(false),Some(true),Some(c[2].parse::<i32>().unwrap()),&(con.login).as_ref().unwrap().id,true);
 						} else {
-							rstr = show_entries(&con.backend_con,Some(false),Some(true),None);
+							rstr = show_entries(&con.backend_con,Some(false),Some(true),None,&(con.login).as_ref().unwrap().id,true);
 						}
 						return if rstr != "" {IcPacket::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec()))} else {IcPacket::new(Some("Err.".to_string()),None)};
 					}

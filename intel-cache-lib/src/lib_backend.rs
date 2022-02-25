@@ -388,7 +388,7 @@ pub fn get_dir_tags(conn: &MysqlConnection, dir_id: i32) -> String {
 	retstr
 }
 
-pub fn show_entries(conn: &MysqlConnection, _display: Option<bool>, shortened: Option<bool>, under_id: Option<i32>) -> String {
+pub fn show_entries(conn: &MysqlConnection, _display: Option<bool>, shortened: Option<bool>, under_id: Option<i32>,o: &String,owned_only: bool) -> String {
 	use self::schema::entry::dsl::*;
 	use schema::entry;
 	let results: Vec<Entry>;
@@ -401,17 +401,21 @@ pub fn show_entries(conn: &MysqlConnection, _display: Option<bool>, shortened: O
 	let mut retstr = String::new();
 	if ! shortened.unwrap_or(false) { 
 		for e in results {
-			let tags = get_entry_tags(conn,e.id);
-			let text = match str::from_utf8(&e.data) {
-				Ok(v) => v,
-				Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
-			};
-			retstr.push_str(format!("{} {} ({}) {} [{}]\n{}\n",e.id,e.name,e.type_,e.loc.unwrap_or(0),tags,text).as_str());
+			if e.owner == *o || (owned_only && e.visibility){
+				let tags = get_entry_tags(conn,e.id);
+				let text = match str::from_utf8(&e.data) {
+					Ok(v) => v,
+					Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
+				};
+				retstr.push_str(format!("{} {} ({}) {} [{}]\n{}\n",e.id,e.name,e.type_,e.loc.unwrap_or(0),tags,text).as_str());
+			}
 		}
 	} else {
 		for e in results {
-			let tags = get_entry_tags(conn,e.id);
-			retstr.push_str(format!("{} {} ({}) {} {}\n",e.id,e.name,e.type_,e.loc.unwrap_or(0),tags).as_str());
+			if e.owner == *o || (owned_only && e.visibility){
+				let tags = get_entry_tags(conn,e.id);
+				retstr.push_str(format!("{} {} ({}) {} {}\n",e.id,e.name,e.type_,e.loc.unwrap_or(0),tags).as_str());
+			}
 		}
 	}
 	retstr

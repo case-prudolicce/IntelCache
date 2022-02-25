@@ -7,7 +7,7 @@ CREATE TABLE user(
 	admin BOOLEAN NOT NULL DEFAULT FALSE
 );
 
--- default login: admin:admin
+-- default login: admin:admin, global_id remains the same throughout all the instances.
 INSERT INTO user(global_id,username,password,admin) VALUES ("e3351b7f8bbd01daf63a2978657c50faf30f6301ba2bb32293c85576a5afd003","admin","c7ad44cbad762a5da0a452f9e854fdc1e0e7a52a38015f23f3eab1d80b931dd472634dfac71cd34ebc35d16ab7fb8a90c81f975113d6c7538dc69dd8de9077ec",TRUE);
 
 CREATE TABLE dir(
