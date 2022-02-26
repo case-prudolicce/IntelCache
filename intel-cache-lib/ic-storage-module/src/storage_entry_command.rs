@@ -97,7 +97,7 @@ impl IcExecute for StorageEntry {
 					}
 					if show {
 						//ENTRY SHOW [<DIR ID>] <COOKIE>
-						if c.len() >= 3 {
+						if c.len() >= 4 {
 							rstr = show_entries(&con.backend_con,Some(false),Some(true),Some(c[2].parse::<i32>().unwrap()),&(con.login).as_ref().unwrap().id,true);
 						} else {
 							rstr = show_entries(&con.backend_con,Some(false),Some(true),None,&(con.login).as_ref().unwrap().id,true);

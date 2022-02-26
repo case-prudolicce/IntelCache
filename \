@@ -40,9 +40,8 @@
 * \[TV\] (B2.0) STORAGE SHOW isn't returning all entries and directories.
 
 ## (WOF) Native IC Client
-* (WO) (B2.0) `mv` sets the data to 512 0s
-* (B2.0) `logout` doesn't reset the cookie and thus allowing leaked data.
-* `logout` doesn't reset prompt user.
+* (WO) (B2.0) `edit` reset the entry's loc to 0
+* (B2.0) `mv` sets the data to 512 0s
 
 # MISC/MARKERS
 * (B2.0) READMEs Readthrough.

@@ -574,21 +574,36 @@ pub async fn update_entry(conn: &MysqlConnection,uid: i32,dt: Vec<u8>,n: Option<
 
 	let ipfsclient = IpfsClient::default();
 	if get_entry_by_id(conn,uid) != None {
-		//Harden l
+		//If 0, 0. If none, do not change.
 		let e = get_entry_by_id(conn,uid).unwrap();
-		let nl: Option<i32> = if (l != None && l.unwrap() == 0) || l == None {None} else {Some(l.unwrap())};
-		
-		if dt.len() < 65535 {
-			diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::data.eq(&dt),entry::type_.eq("text"),entry::name.eq(n.unwrap_or(&e.name)),entry::loc.eq(nl))).execute(conn).expect("Error updating entry.");
-			Ok(())
+		if l == None {
+			if dt.len() < 65535 {
+				diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::data.eq(&dt),entry::type_.eq("text"),entry::name.eq(n.unwrap_or(&e.name)))).execute(conn).expect("Error updating entry.");
+				Ok(())
+			} else {
+				let hash;
+				match block_on(ipfsclient.add(Cursor::new(dt))) {
+					Ok(res) => hash = res.hash,
+					Err(_e) => return Err(IcError("Error adding updated entry data.".to_string())),
+				};
+				diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::data.eq(hash.as_bytes()),entry::type_.eq("text"),entry::name.eq(n.unwrap_or(&e.name)))).execute(conn).expect("Error updating entry.");
+				Ok(())
+			}
 		} else {
-			let hash;
-			match block_on(ipfsclient.add(Cursor::new(dt))) {
-				Ok(res) => hash = res.hash,
-				Err(_e) => return Err(IcError("Error adding updated entry data.".to_string())),
-			};
-			diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::data.eq(hash.as_bytes()),entry::type_.eq("text"),entry::name.eq(n.unwrap_or(&e.name)),entry::loc.eq(nl))).execute(conn).expect("Error updating entry.");
-			Ok(())
+			let nl: Option<i32> = if l.unwrap() == 0 {None} else {Some(l.unwrap())};
+			
+			if dt.len() < 65535 {
+				diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::data.eq(&dt),entry::type_.eq("text"),entry::name.eq(n.unwrap_or(&e.name)),entry::loc.eq(nl))).execute(conn).expect("Error updating entry.");
+				Ok(())
+			} else {
+				let hash;
+				match block_on(ipfsclient.add(Cursor::new(dt))) {
+					Ok(res) => hash = res.hash,
+					Err(_e) => return Err(IcError("Error adding updated entry data.".to_string())),
+				};
+				diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::data.eq(hash.as_bytes()),entry::type_.eq("text"),entry::name.eq(n.unwrap_or(&e.name)),entry::loc.eq(nl))).execute(conn).expect("Error updating entry.");
+				Ok(())
+			}
 		}
 	} else {return Err(IcError("Error getting entry for update".to_string()))}
 }

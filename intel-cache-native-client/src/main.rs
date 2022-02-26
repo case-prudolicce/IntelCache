@@ -51,6 +51,7 @@ fn main() {
 					println!("Name?");
 					let mut n = String::new();
 					stdin().read_line(&mut n).unwrap();
+					n.pop();
 					input_cmd.cmd[1] = n;
 					//input_cmd.databuff = write_entry().as_bytes().to_vec();
 					input_cmd.databuff = match write_entry() {//.as_bytes().to_vec();
