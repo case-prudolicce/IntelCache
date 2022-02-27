@@ -113,30 +113,32 @@ impl IcInputCommand<'_> {
 						fmt_vec.push("STORAGE".to_string());
 						fmt_vec.push("ENTRY".to_string());
 						fmt_vec.push("SHOW".to_string());
+						fmt_vec.push("PRIVATE".to_string());
 						if &self.cmd[1][1..] != "" {
 							fmt_vec.push(self.cmd[1][1..].to_string());
 						} else {
 							fmt_vec.push("0".to_string());
 						}
 					},
-					'd' => {
+					'd' => { //ls dir in the directory
 						fmt_vec.push("STORAGE".to_string());
 						fmt_vec.push("DIR".to_string());
 						fmt_vec.push("SHOW".to_string());
+						fmt_vec.push("PRIVATE".to_string());
 						if &self.cmd[1][1..] != "" {
 							fmt_vec.push(self.cmd[1][1..].to_string());
 						} else {
 							fmt_vec.push("0".to_string());
 						}
 					}
-					'a' => {
+					'a' => { //ls all
 						fmt_vec.push("STORAGE".to_string());
 						fmt_vec.push("SHOW".to_string());
 					}
 					_ =>(),
 					};
-				} else { fmt_vec.push("STORAGE".to_string());fmt_vec.push("SHOW".to_string());fmt_vec.push(self.cmd[1].clone()) }
-			} else {
+				} else { fmt_vec.push("STORAGE".to_string());fmt_vec.push("SHOW".to_string());fmt_vec.push(self.cmd[1].clone()) } //ls in the dir
+			} else { //ls in the dir
 				fmt_vec.push("STORAGE".to_string());
 				fmt_vec.push("SHOW".to_string());
 				fmt_vec.push(self.ref_in.pwd.to_string());

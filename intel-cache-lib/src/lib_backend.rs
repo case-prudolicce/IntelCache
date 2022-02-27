@@ -284,8 +284,8 @@ pub fn show_dirs(conn: &MysqlConnection,by_id: Option<i32>,o: &String,owned_only
 		} else {
 			results = dir.filter(dir::loc.is_null().and(dir::owner.eq(o))).load::<Dir>(conn).expect("Error loading dirs");
 		}
-	} else {
-		results = dir.filter(dir::owner.eq(o).and(dir::loc.is_null())).load::<Dir>(conn).expect("Error loading dirs");
+	} else { //SHOW ALL DIRS (Non public)
+		results = dir.filter(dir::owner.eq(o)).load::<Dir>(conn).expect("Error loading dirs");
 	}
 	let mut retstr = String::new();
 	
@@ -295,8 +295,8 @@ pub fn show_dirs(conn: &MysqlConnection,by_id: Option<i32>,o: &String,owned_only
 		retstr.push_str(format!("{} {} ({}) {}\n",d.id,d.name, location, tags).as_str())
 	}
 	if ! owned_only {
-		results = dir.filter(dir::visibility.eq(true)).load::<Dir>(conn).expect("Error loading dirs");
-		for d in results {
+		let public_results = dir.filter(dir::visibility.eq(true)).load::<Dir>(conn).expect("Error loading dirs");
+		for d in public_results {
 			let location = if d.loc.unwrap_or(-1) == -1 {"ROOT".to_string()} else {dir::table.filter(dir::id.eq(d.loc.unwrap())).select(dir::name).get_result::<String>(conn).unwrap()};
 			let tags = get_dir_tags(conn,d.id);
 			retstr.push_str(format!("{} {} ({}) {} -> {} {}\n",d.id,d.name, location, tags,d.owner,if d.visibility {"PUBLIC"} else {"PRIVATE"}).as_str())
@@ -392,10 +392,13 @@ pub fn show_entries(conn: &MysqlConnection, _display: Option<bool>, shortened: O
 	use self::schema::entry::dsl::*;
 	use schema::entry;
 	let results: Vec<Entry>;
-	if (under_id != None && under_id.unwrap() == 0) || under_id == None {
-		results = entry.filter(entry::loc.is_null()).load::<Entry>(conn).expect("Error loading entries");
-	} else {
-		results = entry.filter(entry::loc.eq(under_id.unwrap())).load::<Entry>(conn).expect("Error loading entries");
+	if (under_id != None && under_id.unwrap() == 0) { //Load entries at null
+		results = entry.filter(entry::loc.is_null().and(entry::owner.eq(o))).load::<Entry>(conn).expect("Error loading entries");
+	} else if under_id == None { //Show all entries
+		println!("MARKER!");
+		results = entry.filter(entry::owner.eq(o)).load::<Entry>(conn).expect("Error loading entries");
+	} else { //ID present
+		results = entry.filter(entry::loc.eq(under_id.unwrap()).and(entry::owner.eq(o))).load::<Entry>(conn).expect("Error loading entries");
 	}
 	
 	let mut retstr = String::new();
@@ -628,10 +631,16 @@ pub fn get_entry_by_id(conn: &MysqlConnection,entryid: i32) -> Option<Entry> {
 
 pub fn validate_dir(conn: &MysqlConnection,dirid: i32) -> Option<String> {
 	use schema::dir;
-	let d = dir::table.filter(dir::id.eq(dirid)).select(dir::name).load::<String>(conn);
+	let d: Result<Vec<String>,diesel::result::Error>;
+	if dirid > 0 {
+		d = dir::table.filter(dir::id.eq(dirid)).select(dir::name).load::<String>(conn);
+	} else if dirid == 0 {
+		d = Ok(vec!("ROOT".to_string()));
+	} else { return None };
+	
 	match d {
-	Ok(n) => return if n.len() > 0 {Some(n[0].clone())} else {None},
-	Err(_e) => return None,
+		Ok(n) => return if n.len() >= 0 {Some(n[0].clone())} else {None},
+		Err(_e) => return None,
 	}
 }
 pub fn validate_tag(conn: &MysqlConnection,tagid: i32) -> Option<String> {
@@ -661,8 +670,8 @@ pub fn login(conn: &MysqlConnection,login: &mut Option<IcLoginDetails>,id: Strin
 	let d = user::table.filter(user::global_id.eq(&id)).load::<User>(conn);
 	match d {
 	Ok(n) => {
-		if n[0].password != password {
-			return Err(IcError("Error: wrong password.".to_string()));
+		if n.len() == 0 || n[0].password != password {
+			return Err(IcError("Error: wrong user/password.".to_string()));
 		} else {
 			//Make cookie and fill login
 			let start = SystemTime::now();

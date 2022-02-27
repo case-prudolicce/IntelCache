@@ -61,15 +61,17 @@ impl IcInput {
 	}
 	pub fn get_username(&mut self,client: &mut IcClient,cookie: &Option<String>) -> String {
 		let mut p = Vec::<String>::new();
-		if let c = cookie.as_ref().unwrap(){
-			p.push("CORE".to_string());
-			p.push("ACCOUNT".to_string());
-			p.push("VALIDATE".to_string());
-			p.push(c.to_string());
-			let icp = IcInputCommand::from_vec(self,p);
-			
-			let resp = client.send_cmd(&mut icp.to_ic_packet(cookie));
-			return resp.header.unwrap();
+		if *cookie != None {
+			if let c = cookie.as_ref().unwrap(){
+				p.push("CORE".to_string());
+				p.push("ACCOUNT".to_string());
+				p.push("VALIDATE".to_string());
+				p.push(c.to_string());
+				let icp = IcInputCommand::from_vec(self,p);
+				
+				let resp = client.send_cmd(&mut icp.to_ic_packet(cookie));
+				return resp.header.unwrap();
+			} else {return "ANONYMOUS".to_string()}
 		} else {return "ANONYMOUS".to_string()}
 	}
 	pub fn set_pwd(&mut self, pwdid: i32,client: &mut IcClient,cookie: &Option<String>) -> bool {

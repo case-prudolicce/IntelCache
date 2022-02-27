@@ -23,26 +23,27 @@
 
 ## Native IC Client
 * ls a prints as tree
+* Password prompt for login
 
 ## Server
 * --export,--import and --teardown handle ipfs
 * --raw\_dump (Dumping all files from user in archive)
 
-# Known Bugs to fix
+# (WOM) Known Bugs to fix
 
-## Server
-* (B2.0) CORE LOGIN with the wrong login arguments crashes the server
+## (WOM) Server
+* TBD
 
-### STORAGE MODULE
+### (WOF) STORAGE MODULE
 * STORAGE TAG UNDIR returns OK! even if it fails.
 * [UV] STORAGE ENTRY SET \<NEW NAME\> doesn't unwrap the surrounding parantheses.
 * [UV] STORAGE DIR SET \<NEW NAME\> doesn't unwrap the surrounding parantheses.
 * [TV] STORAGE ENTRY SHOW 0 \<COOKIE\> returns error.
-* \[TV\] (B2.0) STORAGE SHOW isn't returning all entries and directories.
-* \[TV\] (B2.0) STORAGE SET Without any buffer shouldn't reset data to nothing.
+* (WO) \[TV\] (B2.0) STORAGE SET Without any buffer shouldn't reset data to nothing.
+* (B2.0) STORAGE ENTRY SHOW with PRIVATE/PUBLIC Crashes.
 
-## (WOF) Native IC Client
-* (WO) (B2.0) `login` with the wrong login crashes the client.
+## Native IC Client
+* `ls d` doesn't include the PUBLIC PRIVATE keyword
 
 # MISC/MARKERS
 * (B2.0) READMEs Readthrough.

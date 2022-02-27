@@ -64,13 +64,14 @@ impl IcExecute for StorageDir {
 						} else { return IcPacket::new(Some(format!("Err. {} arguments is invalid.",c.len()).to_string()),None) }
 					}
 					if show {
-						//DIR SHOW {PUBLIC|PRIVATE} [<DIR_ID>] <COOKIE>
+						//STORAGE DIR SHOW {PUBLIC|PRIVATE} [<DIR_ID>] <COOKIE>
 						let retstr: String;
 						let public_show: bool;
-						if c.len() == 5 {
+						if c.len() == 5 { //DIR SHOW {PUBLIC|PRIVATE} [<DIR_ID>] <COOKIE>
+
 							public_show = if c[2] == "PUBLIC" {false} else {true};
 							retstr = show_dirs(&con.backend_con,Some(c[3].parse::<i32>().unwrap()),&con.login.as_ref().unwrap().id,public_show);
-						} else if c.len() == 4{
+						} else if c.len() == 4{ //DIR SHOW {PUBLIC|PRIVATE} <COOKIE>
 							public_show = if c[2] == "PUBLIC" {false} else {true};
 							retstr = show_dirs(&con.backend_con,None,&con.login.as_ref().unwrap().id,public_show);
 						} else { return IcPacket::new(Some("Error, Invalid amount of arguments.".to_string()),None) }
