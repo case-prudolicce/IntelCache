@@ -30,7 +30,8 @@
 
 # Known Bugs to fix
 
-## (WOF) Server
+## Server
+* (B2.0) CORE LOGIN with the wrong login arguments crashes the server
 
 ### STORAGE MODULE
 * STORAGE TAG UNDIR returns OK! even if it fails.
@@ -38,11 +39,10 @@
 * [UV] STORAGE DIR SET \<NEW NAME\> doesn't unwrap the surrounding parantheses.
 * [TV] STORAGE ENTRY SHOW 0 \<COOKIE\> returns error.
 * \[TV\] (B2.0) STORAGE SHOW isn't returning all entries and directories.
+* \[TV\] (B2.0) STORAGE SET Without any buffer shouldn't reset data to nothing.
 
 ## (WOF) Native IC Client
-* (WO) (B2.0) `mv` sets the data to 512 0s
-* (B2.0) `logout` doesn't reset the cookie and thus allowing leaked data.
-* `logout` doesn't reset prompt user.
+* (WO) (B2.0) `login` with the wrong login crashes the client.
 
 # MISC/MARKERS
 * (B2.0) READMEs Readthrough.

@@ -5,7 +5,7 @@ use intel_cache_lib::ic_types::IcPacket;
 use sha2::{Sha512, Digest};
 pub struct IcInputCommand<'a> { 
 	pub cmd: Vec<String>, 
-	pub databuff: Vec<u8>,
+	pub databuff: Option<Vec<u8>>,
 	ref_in: &'a mut IcInput 
 }
 impl IcInputCommand<'_> {
@@ -14,7 +14,7 @@ impl IcInputCommand<'_> {
 		let mut concatenated_str = String::new();
 		let mut fcmd = Vec::new();
 		if input.input_str.split_whitespace().collect::<Vec<&str>>().len() == 0 {
-			return IcInputCommand { cmd:Vec::new(), databuff: vec![0;512], ref_in: input}
+			return IcInputCommand { cmd:Vec::new(), databuff: None, ref_in: input}
 		}
 		for c in input.input_str.split_whitespace() {
 			if ! con { 
@@ -41,14 +41,14 @@ impl IcInputCommand<'_> {
 				} else { concatenated_str.push(' '); concatenated_str.push_str(c) }
 			}
 		}
-		IcInputCommand { cmd:fcmd, databuff: vec![0;512],ref_in: input }
+		IcInputCommand { cmd:fcmd, databuff: None,ref_in: input }
 	}
 	pub fn from_vec<'a>(input: &'a mut IcInput,v: Vec<String>) -> IcInputCommand<'a> {
 		let mut con = false;
 		let mut concatenated_str = String::new();
 		let mut fcmd = Vec::new();
 		if v.len() == 0 {
-			return IcInputCommand { cmd:Vec::new(), databuff: vec![0;512], ref_in: input}
+			return IcInputCommand { cmd:Vec::new(), databuff: None, ref_in: input}
 		}
 		for c in v {
 			if ! con { 
@@ -75,7 +75,7 @@ impl IcInputCommand<'_> {
 				} else { concatenated_str.push(' '); concatenated_str.push_str(&c) }
 			}
 		}
-		IcInputCommand { cmd:fcmd, databuff: vec![0;512],ref_in: input }
+		IcInputCommand { cmd:fcmd, databuff: None,ref_in: input }
 	}
 	pub fn to_ic_packet(&self,cookie: &Option<String>) -> IcPacket {
 		let mut fmt_vec:Vec<String> = Vec::new();
@@ -95,7 +95,7 @@ impl IcInputCommand<'_> {
 					fmt_vec.push(self.cmd[2].clone());
 			}
 			fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
-			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
+			return IcPacket::from_parsed_header(fmt_vec,self.databuff.clone());
 		},
 		"get" => {
 			fmt_vec.push("STORAGE".to_string());
@@ -103,7 +103,7 @@ impl IcInputCommand<'_> {
 			fmt_vec.push("GET".to_string());
 			fmt_vec.push(self.string_wrap(self.cmd[1].clone()));
 			fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
-			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
+			return IcPacket::from_parsed_header(fmt_vec,self.databuff.clone());
 		},
 		"ls" => {
 			if self.cmd.len() >= 2 {
@@ -142,7 +142,7 @@ impl IcInputCommand<'_> {
 				fmt_vec.push(self.ref_in.pwd.to_string());
 			}
 			fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
-			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
+			return IcPacket::from_parsed_header(fmt_vec,self.databuff.clone());
 		},
 		"rm" => {
 			fmt_vec.push("STORAGE".to_string());
@@ -150,7 +150,7 @@ impl IcInputCommand<'_> {
 			fmt_vec.push("DELETE".to_string());
 			fmt_vec.push(self.cmd[1].clone());
 			fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
-			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
+			return IcPacket::from_parsed_header(fmt_vec,self.databuff.clone());
 		},
 		"set" => {
 			if self.cmd.len() > 1 {
@@ -159,9 +159,9 @@ impl IcInputCommand<'_> {
 				fmt_vec.push("SET".to_string());
 				fmt_vec.push(self.cmd[1].clone());
 				fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
-				return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
+				return IcPacket::from_parsed_header(fmt_vec,self.databuff.clone());
 			}
-			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
+			return IcPacket::from_parsed_header(fmt_vec,self.databuff.clone());
 		},
 		"mv" => {
 			if self.cmd[1].chars().last().unwrap() == '/' {
@@ -177,9 +177,8 @@ impl IcInputCommand<'_> {
 				fmt_vec.push(self.cmd[1].clone());
 				fmt_vec.push(self.cmd[2].clone());
 			}
-			
 			fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
-			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
+			return IcPacket::from_parsed_header(fmt_vec,self.databuff.clone());
 		},
 		"mkdir" => {
 			fmt_vec.push("STORAGE".to_string());
@@ -190,7 +189,7 @@ impl IcInputCommand<'_> {
 			fmt_vec.push("UNDER".to_string());
 			fmt_vec.push(self.ref_in.pwd.to_string());
 			fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
-			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
+			return IcPacket::from_parsed_header(fmt_vec,self.databuff.clone());
 		},
 		"rmdir" => {
 			fmt_vec.push("STORAGE".to_string());
@@ -198,7 +197,7 @@ impl IcInputCommand<'_> {
 			fmt_vec.push("DELETE".to_string());
 			fmt_vec.push(self.cmd[1].clone());
 			fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
-			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
+			return IcPacket::from_parsed_header(fmt_vec,self.databuff.clone());
 		},
 		"tag" => {
 			if self.cmd[1].chars().last().unwrap() == '/' {
@@ -215,7 +214,7 @@ impl IcInputCommand<'_> {
 				fmt_vec.push(self.cmd[2].clone());
 			}
 			fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
-			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
+			return IcPacket::from_parsed_header(fmt_vec,self.databuff.clone());
 		},
 		"untag" => {
 			if self.cmd[1].chars().last().unwrap() == '/' {
@@ -232,7 +231,7 @@ impl IcInputCommand<'_> {
 				fmt_vec.push(self.cmd[2].clone());
 			}
 			fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
-			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
+			return IcPacket::from_parsed_header(fmt_vec,self.databuff.clone());
 		},
 		"tagrename" => {
 			fmt_vec.push("STORAGE".to_string());
@@ -241,7 +240,7 @@ impl IcInputCommand<'_> {
 			fmt_vec.push(self.cmd[1].clone());
 			fmt_vec.push(self.cmd[2].clone());
 			fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
-			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
+			return IcPacket::from_parsed_header(fmt_vec,self.databuff.clone());
 		},
 		"rename" => {
 			if self.cmd[1].chars().last().unwrap() == '/' {
@@ -251,7 +250,7 @@ impl IcInputCommand<'_> {
 				fmt_vec.push(self.cmd[1][..self.cmd.len()-1].to_string());
 				fmt_vec.push(self.cmd[2].clone());
 				fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
-				return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
+				return IcPacket::from_parsed_header(fmt_vec,self.databuff.clone());
 			} else { 
 				fmt_vec.push("STORAGE".to_string());
 				fmt_vec.push("ENTRY".to_string());
@@ -259,7 +258,7 @@ impl IcInputCommand<'_> {
 				fmt_vec.push(self.cmd[1].clone());
 				fmt_vec.push(self.cmd[2].clone());
 				fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
-				return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
+				return IcPacket::from_parsed_header(fmt_vec,self.databuff.clone());
 			}
 			
 		}
@@ -268,7 +267,7 @@ impl IcInputCommand<'_> {
 			fmt_vec.push("TAG".to_string());
 			fmt_vec.push("SHOW".to_string());
 			fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
-			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
+			return IcPacket::from_parsed_header(fmt_vec,self.databuff.clone());
 		},
 		"mktag" => {
 			fmt_vec.push("STORAGE".to_string());
@@ -276,7 +275,7 @@ impl IcInputCommand<'_> {
 			fmt_vec.push("CREATE".to_string());
 			fmt_vec.push(self.cmd[1].clone());
 			fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
-			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
+			return IcPacket::from_parsed_header(fmt_vec,self.databuff.clone());
 		},
 		"rmtag" => {
 			fmt_vec.push("STORAGE".to_string());
@@ -284,7 +283,7 @@ impl IcInputCommand<'_> {
 			fmt_vec.push("DELETE".to_string());
 			fmt_vec.push(self.cmd[1].clone());
 			fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
-			return IcPacket::from_parsed_header(fmt_vec,Some(self.databuff.clone()));
+			return IcPacket::from_parsed_header(fmt_vec,self.databuff.clone());
 		},
 		"fetchusers" => {
 			if self.cmd.len() > 1 {
@@ -301,10 +300,16 @@ impl IcInputCommand<'_> {
 			fmt_vec.push("LOGIN".to_string());
 			fmt_vec.push(self.cmd[1].clone());
 			let p = self.cmd[2].clone();
-			//HASH P with sha512 and push
 			let mut hasher = Sha512::new();
 			hasher.update(p);
 			fmt_vec.push(format!("{:x}",hasher.finalize()));
+			return IcPacket::from_parsed_header(fmt_vec,None);
+		}
+		"logout" => {
+			fmt_vec.push("CORE".to_string());
+			fmt_vec.push("ACCOUNT".to_string());
+			fmt_vec.push("LOGOUT".to_string());
+			fmt_vec.push(cookie.as_ref().unwrap_or(&String::new()).to_string());
 			return IcPacket::from_parsed_header(fmt_vec,None);
 		}
 		"exit" => {

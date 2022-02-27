@@ -73,7 +73,7 @@ impl IcInput {
 		} else {return "ANONYMOUS".to_string()}
 	}
 	pub fn set_pwd(&mut self, pwdid: i32,client: &mut IcClient,cookie: &Option<String>) -> bool {
-		if pwdid < 0 {return false}
+		if pwdid < 0 {self.pwdstr = "ANONYMOUS@NONE".to_string();return true}
 		else if pwdid == 0 {self.pwd = pwdid;self.pwdstr = self.get_username(client,cookie)+"@ROOT";return true;}
 		let mut p = Vec::<String>::new();
 		if let c = cookie.as_ref().unwrap(){

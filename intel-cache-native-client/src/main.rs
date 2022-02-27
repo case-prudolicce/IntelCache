@@ -43,7 +43,7 @@ fn main() {
 			"new" => {
 				if input_cmd.cmd.len() > 1 {
 					input_cmd.databuff = match write_entry() {//.as_bytes().to_vec();
-					Ok(v) => v.as_bytes().to_vec(),
+					Ok(v) => Some(v.as_bytes().to_vec()),
 					Err(_e) => {println!("The entry was empty. Aborting.");continue},
 					}
 				} else {
@@ -55,7 +55,7 @@ fn main() {
 					input_cmd.cmd[1] = n;
 					//input_cmd.databuff = write_entry().as_bytes().to_vec();
 					input_cmd.databuff = match write_entry() {//.as_bytes().to_vec();
-					Ok(v) => v.as_bytes().to_vec(),
+					Ok(v) => Some(v.as_bytes().to_vec()),
 					Err(_e) => {println!("The entry was empty. Aborting.");continue},
 					}
 				}
@@ -64,7 +64,7 @@ fn main() {
 				if input_cmd.cmd.len() > 2 {
 					let dtb = fs::read(&input_cmd.cmd[1]);
 					match dtb {
-					Ok(data) => input_cmd.databuff = data,
+					Ok(data) => input_cmd.databuff = Some(data),
 					Err(_e) => {println!("{} is an invalid filename.",&input_cmd.cmd[1]);continue},
 					}
 				} else if input_cmd.cmd.len() == 2 {
@@ -75,7 +75,7 @@ fn main() {
 					input_cmd.cmd[2] = n.trim_end().to_string();
 					let dtb = fs::read(&input_cmd.cmd[1]);
 					match dtb {
-					Ok(data) => input_cmd.databuff = data,
+					Ok(data) => input_cmd.databuff = Some(data),
 					Err(_e) => {println!("{} is an invalid filename.",&input_cmd.cmd[1]);continue},
 					}
 				} else {
@@ -91,7 +91,7 @@ fn main() {
 					input_cmd.cmd[2] = n.trim_end().to_string();
 					let dtb = fs::read(&input_cmd.cmd[1]);
 					match dtb {
-					Ok(data) => input_cmd.databuff = data,
+					Ok(data) => input_cmd.databuff = Some(data),
 					Err(_e) => {println!("{} is an invalid filename.",&input_cmd.cmd[1]);continue},
 					}
 				}
@@ -118,7 +118,7 @@ fn main() {
 						IcInput::write_to_file(r,filename);
 						//input_cmd.databuff = write_entry().as_bytes().to_vec();
 						input_cmd.databuff = match write_entry() {//.as_bytes().to_vec();
-						Ok(v) => v.as_bytes().to_vec(),
+						Ok(v) => Some(v.as_bytes().to_vec()),
 						Err(_e) => {println!("The entry was empty. Aborting.");continue},
 						};
 						input_cmd.cmd[0] = "set".to_string();
@@ -243,6 +243,7 @@ fn main() {
 			
 			"raw" => {input.debug(r);},
 			"exit" | "quit" => {process::exit(1);},
+			"logout" => {let r = client.send_cmd(&mut input_cmd.to_ic_packet(&cookie));cookie = None;input.set_pwd(-1,&mut client, &cookie);},
 			_ => (),
 			};
 		} else { 
@@ -253,6 +254,7 @@ fn main() {
 					continue;
 				}
 			},
+			"fetchusers" => (),
 			_ => {println!("INVALID.");},
 			};
 			match input_cmd.cmd[0].as_ref() {

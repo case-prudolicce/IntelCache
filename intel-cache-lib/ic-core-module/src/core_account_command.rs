@@ -10,6 +10,7 @@ use intel_cache_lib::lib_backend::rename_account;
 use intel_cache_lib::lib_backend::change_password;
 use intel_cache_lib::lib_backend::logout;
 use intel_cache_lib::lib_backend::validate_user;
+use intel_cache_lib::ic_types::IcLoginDetails;
 
 pub struct CoreAccount {}
 impl CoreAccount {
@@ -30,7 +31,7 @@ impl IcExecute for CoreAccount {
 	fn exec(&mut self,con: &mut Self::Connection,cmd: Option<Vec<String>>,_data: Option<Vec<u8>>,cached: bool) -> IcPacket {
 		match &cmd {
 			Some(cmd) => {
-				if cmd[cmd.len() - 1..][0] == con.login.as_ref().unwrap().cookie {
+				if cmd[cmd.len() - 1..][0] == con.login.as_ref().unwrap_or(&IcLoginDetails {username: "ANONYMOUS".to_string(),id: "NONE".to_string(),cookie: "NONE".to_string()}).cookie {
 					let mut rename = false;
 					let mut chpwd = false;
 					let mut lo = false;
