@@ -45,7 +45,7 @@
 * `ls d` doesn't include the PUBLIC PRIVATE keyword
 
 # MISC/MARKERS
-* (B2.0) READMEs Readthrough.
+* (WO) (B2.0) READMEs Readthrough.
 * (B2.0) Buffer prints.
 
 ## Native IC Client
