@@ -20,6 +20,7 @@
 * STORAGE ENTRY labels
 * STORAGE ENTRY GET \<DIR\>
 * STORAGE ENTRY MAKE \<ARCHIVE\>
+* STORAGE ENTRY SHOW with PUBLIC and PRIVATE
 
 ## Native IC Client
 * ls a prints as tree
@@ -39,8 +40,6 @@
 * [UV] STORAGE ENTRY SET \<NEW NAME\> doesn't unwrap the surrounding parantheses.
 * [UV] STORAGE DIR SET \<NEW NAME\> doesn't unwrap the surrounding parantheses.
 * [TV] STORAGE ENTRY SHOW 0 \<COOKIE\> returns error.
-* (WO) \[TV\] (B2.0) STORAGE SET Without any buffer shouldn't reset data to nothing.
-* (B2.0) STORAGE ENTRY SHOW with PRIVATE/PUBLIC Crashes.
 
 ## Native IC Client
 * `ls d` doesn't include the PUBLIC PRIVATE keyword

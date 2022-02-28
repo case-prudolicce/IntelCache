@@ -39,8 +39,7 @@ impl IcExecute for StorageEntry {
 					let mut delete = false;
 					let mut show = false;
 					let mut rstr = "".to_string();
-					let d = data.unwrap_or(Vec::new());
-
+					
 					match c[1].as_str() {
 					"DELETE" => delete = true,
 					"SHOW" => show = true,
@@ -63,7 +62,7 @@ impl IcExecute for StorageEntry {
 								Ok(l) => loc = l,
 								Err(_err) => return IcPacket::new(Some("ERR: Sixth argument isn't a number.".to_string()),None),
 							}
-							let r = make_file_entry(con,&c[2],d.clone(),Some(loc),None,public,cached);
+							let r = make_file_entry(con,&c[2],data.unwrap_or(Vec::new()),Some(loc),None,public,cached);
 							match r {
 								Ok(_e) => return IcPacket::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec())),
 								Err(_err) => panic!("{}",_err),//return IcPacket::new(Some("ERR: Failed to make entry.".to_string()),None),
@@ -73,7 +72,7 @@ impl IcExecute for StorageEntry {
 								"PUBLIC" => public = true,
 								_ => public = false,
 							}
-							let r = make_file_entry(con,&c[2],d.clone(),None,None,public,cached);
+							let r = make_file_entry(con,&c[2],data.unwrap_or(Vec::new()),None,None,public,cached);
 							match r {
 								Ok(_e) => return IcPacket::new(Some("OK!".to_string()),Some(rstr.as_bytes().to_vec())),
 								Err(_err) => panic!("{}",_err)//return IcPacket::new(Some("ERR: Failed to make entry.".to_string()),None),
@@ -115,9 +114,10 @@ impl IcExecute for StorageEntry {
 					if set {
 						//ENTRY SET <ENTRY ID> {<NEW NAME>|<NEW LOC>} <COOKIE>
 						if c.len() == 4 { //No new loc or name.
+							println!("MARKER 1");
 							match c[2].parse::<i32>() {
 								Ok(v) => {
-									match block_on(update_entry(&con.backend_con,v,d.clone(),None,None,None)) {
+									match block_on(update_entry(&con.backend_con,v,data,None,None,None)) {
 										Ok(_v) => return IcPacket::new(Some("OK!".to_string()),None),
 										Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
 									};
@@ -125,6 +125,7 @@ impl IcExecute for StorageEntry {
 								Err(_err) => { return IcPacket::new(Some("Err.".to_string()),None)},
 							}
 						} else if c.len() == 5 { //New loc OR new name
+							println!("MARKER 2");
 							let its: i32;
 							match c[2].parse::<i32>() {
 								Ok(v) => its = v,
@@ -132,17 +133,18 @@ impl IcExecute for StorageEntry {
 							}
 							let pnl = c[3].parse::<i32>().unwrap_or(-1);
 							if pnl == -1 {
-								match block_on(update_entry(&con.backend_con,its,d.clone(),Some(&c[3]),None,None)) {
+								match block_on(update_entry(&con.backend_con,its,data,Some(&c[3]),None,None)) {
 									Ok(_v) => return IcPacket::new(Some("OK!".to_string()),None),
 									Err(_err) => return IcPacket::new(Some("ERR: Cannot update entry with new name.".to_string()),None),
 								};
 							} else {
-								match block_on(update_entry(&con.backend_con,its,d.clone(),None,Some(c[3].parse::<i32>().unwrap()),None)) {
+								match block_on(update_entry(&con.backend_con,its,data,None,Some(c[3].parse::<i32>().unwrap()),None)) {
 									Ok(_v) => return IcPacket::new(Some("OK!".to_string()),None),
 									Err(_err) => return IcPacket::new(Some("ERR: Cannot update entry with new loc.".to_string()),None),
 								};
 							}
 						} else if c.len() > 5 { //New loc + new name
+							println!("MARKER 3");
 							//Harden entry id
 							let its: i32;
 							match c[2].parse::<i32>() {
@@ -155,7 +157,7 @@ impl IcExecute for StorageEntry {
 								Ok(v) => nli = v,
 								Err(_err) => { return IcPacket::new(Some("Err.".to_string()),None)},
 							}
-							match block_on(update_entry(&con.backend_con,its,d.clone(),Some(&c[3]),Some(nli),None)) {
+							match block_on(update_entry(&con.backend_con,its,data,Some(&c[3]),Some(nli),None)) {
 								Ok(_v) => return IcPacket::new(Some("OK!".to_string()),None),
 								Err(_err) => return IcPacket::new(Some("Err.".to_string()),None),
 							};

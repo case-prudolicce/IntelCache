@@ -395,7 +395,6 @@ pub fn show_entries(conn: &MysqlConnection, _display: Option<bool>, shortened: O
 	if (under_id != None && under_id.unwrap() == 0) { //Load entries at null
 		results = entry.filter(entry::loc.is_null().and(entry::owner.eq(o))).load::<Entry>(conn).expect("Error loading entries");
 	} else if under_id == None { //Show all entries
-		println!("MARKER!");
 		results = entry.filter(entry::owner.eq(o)).load::<Entry>(conn).expect("Error loading entries");
 	} else { //ID present
 		results = entry.filter(entry::loc.eq(under_id.unwrap()).and(entry::owner.eq(o))).load::<Entry>(conn).expect("Error loading entries");
@@ -572,39 +571,55 @@ pub async fn make_file_entry(conn: &IcConnection,name: &str,dt: Vec<u8>,location
 	}
 }
 
-pub async fn update_entry(conn: &MysqlConnection,uid: i32,dt: Vec<u8>,n: Option<&str>,l: Option<i32>,_lbl: Option<&str>) -> Result<(),IcError>{
+pub async fn update_entry(conn: &MysqlConnection,uid: i32,dt: Option<Vec<u8>>,n: Option<&str>,l: Option<i32>,_lbl: Option<&str>) -> Result<(),IcError>{
 	use schema::entry;
 
 	let ipfsclient = IpfsClient::default();
 	if get_entry_by_id(conn,uid) != None {
-		//If 0, 0. If none, do not change.
+		//if 0, 0. if none, do not change.
 		let e = get_entry_by_id(conn,uid).unwrap();
 		if l == None {
-			if dt.len() < 65535 {
-				diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::data.eq(&dt),entry::type_.eq("text"),entry::name.eq(n.unwrap_or(&e.name)))).execute(conn).expect("Error updating entry.");
-				Ok(())
+			println!("L IS NONE");
+			if dt != None {
+				println!("DT IS NOT NONE");
+				if dt.as_ref().unwrap().len() < 65535 {
+					diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::data.eq(&dt.unwrap()),entry::type_.eq("text"),entry::name.eq(n.unwrap_or(&e.name)))).execute(conn).expect("Error updating entry.");
+					Ok(())
+				} else {
+					let hash;
+					match block_on(ipfsclient.add(Cursor::new(dt.unwrap()))) {
+						Ok(res) => hash = res.hash,
+						Err(_e) => return Err(IcError("Error adding updated entry data.".to_string())),
+					};
+					diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::data.eq(hash.as_bytes()),entry::type_.eq("text"),entry::name.eq(n.unwrap_or(&e.name)))).execute(conn).expect("Error updating entry.");
+					Ok(())
+				}
 			} else {
-				let hash;
-				match block_on(ipfsclient.add(Cursor::new(dt))) {
-					Ok(res) => hash = res.hash,
-					Err(_e) => return Err(IcError("Error adding updated entry data.".to_string())),
-				};
-				diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::data.eq(hash.as_bytes()),entry::type_.eq("text"),entry::name.eq(n.unwrap_or(&e.name)))).execute(conn).expect("Error updating entry.");
+				println!("DT IS NONE");
+				diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::name.eq(n.unwrap_or(&e.name)))).execute(conn).expect("Error updating entry.");
 				Ok(())
 			}
 		} else {
+			println!("L IS NOT NONE");
 			let nl: Option<i32> = if l.unwrap() == 0 {None} else {Some(l.unwrap())};
 			
-			if dt.len() < 65535 {
-				diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::data.eq(&dt),entry::type_.eq("text"),entry::name.eq(n.unwrap_or(&e.name)),entry::loc.eq(nl))).execute(conn).expect("Error updating entry.");
-				Ok(())
+			if dt != None {
+				println!("DT IS NOT NONE");
+				if dt.as_ref().unwrap().len() < 65535 {
+					diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::data.eq(&dt.unwrap()),entry::type_.eq("text"),entry::name.eq(n.unwrap_or(&e.name)),entry::loc.eq(nl))).execute(conn).expect("Error updating entry.");
+					Ok(())
+				} else {
+					let hash;
+					match block_on(ipfsclient.add(Cursor::new(dt.unwrap()))) {
+						Ok(res) => hash = res.hash,
+						Err(_e) => return Err(IcError("Error adding updated entry data.".to_string())),
+					};
+					diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::data.eq(hash.as_bytes()),entry::type_.eq("text"),entry::name.eq(n.unwrap_or(&e.name)),entry::loc.eq(nl))).execute(conn).expect("Error updating entry.");
+					Ok(())
+				}
 			} else {
-				let hash;
-				match block_on(ipfsclient.add(Cursor::new(dt))) {
-					Ok(res) => hash = res.hash,
-					Err(_e) => return Err(IcError("Error adding updated entry data.".to_string())),
-				};
-				diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::data.eq(hash.as_bytes()),entry::type_.eq("text"),entry::name.eq(n.unwrap_or(&e.name)),entry::loc.eq(nl))).execute(conn).expect("Error updating entry.");
+				println!("DT IS NONE");
+				diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::name.eq(n.unwrap_or(&e.name)),entry::loc.eq(nl))).execute(conn).expect("Error updating entry.");
 				Ok(())
 			}
 		}
