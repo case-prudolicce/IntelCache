@@ -1,6 +1,6 @@
 [package]
 name = "intel_cache_server"
-version = "1.1.0"
+version = "2.0.0"
 authors = ["case-prudolicce"]
 edition = "2021"
 description = "IntelCache server"
@@ -9,5 +9,5 @@ license = "GPL-3.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-intel-cache-lib = { version="1.1.0",path = "../intel-cache-lib" }
+intel-cache-lib = { version="2.0.0",path = "../intel-cache-lib" }
 rpassword = "0.0.4"

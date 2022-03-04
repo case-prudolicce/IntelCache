@@ -1,6 +1,6 @@
 [package]
 name = "intel_cache_native_client"
-version = "1.0.1"
+version = "2.0.0"
 authors = ["case-prudolicce"]
 edition = "2021"
 description = "Native client for interacting with IntelCache"
@@ -9,5 +9,5 @@ license = "GPL-3.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-intel-cache-lib = { version="1.0.0", path = "../intel-cache-lib" }
+intel-cache-lib = { version="2.0.0", path = "../intel-cache-lib" }
 sha2 = "0.10.1"

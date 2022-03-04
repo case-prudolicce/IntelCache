@@ -46,9 +46,7 @@
 * `ls d` is broken (doesn't include the PUBLIC PRIVATE keyword)
 * `ls f` is broken (sends 0 regardless of current pwd)
 
-# (WOF) MISC/MARKERS
-* (B2.0,Last) Cargo tomls
-* (WO) (B2.0,Before Last) Cargo Docs.
+# MISC/MARKERS
 
 ## Native IC Client
 * TBD
