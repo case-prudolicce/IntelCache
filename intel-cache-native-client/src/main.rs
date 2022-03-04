@@ -179,13 +179,13 @@ fn main() {
 				//RENAME
 				//tagrename/rename id[/] newname
 				if input_cmd.cmd.len() == 3 {
-					let id_type = match input_cmd.cmd[1].parse::<i32>() {
-						Ok(v) => 1, // tag/entry
+					let _id_type = match input_cmd.cmd[1].parse::<i32>() {
+						Ok(_v) => 1, // tag/entry
 						Err(_e) => {
 							match input_cmd.cmd[1][..input_cmd.cmd[1].len() - 1].parse::<i32>() {
-								Ok(v) => -1,
-								Err(e) => {
-									println!("{} is not a valid id.",input_cmd.cmd[1]);return 
+								Ok(_v) => -1,
+								Err(_e) => {
+									println!("{} is not a valid id.",input_cmd.cmd[1]);
 									continue;
 								} //None/Err
 							}
@@ -243,7 +243,7 @@ fn main() {
 			
 			"raw" => {input.debug(r);},
 			"exit" | "quit" => {process::exit(1);},
-			"logout" => {let r = client.send_cmd(&mut input_cmd.to_ic_packet(&cookie));cookie = None;input.set_pwd(-1,&mut client, &cookie);},
+			"logout" => {let _r = client.send_cmd(&mut input_cmd.to_ic_packet(&cookie));cookie = None;input.set_pwd(-1,&mut client, &cookie);},
 			_ => (),
 			};
 		} else { 
@@ -255,7 +255,7 @@ fn main() {
 				}
 			},
 			"fetchusers" => (),
-			_ => {println!("INVALID.");},
+			_ => (),
 			};
 			match input_cmd.cmd[0].as_ref() {
 				"exit" | "quit" => {process::exit(1);},

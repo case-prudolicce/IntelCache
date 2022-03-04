@@ -62,7 +62,7 @@ impl IcInput {
 	pub fn get_username(&mut self,client: &mut IcClient,cookie: &Option<String>) -> String {
 		let mut p = Vec::<String>::new();
 		if *cookie != None {
-			if let c = cookie.as_ref().unwrap(){
+			if let Some(c) = cookie.as_ref(){
 				p.push("CORE".to_string());
 				p.push("ACCOUNT".to_string());
 				p.push("VALIDATE".to_string());
@@ -78,7 +78,7 @@ impl IcInput {
 		if pwdid < 0 {self.pwdstr = "ANONYMOUS@NONE".to_string();return true}
 		else if pwdid == 0 {self.pwd = pwdid;self.pwdstr = self.get_username(client,cookie)+"@ROOT";return true;}
 		let mut p = Vec::<String>::new();
-		if let c = cookie.as_ref().unwrap(){
+		if let Some(c) = cookie.as_ref() {
 			p.push("STORAGE".to_string());
 			p.push("DIR".to_string());
 			p.push("VALIDATE".to_string());

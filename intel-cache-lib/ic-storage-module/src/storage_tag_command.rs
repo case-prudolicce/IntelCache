@@ -24,7 +24,7 @@ impl StorageTag {
 }
 impl IcExecute for StorageTag {
 	type Connection = IcConnection;
-	fn exec(&mut self,con: &mut Self::Connection,cmd: Option<Vec<String>>,_data: Option<Vec<u8>>,cached: bool) -> IcPacket {
+	fn exec(&mut self,con: &mut Self::Connection,cmd: Option<Vec<String>>,_data: Option<Vec<u8>>,_cached: bool) -> IcPacket {
 		match cmd {
 			Some(c) => {
 				if con.login != None && con.login.as_ref().unwrap().cookie == c[c.len() - 1..][0] {
@@ -84,10 +84,12 @@ impl IcExecute for StorageTag {
 						//TAG RENAME <TAG ID> <NEW NAME> <COOKIE>
 						if c.len() == 5 {
 							let nn = &c[3];
-							if let tid = (&c[2]).parse::<i32>().unwrap() { 
+							if let Ok(tid) = (&c[2]).parse::<i32>() { 
 								println!("RENAMING TAG {} to name {}",tid,nn); 
-								rename_tag(&con,tid,nn);
-								return IcPacket::new(Some("OK!".to_string()),None);
+								match rename_tag(&con,tid,nn) {
+									Ok(_e) => return IcPacket::new(Some("OK!".to_string()),None),
+									Err(_err) => {return IcPacket::new(Some("Err.".to_string()),None) }
+								};
 							}
 						} else { println!("MISSING ARGS ({})",c.len()) }
 					}

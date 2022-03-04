@@ -30,27 +30,28 @@
 * --export,--import and --teardown handle ipfs
 * --raw\_dump (Dumping all files from user in archive)
 
-# (WOM) Known Bugs to fix
+# (WOF) Known Bugs to fix
 
-## (WOM) Server
+## Server
 * TBD
 
-### (WOF) STORAGE MODULE
+### STORAGE MODULE
+* STORAGE ENTRY SHOW will return Error is there isn't any entries in the location
 * STORAGE TAG UNDIR returns OK! even if it fails.
 * [UV] STORAGE ENTRY SET \<NEW NAME\> doesn't unwrap the surrounding parantheses.
 * [UV] STORAGE DIR SET \<NEW NAME\> doesn't unwrap the surrounding parantheses.
 * [TV] STORAGE ENTRY SHOW 0 \<COOKIE\> returns error.
 
 ## Native IC Client
-* `ls d` doesn't include the PUBLIC PRIVATE keyword
+* `ls d` is broken (doesn't include the PUBLIC PRIVATE keyword)
+* `ls f` is broken (sends 0 regardless of current pwd)
 
-# MISC/MARKERS
-* (WO) (B2.0) READMEs Readthrough.
-* (B2.0) Buffer prints.
+# (WOF) MISC/MARKERS
+* (B2.0,Last) Cargo tomls
+* (WO) (B2.0,Before Last) Cargo Docs.
 
 ## Native IC Client
-* (B2.0) Supress warnings.
-* (B2.0) Invalid twice.
+* TBD
 
 ## LIB
-* lib\_backed @ get\_entry: Write file directly from ipfs instead of holding in memory (TODO:1)
+* lib\_backend @ get\_entry: Write file directly from ipfs instead of holding in memory (TODO:1)

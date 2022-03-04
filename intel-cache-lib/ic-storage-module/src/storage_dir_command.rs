@@ -16,7 +16,7 @@ impl StorageDir {
 impl IcExecute for StorageDir {
 	type Connection = IcConnection;
 	
-	fn exec(&mut self,con: &mut Self::Connection,cmd: Option<Vec<String>>,_data: Option<Vec<u8>>,cached: bool) -> IcPacket {
+	fn exec(&mut self,con: &mut Self::Connection,cmd: Option<Vec<String>>,_data: Option<Vec<u8>>,_cached: bool) -> IcPacket {
 		match cmd {
 			Some(c) => {
 				if c[c.len() - 1..][0] == con.login.as_ref().unwrap().cookie {
@@ -115,7 +115,6 @@ impl IcExecute for StorageDir {
 												Some(_dip) => {
 													dts = v;
 													nns = &c[3];
-													nli = v;
 													match update_dir(&con.backend_con,dts,None,Some(nns)) {
 														Ok(_) => return IcPacket::new(Some("OK!".to_string()),None),
 														Err(_err) => return IcPacket::new(Some("Err.".to_string()),None), 

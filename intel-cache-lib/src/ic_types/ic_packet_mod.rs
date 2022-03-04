@@ -1,4 +1,3 @@
-use std::fs::File;
 use std::fs;
 
 /// Parsed `IcCommand` ready to be sent to the connection.

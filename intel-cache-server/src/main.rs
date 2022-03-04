@@ -1,7 +1,6 @@
 extern crate rpassword;
 use rpassword::read_password;
 use std::env;
-use std::fs::File;
 use std::io::{stdin,stdout,Write};
 use intel_cache_lib::IcServer;
 use intel_cache_lib::lib_backend::build_sql;
@@ -53,13 +52,13 @@ fn export(filename: &str,testing: bool) {
 		let mut user = String::new();
 		//Prompt user and pass for mysql server
 		print!("Username for mysql server: ");
-		stdout().flush();
+		stdout().flush().unwrap();
 		stdin().read_line(&mut user).expect("Error getting username.");
-		stdout().flush();
+		stdout().flush().unwrap();
 		print!("Password for mysql server: ");
-		stdout().flush();
+		stdout().flush().unwrap();
 		//stdin().read_line(&mut pass).expect("Error getting username.");
-		let mut pass = read_password().unwrap();
+		let pass = read_password().unwrap();
 		user.pop().unwrap();
 		match export_sql(&user,&pass,filename) {
 		Ok(()) => println!("Database exported successfully :)."),
@@ -70,13 +69,13 @@ fn export(filename: &str,testing: bool) {
 		let mut user = String::new();
 		//Prompt user and pass for mysql server
 		print!("Username for mysql server: ");
-		stdout().flush();
+		stdout().flush().unwrap();
 		stdin().read_line(&mut user).expect("Error getting username.");
-		stdout().flush();
+		stdout().flush().unwrap();
 		print!("Password for mysql server: ");
-		stdout().flush();
+		stdout().flush().unwrap();
 		//stdin().read_line(&mut pass).expect("Error getting username.");
-		let mut pass = read_password().unwrap();
+		let pass = read_password().unwrap();
 		user.pop().unwrap();
 		match export_testing_sql(&user,&pass,filename) {
 		Ok(()) => println!("Database exported successfully :)."),
@@ -90,30 +89,30 @@ fn teardown(testing: bool) -> (String,String){
 		let mut user = String::new();
 		//Prompt user and pass for mysql server
 		print!("Username for mysql server: ");
-		stdout().flush();
+		stdout().flush().unwrap();
 		stdin().read_line(&mut user).expect("Error getting username.");
-		stdout().flush();
+		stdout().flush().unwrap();
 		print!("Password for mysql server: ");
-		stdout().flush();
+		stdout().flush().unwrap();
 		//stdin().read_line(&mut pass).expect("Error getting username.");
-		let mut pass = read_password().unwrap();
+		let pass = read_password().unwrap();
 		user.pop().unwrap();
-		delete_sql(&user,&pass);
+		delete_sql(&user,&pass).unwrap();
 		//Delete ipfs share
 		(user.to_string(),pass.to_string())
 	} else {
 		let mut user = String::new();
 		//Prompt user and pass for mysql server
 		print!("Username for mysql server: ");
-		stdout().flush();
+		stdout().flush().unwrap();
 		stdin().read_line(&mut user).expect("Error getting username.");
-		stdout().flush();
+		stdout().flush().unwrap();
 		print!("Password for mysql server: ");
-		stdout().flush();
+		stdout().flush().unwrap();
 		//stdin().read_line(&mut pass).expect("Error getting username.");
-		let mut pass = read_password().unwrap();
+		let pass = read_password().unwrap();
 		user.pop().unwrap();
-		delete_testing_sql(&user,&pass);
+		delete_testing_sql(&user,&pass).unwrap();
 		//Delete ipfs share
 		(user.to_string(),pass.to_string())
 	}

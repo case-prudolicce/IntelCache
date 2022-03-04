@@ -3,7 +3,6 @@ use intel_cache_lib::ic_types::IcConnection;
 use intel_cache_lib::ic_types::IcPacket;
 use sha2::{Sha256, Digest};
 use std::time::{SystemTime,UNIX_EPOCH};
-use futures::executor::block_on;
 use intel_cache_lib::lib_backend::register;
 use intel_cache_lib::lib_backend::get_pip;
 
@@ -22,7 +21,7 @@ impl CoreRegister {
 impl IcExecute for CoreRegister {
 	type Connection = IcConnection;
 	
-	fn exec(&mut self,con: &mut Self::Connection,cmd: Option<Vec<String>>,_data: Option<Vec<u8>>,cached: bool) -> IcPacket {
+	fn exec(&mut self,con: &mut Self::Connection,cmd: Option<Vec<String>>,_data: Option<Vec<u8>>,_cached: bool) -> IcPacket {
 		match &cmd {
 			Some(cmd) => {
 				let username = &cmd[1];

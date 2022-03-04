@@ -10,9 +10,6 @@ use intel_cache_lib::ic_types::IcConnection;
 
 use futures::executor::block_on;
 use std::str;
-use std::fs::File;
-use ipfs_api_backend_hyper::IpfsClient;
-use ipfs_api_backend_hyper::IpfsApi;
 
 #[derive(Clone)]
 pub struct StorageEntry { }
@@ -95,9 +92,9 @@ impl IcExecute for StorageEntry {
 						}
 					}
 					if show {
-						//ENTRY SHOW [<DIR ID>] <COOKIE>
+						//ENTRY SHOW {PUBLIC|PRIVATE} [<DIR ID>] <COOKIE>
 						if c.len() >= 4 {
-							rstr = show_entries(&con.backend_con,Some(false),Some(true),Some(c[2].parse::<i32>().unwrap()),&(con.login).as_ref().unwrap().id,true);
+							rstr = show_entries(&con.backend_con,Some(false),Some(true),Some(c[3].parse::<i32>().unwrap()),&(con.login).as_ref().unwrap().id,true);
 						} else {
 							rstr = show_entries(&con.backend_con,Some(false),Some(true),None,&(con.login).as_ref().unwrap().id,true);
 						}
@@ -106,8 +103,8 @@ impl IcExecute for StorageEntry {
 					if get {
 						//ENTRY GET <ENTRY ID> <COOKIE>
 						if c.len() == 4 {
-							if let e = get_entry_by_id(&con.backend_con,c[2].parse::<i32>().unwrap()) {
-								return get_entry(con,c[2].parse::<i32>().unwrap(),&e.unwrap().name)
+							if let Some(e) = get_entry_by_id(&con.backend_con,c[2].parse::<i32>().unwrap_or(-1)) {
+								return get_entry(con,c[2].parse::<i32>().unwrap(),&e.name)
 							} else {return IcPacket::new(Some(format!("ERR: Entry {} not found.",c[2]).to_string()),None)}
 						} else {return IcPacket::new(Some(format!("ERR: Requires 4 Arguments but {} were provided.",c.len()).to_string()),None)}
 					}

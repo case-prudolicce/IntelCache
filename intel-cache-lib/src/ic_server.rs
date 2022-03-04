@@ -40,7 +40,7 @@ impl IcServer {
 							}
 							c.send_packet(&mut op).unwrap();
 						},
-						Err(e) => {
+						Err(_e) => {
 							if c.login != None {
 								println!("SERVER->{}: {}",c.login.as_ref().unwrap().username,&p.header.as_ref().unwrap_or(&"NONE".to_string()))
 							} else {
@@ -50,7 +50,7 @@ impl IcServer {
 						},
 					}
 				},
-				Err(e) =>{println!("Client disconnected.");IcServer::unload_modules(&mut modules);return Ok(())},
+				Err(_e) =>{println!("Client disconnected.");IcServer::unload_modules(&mut modules);return Ok(())},
 			}
 		}
 	}

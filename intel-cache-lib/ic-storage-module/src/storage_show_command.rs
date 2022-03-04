@@ -21,7 +21,7 @@ impl StorageShow {
 impl IcExecute for StorageShow {
 	type Connection = IcConnection;
 	
-	fn exec(&mut self,con: &mut Self::Connection, cmd: Option<Vec<String>>, _data: Option<Vec<u8>>,cached: bool) -> IcPacket {
+	fn exec(&mut self,con: &mut Self::Connection, cmd: Option<Vec<String>>, _data: Option<Vec<u8>>,_cached: bool) -> IcPacket {
 		//SHOW [<DIR ID>] <COOKIE>
 		println!("{:?}",cmd.as_ref().unwrap_or(&vec!["NONE".to_string()]));
 		let mut retstr: String;

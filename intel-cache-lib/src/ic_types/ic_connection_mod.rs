@@ -1,5 +1,4 @@
 use diesel::MysqlConnection;
-use rand::prelude::*;
 use rand::Rng;
 
 use crate::lib_backend::{establish_connection,establish_testing_connection};
@@ -10,7 +9,6 @@ use std::io::{Read,BufRead,BufReader,Write};
 use std::fs;
 use std::time::{SystemTime,UNIX_EPOCH};
 use std::fs::{OpenOptions,File};
-use std::io::prelude::*;
 
 
 #[derive(PartialEq)]
@@ -200,7 +198,10 @@ impl IcConnection {
 				buffer_pointer += 1;
 				for b in &mut self.local_buffer[buffer_pointer..br] {
 					if (file_pointer as i64) + 1 <= bodysize as i64{
-						file.write(&[*b]);
+						match file.write(&[*b]) {
+							Ok(_e) => (),
+							Err(_e) => panic!("Error writing to temporary file."),
+						};
 						buffer_pointer += 1;
 						file_pointer += 1
 					}
@@ -211,7 +212,10 @@ impl IcConnection {
 				let mut br = self.con.read(&mut large_buffer).unwrap();
 				while br != 0 && file_pointer < bodysize {
 					if (file_pointer as i64) + (br as i64) <= bodysize as i64{
-						file.write(&large_buffer[..br]);
+						match file.write(&large_buffer[..br]) {
+							Ok(_e) => (),
+							Err(_e) => panic!("Error writing to temporary file."),
+						};
 						file_pointer += br;
 						println!("BS: {}, FS: {}, {}% (+{})",bodysize,file_pointer,(file_pointer*100)/bodysize,br);
 					}
@@ -220,7 +224,6 @@ impl IcConnection {
 					}
 				}
 			}
-			println!("GOT BUFFER {}",self.final_buffer.len());
 			
 			if ! body_cached {
 				if self.final_buffer.len() > 0 {
@@ -229,11 +232,10 @@ impl IcConnection {
 					Ok(IcPacket::new(header,None))
 				}
 			} else { 
-				println!("BODY CACHED AT {}",&tfn);
 				Ok(IcPacket::new_cached(header,Some(tfn.as_bytes().to_vec())))
 			}
 		} else {
-			return return Err(IcError("Error getting IcPacket header.".to_string()));
+			return Err(IcError("Error getting IcPacket header.".to_string()));
 		}
 	}
 

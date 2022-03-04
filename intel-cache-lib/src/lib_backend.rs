@@ -277,7 +277,7 @@ pub fn update_dir(conn: &MysqlConnection,dirid: i32,iddest: Option<i32>,new_name
 pub fn show_dirs(conn: &MysqlConnection,by_id: Option<i32>,o: &String,owned_only: bool) -> String{
 	use self::schema::dir::dsl::*;
 	use schema::dir;
-	let mut results: Vec<Dir>;
+	let results: Vec<Dir>;
 	if by_id != None {
 		if by_id.unwrap() != 0 {
 			results = dir.filter(dir::loc.eq(by_id.unwrap()).and(dir::owner.eq(o))).load::<Dir>(conn).expect("Error loading dirs");
@@ -392,7 +392,7 @@ pub fn show_entries(conn: &MysqlConnection, _display: Option<bool>, shortened: O
 	use self::schema::entry::dsl::*;
 	use schema::entry;
 	let results: Vec<Entry>;
-	if (under_id != None && under_id.unwrap() == 0) { //Load entries at null
+	if under_id != None && under_id.unwrap() == 0 { //Load entries at null
 		results = entry.filter(entry::loc.is_null().and(entry::owner.eq(o))).load::<Entry>(conn).expect("Error loading entries");
 	} else if under_id == None { //Show all entries
 		results = entry.filter(entry::owner.eq(o)).load::<Entry>(conn).expect("Error loading entries");
@@ -596,7 +596,7 @@ pub async fn update_entry(conn: &MysqlConnection,uid: i32,dt: Option<Vec<u8>>,n:
 				}
 			} else {
 				println!("DT IS NONE");
-				diesel::update(entry::table.filter(entry::id.eq(uid))).set((entry::name.eq(n.unwrap_or(&e.name)))).execute(conn).expect("Error updating entry.");
+				diesel::update(entry::table.filter(entry::id.eq(uid))).set(entry::name.eq(n.unwrap_or(&e.name))).execute(conn).expect("Error updating entry.");
 				Ok(())
 			}
 		} else {
@@ -654,7 +654,7 @@ pub fn validate_dir(conn: &MysqlConnection,dirid: i32) -> Option<String> {
 	} else { return None };
 	
 	match d {
-		Ok(n) => return if n.len() >= 0 {Some(n[0].clone())} else {None},
+		Ok(n) => return if n.len() as i32 >= 0 {Some(n[0].clone())} else {None},
 		Err(_e) => return None,
 	}
 }
@@ -767,7 +767,7 @@ pub fn change_password(conn: &mut IcConnection,password: &str) -> Result<String,
 	}
 }
 
-pub fn logout(conn: &mut IcConnection,new_name: &str) -> Result<String,Box<dyn Error>> {
+pub fn logout(conn: &mut IcConnection) -> Result<String,Box<dyn Error>> {
 	conn.login = None;
 	Ok("OK!".to_string())
 }

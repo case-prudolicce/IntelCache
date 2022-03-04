@@ -17,7 +17,7 @@ impl CoreNull {
 }
 impl IcExecute for CoreNull {
 	type Connection = IcConnection;
-	fn exec(&mut self,_con: &mut Self::Connection,_cmd: Option<Vec<String>>,_data: Option<Vec<u8>>,cached: bool) -> IcPacket {
+	fn exec(&mut self,_con: &mut Self::Connection,_cmd: Option<Vec<String>>,_data: Option<Vec<u8>>,_cached: bool) -> IcPacket {
 		IcPacket::new_empty()
 	}
 	
