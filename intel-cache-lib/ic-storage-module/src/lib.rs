@@ -9,7 +9,8 @@ pub use self::storage_show_command::StorageShow;
 
 use std::collections::HashMap;
 
-use intel_cache_lib::ic_types::{IcExecute,IcModule,IcError,IcConnection};
+use intel_cache_lib::ic_types::{IcExecute,IcError,IcConnection};
+use intel_cache_lib::IcModule;
 
 pub struct IcStorageModule {name: String,version: String,e: HashMap<String,fn()->Box<dyn IcExecute<Connection = IcConnection>>>}
 impl IcModule for IcStorageModule {

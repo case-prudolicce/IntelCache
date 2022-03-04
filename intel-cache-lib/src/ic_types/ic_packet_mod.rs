@@ -1,6 +1,6 @@
 use std::fs;
 
-/// Parsed `IcCommand` ready to be sent to the connection.
+/// An IcPacket is the method of communication to and from `IcServer` instances.
 #[derive(Clone)]
 pub struct IcPacket { 
 	/// Header of the packet. Used for the Command or as a response.
@@ -68,6 +68,7 @@ impl IcPacket {
 		}
 	}
 	
+	/// Returns a parsed header.
 	pub fn parse_header(&self) -> Vec<String> {
 		self.finalize_command(self.header.as_ref().unwrap_or(&String::new()).split_whitespace().collect::<Vec<&str>>())
 	}
@@ -104,11 +105,13 @@ impl IcPacket {
 		retve
 	}
 	
+	/// Takes a parsed header and body and returns an IcPacket instance.
 	pub fn from_parsed_header(input: Vec<String>,d: Option<Vec<u8>>) -> IcPacket {
 		let i = IcPacket::unparse(input);
 		IcPacket { header:Some(i),body: d, cached: false }
 	}
 	
+	/// Unparse a parsed header.
 	pub fn unparse(cmd: Vec<String>) -> String {
 		let mut s = String::new();
 		for t in &cmd {

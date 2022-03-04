@@ -17,7 +17,8 @@ use std::fs;
 use std::error::Error;
 
 use self::models::{EntryTag,NewEntryTag,NewEntry, Entry, NewDirTag, DirTag, Tag, NewTag, Dir, NewDir,NewUser,User};
-use crate::ic_types::{IcError,IcLoginDetails,IcPacket,IcExecute,IcModule,IcConnection};
+use crate::ic_types::{IcError,IcLoginDetails,IcPacket,IcExecute,IcConnection};
+use crate::IcModule;
 use futures::TryStreamExt;
 use tar::Archive;
 

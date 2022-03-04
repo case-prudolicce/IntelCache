@@ -5,11 +5,12 @@ use std::thread;
 use std::net::{TcpListener,SocketAddrV4,Ipv4Addr};
 
 use crate::lib_backend::{establish_connection,establish_testing_connection,parse_ic_packet};
-use crate::ic_types::{IcPacket,IcConnection,IcModule,IcExecute};
+use crate::ic_types::{IcPacket,IcConnection,IcExecute};
+use crate::IcModule;
 
 /// The Server interface struct for IntelCache. It will listen on port 64209 for new clients.
 /// Then for each client, it will create a new thread for the client,
-/// process [`IcCommand`]s and return
+/// process and return
 /// [`IcPacket`]s to the handled client.
 /// 
 /// Note: to initialize the server the struct must be defined as a global.

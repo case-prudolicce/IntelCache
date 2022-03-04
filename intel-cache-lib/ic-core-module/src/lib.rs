@@ -10,7 +10,7 @@ pub use self::core_fetch_command::CoreFetch;
 pub use self::core_account_command::CoreAccount;
 use std::collections::HashMap;
 use intel_cache_lib::ic_types::IcExecute;
-use intel_cache_lib::ic_types::IcModule;
+use intel_cache_lib::IcModule;
 use intel_cache_lib::ic_types::IcError;
 use intel_cache_lib::ic_types::IcConnection;
 

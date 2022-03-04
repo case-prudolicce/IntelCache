@@ -3,7 +3,10 @@ use std::io::{ErrorKind,Error};
 use crate::ic_types::{IcConnection,IcPacket};
 
 /// The Client interface struct for IntelCache. Used to interact with the server.
-pub struct IcClient { pub con: IcConnection }
+pub struct IcClient { 
+	///Underlying connection object for both the client and backend.
+	pub con: IcConnection 
+}
 impl IcClient {
 	/// Connect to `ip` address
 	///

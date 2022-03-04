@@ -12,6 +12,7 @@ use std::fs::{OpenOptions,File};
 
 
 #[derive(PartialEq)]
+/// Interface for storing user connection details.
 pub struct IcLoginDetails { pub username: String,pub id: String, pub cookie: String }
 /// Interface implementation struct for sending and receiving `IcPackets`
 pub struct IcConnection { pub backend_con: MysqlConnection, con: TcpStream,local_buffer: Vec<u8>,final_buffer: Vec<u8>,pub login: Option<IcLoginDetails> }
