@@ -1,6 +1,6 @@
 # The IntelCache Server is the server that will interact with and server the backend Intel (Data) to clients via IcCommands, furnished by IcModules.
 
-It works by translating input commands to corresponding module commands. To view available commands view the CORE and STORAGE READMEs.
+It works by translating input commands to corresponding module commands. To view available commands view the [CORE](https://github.com/case-prudolicce/IntelCache/tree/main/intel-cache-lib/ic-core-module) and [STORAGE](https://github.com/case-prudolicce/IntelCache/tree/main/intel-cache-lib/ic-storage-module) READMEs.
 
 # Starting
 If starting for the first time, initialize it with `--init`, otherwise just run the program without arguments. Make sure that IPFS is up and working when running the server.
