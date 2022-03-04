@@ -1,7 +1,7 @@
 IntelCache, an extensible cloud storage solution.
 =
 
-Intelcache is a combo of a client + server that aims at providing the general populace with cloud technology that prioritize transparency, extensibility and privacy. It comes with a server and a native client that will connect to the local server then communicate using a predefined set of commands. Read more on the server and client by reading their respective README Pages.
+Intelcache is a combo of a client + server that aims at providing the general populace with cloud technology that prioritize transparency, extensibility and privacy. It comes with a server and a native client that will connect to the local server then communicate using a predefined set of commands. Read more on the [server](https://github.com/case-prudolicce/IntelCache/tree/main/intel-cache-server) and [client](https://github.com/case-prudolicce/IntelCache/tree/main/intel-cache-native-client) by reading their respective README Pages.
 
 Motivation
 -
